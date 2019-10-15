@@ -36,7 +36,8 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestPusher}. */
 public class ManifestPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule
+  public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
@@ -46,32 +47,39 @@ public class ManifestPusherIntegrationTest {
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java")
+            .newRegistryClient();
+    ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest").getManifest();
 
     registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     try {
-      registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
+      registryClient.pushManifest((V22ManifestTemplate)manifestTemplate,
+                                  "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
 
     } catch (RegistryErrorException ex) {
-      HttpResponseException httpResponseException = (HttpResponseException) ex.getCause();
-      Assert.assertEquals(
-          HttpStatusCodes.STATUS_CODE_BAD_REQUEST, httpResponseException.getStatusCode());
+      HttpResponseException httpResponseException =
+          (HttpResponseException)ex.getCause();
+      Assert.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+                          httpResponseException.getStatusCode());
     }
   }
 
-  /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
+  /**
+   * Tests manifest pushing. This test is a comprehensive test of push and
+   * pull.
+   */
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush()
+      throws DigestException, IOException, RegistryException {
     Blob testLayerBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
-    DescriptorDigest testLayerBlobDigest =
-        DescriptorDigest.fromHash(
-            "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
+    DescriptorDigest testLayerBlobDigest = DescriptorDigest.fromHash(
+        "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
     Blob testContainerConfigurationBlob = Blobs.from("12345");
     DescriptorDigest testContainerConfigurationBlobDigest =
         DescriptorDigest.fromHash(
@@ -80,30 +88,32 @@ public class ManifestPusherIntegrationTest {
     // Creates a valid image manifest.
     V22ManifestTemplate expectedManifestTemplate = new V22ManifestTemplate();
     expectedManifestTemplate.addLayer(9, testLayerBlobDigest);
-    expectedManifestTemplate.setContainerConfiguration(5, testContainerConfigurationBlobDigest);
+    expectedManifestTemplate.setContainerConfiguration(
+        5, testContainerConfigurationBlobDigest);
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage")
+        RegistryClient
+            .factory(EventHandlers.NONE, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    Assert.assertFalse(
-        registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));
-    Assert.assertFalse(
-        registryClient.pushBlob(
-            testContainerConfigurationBlobDigest,
-            testContainerConfigurationBlob,
-            null,
-            ignored -> {}));
+    Assert.assertFalse(registryClient.pushBlob(
+        testLayerBlobDigest, testLayerBlob, null, ignored -> {}));
+    Assert.assertFalse(registryClient.pushBlob(
+        testContainerConfigurationBlobDigest, testContainerConfigurationBlob,
+        null, ignored -> {}));
 
     // Pushes the manifest.
-    DescriptorDigest imageDigest = registryClient.pushManifest(expectedManifestTemplate, "latest");
+    DescriptorDigest imageDigest =
+        registryClient.pushManifest(expectedManifestTemplate, "latest");
 
     // Pulls the manifest.
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+        registryClient.pullManifest("latest", V22ManifestTemplate.class)
+            .getManifest();
     Assert.assertEquals(1, manifestTemplate.getLayers().size());
-    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayers().get(0).getDigest());
+    Assert.assertEquals(testLayerBlobDigest,
+                        manifestTemplate.getLayers().get(0).getDigest());
     Assert.assertNotNull(manifestTemplate.getContainerConfiguration());
     Assert.assertEquals(
         testContainerConfigurationBlobDigest,
@@ -114,8 +124,7 @@ public class ManifestPusherIntegrationTest {
         registryClient
             .pullManifest(imageDigest.toString(), V22ManifestTemplate.class)
             .getManifest();
-    Assert.assertEquals(
-        Digests.computeJsonDigest(manifestTemplate),
-        Digests.computeJsonDigest(manifestTemplateByDigest));
+    Assert.assertEquals(Digests.computeJsonDigest(manifestTemplate),
+                        Digests.computeJsonDigest(manifestTemplateByDigest));
   }
 }

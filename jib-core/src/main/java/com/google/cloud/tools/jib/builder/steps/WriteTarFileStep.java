@@ -40,8 +40,7 @@ public class WriteTarFileStep implements Callable<BuildResult> {
   WriteTarFileStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Path outputPath,
-      Image builtImage) {
+      Path outputPath, Image builtImage) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.outputPath = outputPath;
@@ -50,26 +49,26 @@ public class WriteTarFileStep implements Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws IOException {
-    buildConfiguration
-        .getEventHandlers()
-        .dispatch(LogEvent.progress("Building image to tar file..."));
+    buildConfiguration.getEventHandlers().dispatch(
+        LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =
-        progressEventDispatcherFactory.create("writing to tar file", 1)) {
+             progressEventDispatcherFactory.create("writing to tar file", 1)) {
       // Builds the image to a tarball.
       if (outputPath.getParent() != null) {
         Files.createDirectories(outputPath.getParent());
       }
-      try (OutputStream outputStream =
-          new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
+      try (OutputStream outputStream = new BufferedOutputStream(
+               FileOperations.newLockingOutputStream(outputPath))) {
         new ImageTarball(
-                builtImage,
-                buildConfiguration.getTargetImageConfiguration().getImage(),
-                buildConfiguration.getAllTargetImageTags())
+            builtImage,
+            buildConfiguration.getTargetImageConfiguration().getImage(),
+            buildConfiguration.getAllTargetImageTags())
             .writeTo(outputStream);
       }
 
-      return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
+      return BuildResult.fromImage(builtImage,
+                                   buildConfiguration.getTargetFormat());
     }
   }
 }

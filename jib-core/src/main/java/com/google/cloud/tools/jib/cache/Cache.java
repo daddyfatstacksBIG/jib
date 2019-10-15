@@ -42,7 +42,8 @@ public class Cache {
   /**
    * Initializes the cache using {@code cacheDirectory} for storage.
    *
-   * @param cacheDirectory the directory for the cache. Creates the directory if it does not exist.
+   * @param cacheDirectory the directory for the cache. Creates the directory if
+   *     it does not exist.
    * @return a new {@link Cache}
    * @throws IOException if an I/O exception occurs
    */
@@ -62,63 +63,72 @@ public class Cache {
   /**
    * Saves a manifest and container configuration for a V2.2 or OCI image.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest and
+   *     container configuration for
    * @param manifestTemplate the V2.2 or OCI manifest
    * @param containerConfigurationTemplate the container configuration
    * @throws IOException if an I/O exception occurs
    */
-  public void writeMetadata(
-      ImageReference imageReference,
-      BuildableManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfigurationTemplate)
+  public void
+  writeMetadata(ImageReference imageReference,
+                BuildableManifestTemplate manifestTemplate,
+                ContainerConfigurationTemplate containerConfigurationTemplate)
       throws IOException {
-    cacheStorageWriter.writeMetadata(
-        imageReference, manifestTemplate, containerConfigurationTemplate);
+    cacheStorageWriter.writeMetadata(imageReference, manifestTemplate,
+                                     containerConfigurationTemplate);
   }
 
   /**
    * Saves a V2.1 image manifest.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest and
+   *     container configuration for
    * @param manifestTemplate the V2.1 manifest
    * @throws IOException if an I/O exception occurs
    */
-  public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+  public void writeMetadata(ImageReference imageReference,
+                            V21ManifestTemplate manifestTemplate)
       throws IOException {
     cacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
   }
 
   /**
    * Saves a cache entry with a compressed layer {@link Blob}. Use {@link
-   * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an uncompressed layer
+   * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an
+   * uncompressed layer
    * {@link Blob} and include a selector.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
+  public CachedLayer writeCompressedLayer(Blob compressedLayerBlob)
+      throws IOException {
     return cacheStorageWriter.writeCompressed(compressedLayerBlob);
   }
 
   /**
-   * Saves a cache entry with an uncompressed layer {@link Blob} and an additional selector digest.
-   * Use {@link #writeCompressedLayer(Blob)} to save a compressed layer {@link Blob}.
+   * Saves a cache entry with an uncompressed layer {@link Blob} and an
+   * additional selector digest. Use {@link #writeCompressedLayer(Blob)} to save
+   * a compressed layer {@link Blob}.
    *
    * @param uncompressedLayerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CachedLayer writeUncompressedLayer(
-      Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
+  public CachedLayer
+  writeUncompressedLayer(Blob uncompressedLayerBlob,
+                         ImmutableList<LayerEntry> layerEntries)
+      throws IOException {
     return cacheStorageWriter.writeUncompressed(
-        uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
+        uncompressedLayerBlob,
+        LayerEntriesSelector.generateSelector(layerEntries));
   }
 
   /**
-   * Caches a layer that was extracted from a local base image, and names the file using the
-   * provided diff id.
+   * Caches a layer that was extracted from a local base image, and names the
+   * file using the provided diff id.
    *
    * @param diffId the diff id
    * @param compressedBlob the compressed layer blob
@@ -131,49 +141,57 @@ public class Cache {
   }
 
   /**
-   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}. An image
-   * ID is a SHA hash of a container configuration JSON. The value is also shown as IMAGE ID in
+   * Writes a container configuration to {@code (cache
+   * directory)/local/config/(image id)}. An image ID is a SHA hash of a
+   * container configuration JSON. The value is also shown as IMAGE ID in
    * {@code docker images}.
    *
-   * <p>Note: the {@code imageID} to the {@code containerConfiguration} is a one-way relationship;
-   * there is no guarantee that {@code containerConfiguration}'s SHA will be {@code imageID}, since
-   * the original container configuration is being rewritten here rather than being moved.
+   * <p>Note: the {@code imageID} to the {@code containerConfiguration} is a
+   * one-way relationship; there is no guarantee that {@code
+   * containerConfiguration}'s SHA will be {@code imageID}, since the original
+   * container configuration is being rewritten here rather than being moved.
    *
    * @param imageId the ID of the image to store the container configuration for
    * @param containerConfiguration the container configuration
    * @throws IOException if an I/O exception occurs
    */
-  void writeLocalConfig(
-      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+  void writeLocalConfig(DescriptorDigest imageId,
+                        ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
     cacheStorageWriter.writeLocalConfig(imageId, containerConfiguration);
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached manifest and container configuration for an image
+   * reference.
    *
    * @param imageReference the image reference
-   * @return the manifest and container configuration for the image reference, if found
+   * @return the manifest and container configuration for the image reference,
+   *     if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  public Optional<ManifestAndConfig>
+  retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
   /**
-   * Retrieves the {@link CachedLayer} that was built from the {@code layerEntries}.
+   * Retrieves the {@link CachedLayer} that was built from the {@code
+   * layerEntries}.
    *
    * @param layerEntries the layer entries to match against
-   * @return a {@link CachedLayer} that was built from {@code layerEntries}, if found
+   * @return a {@link CachedLayer} that was built from {@code layerEntries}, if
+   *     found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
   public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
-        cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));
+        cacheStorageReader.select(
+            LayerEntriesSelector.generateSelector(layerEntries));
     if (!optionalSelectedLayerDigest.isPresent()) {
       return Optional.empty();
     }
@@ -182,7 +200,8 @@ public class Cache {
   }
 
   /**
-   * Retrieves the {@link CachedLayer} for the layer with digest {@code layerDigest}.
+   * Retrieves the {@link CachedLayer} for the layer with digest {@code
+   * layerDigest}.
    *
    * @param layerDigest the layer digest
    * @return the {@link CachedLayer} referenced by the layer digest, if found
@@ -195,7 +214,8 @@ public class Cache {
   }
 
   /**
-   * Retrieves a {@link CachedLayer} for a local base image layer with the given diff id.
+   * Retrieves a {@link CachedLayer} for a local base image layer with the given
+   * diff id.
    *
    * @param diffId the diff id
    * @return the {@link CachedLayer} with the given diff id
@@ -208,21 +228,25 @@ public class Cache {
   }
 
   /**
-   * Retrieves the {@link ContainerConfigurationTemplate} for the image saved from the given image
-   * ID. An image ID is a SHA hash of a container configuration JSON. The value is also shown as
-   * IMAGE ID in {@code docker images}.
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image saved
+   * from the given image ID. An image ID is a SHA hash of a container
+   * configuration JSON. The value is also shown as IMAGE ID in {@code docker
+   * images}.
    *
-   * <p>Note: the {@code imageID} is only used to find the {@code containerConfiguration}, and is
-   * not necessarily the actual SHA of {@code containerConfiguration}. There is no guarantee that
-   * {@code containerConfiguration}'s SHA will be {@code imageID}, since the saved container
-   * configuration is not a direct copy of the base image's original configuration.
+   * <p>Note: the {@code imageID} is only used to find the {@code
+   * containerConfiguration}, and is not necessarily the actual SHA of {@code
+   * containerConfiguration}. There is no guarantee that
+   * {@code containerConfiguration}'s SHA will be {@code imageID}, since the
+   * saved container configuration is not a direct copy of the base image's
+   * original configuration.
    *
    * @param imageId the image ID
-   * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
+   * @return the {@link ContainerConfigurationTemplate} referenced by the image
+   *     ID, if found
    * @throws IOException if an I/O exception occurs
    */
-  public Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
-      throws IOException {
+  public Optional<ContainerConfigurationTemplate>
+  retrieveLocalConfig(DescriptorDigest imageId) throws IOException {
     return cacheStorageReader.retrieveLocalConfig(imageId);
   }
 }

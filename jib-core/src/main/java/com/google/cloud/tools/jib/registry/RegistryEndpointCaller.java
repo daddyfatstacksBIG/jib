@@ -65,7 +65,8 @@ class RegistryEndpointCaller<T> {
     Throwable exception = original;
     while (exception != null) {
       String message = exception.getMessage();
-      if (message != null && message.toLowerCase(Locale.US).contains("broken pipe")) {
+      if (message != null &&
+          message.toLowerCase(Locale.US).contains("broken pipe")) {
         return true;
       }
 
@@ -81,7 +82,8 @@ class RegistryEndpointCaller<T> {
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
 
   /** Makes a {@link Connection} to the specified {@link URL}. */
@@ -95,33 +97,28 @@ class RegistryEndpointCaller<T> {
    *
    * @param eventHandlers the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
-   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the
+   *     endpoint
    * @param authorization optional authentication credentials to use
-   * @param registryEndpointRequestProperties properties of the registry endpoint request
-   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
+   * @param registryEndpointRequestProperties properties of the registry
+   *     endpoint request
+   * @param allowInsecureRegistries if {@code true}, insecure connections will
+   *     be allowed
    */
   RegistryEndpointCaller(
-      EventHandlers eventHandlers,
-      String userAgent,
+      EventHandlers eventHandlers, String userAgent,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries) {
     this(
-        eventHandlers,
-        userAgent,
-        registryEndpointProvider,
-        authorization,
-        registryEndpointRequestProperties,
-        allowInsecureRegistries,
-        Connection.getConnectionFactory(),
-        null /* might never be used, so create lazily to delay throwing potential GeneralSecurityException */);
+        eventHandlers, userAgent, registryEndpointProvider, authorization,
+        registryEndpointRequestProperties, allowInsecureRegistries, Connection.getConnectionFactory(), null /* might never be used, so create lazily to delay throwing potential GeneralSecurityException */);
   }
 
   @VisibleForTesting
   RegistryEndpointCaller(
-      EventHandlers eventHandlers,
-      String userAgent,
+      EventHandlers eventHandlers, String userAgent,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
@@ -143,12 +140,16 @@ class RegistryEndpointCaller<T> {
    *
    * @return an object representing the response, or {@code null}
    * @throws IOException for most I/O exceptions when making the request
-   * @throws RegistryException for known exceptions when interacting with the registry
+   * @throws RegistryException for known exceptions when interacting with the
+   *     registry
    */
   T call() throws IOException, RegistryException {
     try {
-      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
-      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
+      String apiRouteBase = "https://" +
+                            registryEndpointRequestProperties.getServerUrl() +
+                            "/v2/";
+      URL initialRequestUrl =
+          registryEndpointProvider.getApiRoute(apiRouteBase);
       return callWithAllowInsecureRegistryHandling(initialRequestUrl);
 
     } catch (IOException ex) {
@@ -159,14 +160,16 @@ class RegistryEndpointCaller<T> {
       if (isBrokenPipe(ex)) {
         logError(
             "broken pipe: the server shut down the connection. Check the server log if possible. "
-                + "This could also be a proxy issue. For example, a proxy may prevent sending "
-                + "packets that are too large.");
+            +
+            "This could also be a proxy issue. For example, a proxy may prevent sending "
+            + "packets that are too large.");
       }
       throw ex;
     }
   }
 
-  private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+  private T callWithAllowInsecureRegistryHandling(URL url)
+      throws IOException, RegistryException {
     if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
       throw new InsecureRegistryException(url);
     }
@@ -178,32 +181,37 @@ class RegistryEndpointCaller<T> {
       return handleUnverifiableServerException(url);
 
     } catch (ConnectException ex) {
-      // It is observed that Open/Oracle JDKs sometimes throw SocketTimeoutException but other times
-      // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
-      // does not extend ConnectException (or vice versa), and we want to be consistent to error out
-      // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
+      // It is observed that Open/Oracle JDKs sometimes throw
+      // SocketTimeoutException but other times ConnectException for connection
+      // timeout. (Could be a JDK bug.) Note SocketTimeoutException does not
+      // extend ConnectException (or vice versa), and we want to be consistent
+      // to error out on timeouts:
+      // https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
       if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
         throw ex;
       }
 
-      if (allowInsecureRegistries && isHttpsProtocol(url) && url.getPort() == -1) {
-        // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
-        // port 443) and we could not connect to 443. It's worth trying port 80.
+      if (allowInsecureRegistries && isHttpsProtocol(url) &&
+          url.getPort() == -1) {
+        // Fall back to HTTP only if "url" had no port specified (i.e., we tried
+        // the default HTTPS port 443) and we could not connect to 443. It's
+        // worth trying port 80.
         return fallBackToHttp(url);
       }
       throw ex;
     }
   }
 
-  private T handleUnverifiableServerException(URL url) throws IOException, RegistryException {
+  private T handleUnverifiableServerException(URL url)
+      throws IOException, RegistryException {
     if (!allowInsecureRegistries) {
       throw new InsecureRegistryException(url);
     }
 
     try {
       eventHandlers.dispatch(
-          LogEvent.info(
-              "Cannot verify server at " + url + ". Attempting again with no TLS verification."));
+          LogEvent.info("Cannot verify server at " + url +
+                        ". Attempting again with no TLS verification."));
       return call(url, getInsecureConnectionFactory());
 
     } catch (SSLException ex) {
@@ -215,12 +223,13 @@ class RegistryEndpointCaller<T> {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
     eventHandlers.dispatch(
-        LogEvent.info(
-            "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl));
+        LogEvent.info("Failed to connect to " + url +
+                      " over HTTPS. Attempting again with HTTP: " + httpUrl));
     return call(httpUrl.toURL(), connectionFactory);
   }
 
-  private Function<URL, Connection> getInsecureConnectionFactory() throws RegistryException {
+  private Function<URL, Connection> getInsecureConnectionFactory()
+      throws RegistryException {
     try {
       if (insecureConnectionFactory == null) {
         insecureConnectionFactory = Connection.getInsecureConnectionFactory();
@@ -238,12 +247,14 @@ class RegistryEndpointCaller<T> {
    * @param url the endpoint URL to call
    * @return an object representing the response
    * @throws IOException for most I/O exceptions when making the request
-   * @throws RegistryException for known exceptions when interacting with the registry
+   * @throws RegistryException for known exceptions when interacting with the
+   *     registry
    */
   private T call(URL url, Function<URL, Connection> connectionFactory)
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
+    boolean sendCredentials =
+        isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
@@ -255,32 +266,36 @@ class RegistryEndpointCaller<T> {
       if (sendCredentials) {
         requestBuilder.setAuthorization(authorization);
       }
-      Response response =
-          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
+      Response response = connection.send(
+          registryEndpointProvider.getHttpMethod(), requestBuilder.build());
 
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      // First, see if the endpoint provider handles an exception as an expected response.
+      // First, see if the endpoint provider handles an exception as an expected
+      // response.
       try {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
       } catch (HttpResponseException httpResponseException) {
-        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+        if (httpResponseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST ||
+            httpResponseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_NOT_FOUND ||
+            httpResponseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           throw newRegistryErrorException(httpResponseException);
 
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        } else if (httpResponseException.getStatusCode() ==
+                   HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
               registryEndpointRequestProperties.getServerUrl(),
               registryEndpointRequestProperties.getImageName(),
               httpResponseException);
 
-        } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+        } else if (httpResponseException.getStatusCode() ==
+                   HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
           if (sendCredentials) {
             // Credentials are either missing or wrong.
             throw new RegistryUnauthorizedException(
@@ -293,13 +308,15 @@ class RegistryEndpointCaller<T> {
                 registryEndpointRequestProperties.getImageName());
           }
 
-        } else if (httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+        } else if (httpResponseException.getStatusCode() ==
+                       HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT ||
+                   httpResponseException.getStatusCode() ==
+                       HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY ||
+                   httpResponseException.getStatusCode() ==
+                       STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
+          URL redirectLocation =
+              new URL(url, httpResponseException.getHeaders().getLocation());
           return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
@@ -311,25 +328,25 @@ class RegistryEndpointCaller<T> {
   }
 
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(HttpResponseException httpResponseException) {
+  RegistryErrorException
+  newRegistryErrorException(HttpResponseException httpResponseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
-            registryEndpointProvider.getActionDescription(), httpResponseException);
+            registryEndpointProvider.getActionDescription(),
+            httpResponseException);
 
     try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(
-              httpResponseException.getContent(), ErrorResponseTemplate.class);
+      ErrorResponseTemplate errorResponse = JsonTemplateMapper.readJson(
+          httpResponseException.getContent(), ErrorResponseTemplate.class);
       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
         registryErrorExceptionBuilder.addReason(errorEntry);
       }
     } catch (IOException ex) {
       registryErrorExceptionBuilder.addReason(
-          "registry returned error code "
-              + httpResponseException.getStatusCode()
-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + httpResponseException.getContent()
-              + "\n");
+          "registry returned error code " +
+          httpResponseException.getStatusCode() +
+          "; possible causes include invalid or wrong reference. Actual error output follows:\n" +
+          httpResponseException.getContent() + "\n");
     }
 
     return registryErrorExceptionBuilder.build();
@@ -337,6 +354,7 @@ class RegistryEndpointCaller<T> {
 
   /** Logs error message in red. */
   private void logError(String message) {
-    eventHandlers.dispatch(LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
+    eventHandlers.dispatch(
+        LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
   }
 }

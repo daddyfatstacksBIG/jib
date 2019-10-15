@@ -36,29 +36,30 @@ import javax.annotation.Nullable;
  *     "anotherregistry": {},
  *     ...
  *   },
- *   "credsStore": "legacy credential helper config acting as a \"default\" helper",
- *   "credHelpers": {
- *     "registry": "credential helper name",
+ *   "credsStore": "legacy credential helper config acting as a \"default\"
+ * helper", "credHelpers": { "registry": "credential helper name",
  *     "anotherregistry": "another credential helper name",
  *     ...
  *   }
  * }
  * }</pre>
  *
- * <p>Each entry in {@code credHelpers} is a mapping from a registry to a credential helper that
- * stores the authorization for that registry. This takes precedence over {@code credsStore} if
- * there exists a match.
+ * <p>Each entry in {@code credHelpers} is a mapping from a registry to a
+ * credential helper that stores the authorization for that registry. This takes
+ * precedence over {@code credsStore} if there exists a match.
  *
- * <p>{@code credsStore} is a legacy config that acts to provide a "default" credential helper if
- * there is no match in {@code credHelpers}.
+ * <p>{@code credsStore} is a legacy config that acts to provide a "default"
+ * credential helper if there is no match in {@code credHelpers}.
  *
- * <p>If an {@code auth} is defined for a registry, that is a valid {@code Basic} authorization to
- * use for that registry.
+ * <p>If an {@code auth} is defined for a registry, that is a valid {@code
+ * Basic} authorization to use for that registry.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerConfigTemplate implements JsonTemplate {
 
-  /** Template for an {@code auth} defined for a registry under {@code auths}. */
+  /**
+   * Template for an {@code auth} defined for a registry under {@code auths}.
+   */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class AuthTemplate implements JsonTemplate {
 
@@ -78,16 +79,12 @@ public class DockerConfigTemplate implements JsonTemplate {
   /** Maps from registry to credential helper name. */
   private final Map<String, String> credHelpers = new HashMap<>();
 
-  public Map<String, AuthTemplate> getAuths() {
-    return auths;
-  }
+  public Map<String, AuthTemplate> getAuths() { return auths; }
 
   @Nullable
   public String getCredsStore() {
     return credsStore;
   }
 
-  public Map<String, String> getCredHelpers() {
-    return credHelpers;
-  }
+  public Map<String, String> getCredHelpers() { return credHelpers; }
 }

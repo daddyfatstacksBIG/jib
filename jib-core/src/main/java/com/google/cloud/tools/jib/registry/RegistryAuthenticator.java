@@ -57,8 +57,10 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
-   * @param userAgent the {@code User-Agent} header value to use in later authentication calls
-   * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
+   * @param userAgent the {@code User-Agent} header value to use in later
+   *     authentication calls
+   * @return a new {@link RegistryAuthenticator} for authenticating with the
+   *     registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
@@ -66,21 +68,20 @@ public class RegistryAuthenticator {
   static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent)
-      throws RegistryAuthenticationFailedException {
-    // If the authentication method starts with 'basic ' (case insensitive), no registry
-    // authentication is needed.
+      String userAgent) throws RegistryAuthenticationFailedException {
+    // If the authentication method starts with 'basic ' (case insensitive), no
+    // registry authentication is needed.
     if (authenticationMethod.matches("^(?i)(basic) .*")) {
       return Optional.empty();
     }
 
-    // Checks that the authentication method starts with 'bearer ' (case insensitive).
+    // Checks that the authentication method starts with 'bearer ' (case
+    // insensitive).
     if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
       throw newRegistryAuthenticationFailedException(
           registryEndpointRequestProperties.getServerUrl(),
           registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "Bearer");
+          authenticationMethod, "Bearer");
     }
 
     Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
@@ -89,32 +90,31 @@ public class RegistryAuthenticator {
       throw newRegistryAuthenticationFailedException(
           registryEndpointRequestProperties.getServerUrl(),
           registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "realm");
+          authenticationMethod, "realm");
     }
     String realm = realmMatcher.group(1);
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
-    // use the provided registry location when missing service (e.g., for OpenShift)
-    String service =
-        serviceMatcher.find()
-            ? serviceMatcher.group(1)
-            : registryEndpointRequestProperties.getServerUrl();
+    // use the provided registry location when missing service (e.g., for
+    // OpenShift)
+    String service = serviceMatcher.find()
+                         ? serviceMatcher.group(1)
+                         : registryEndpointRequestProperties.getServerUrl();
 
-    return Optional.of(
-        new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent));
+    return Optional.of(new RegistryAuthenticator(
+        realm, service, registryEndpointRequestProperties, userAgent));
   }
 
-  private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
-      String registry, String repository, String authenticationMethod, String authParam) {
+  private static RegistryAuthenticationFailedException
+  newRegistryAuthenticationFailedException(String registry, String repository,
+                                           String authenticationMethod,
+                                           String authParam) {
     return new RegistryAuthenticationFailedException(
-        registry,
-        repository,
-        "'"
-            + authParam
-            + "' was not found in the 'WWW-Authenticate' header, tried to parse: "
-            + authenticationMethod);
+        registry, repository,
+        "'" + authParam +
+            "' was not found in the 'WWW-Authenticate' header, tried to parse: " +
+            authenticationMethod);
   }
 
   /** Template for the authentication response JSON. */
@@ -141,14 +141,14 @@ public class RegistryAuthenticator {
     }
   }
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final String realm;
   private final String service;
   private final String userAgent;
 
   private RegistryAuthenticator(
-      String realm,
-      String service,
+      String realm, String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent) {
     this.realm = realm;
@@ -181,11 +181,11 @@ public class RegistryAuthenticator {
     return authenticate(credential, "pull,push");
   }
 
-  private String getServiceScopeRequestParameters(Map<String, String> repositoryScopes) {
+  private String
+  getServiceScopeRequestParameters(Map<String, String> repositoryScopes) {
     StringBuilder parameters = new StringBuilder("service=").append(service);
     for (Entry<String, String> pair : repositoryScopes.entrySet()) {
-      parameters
-          .append("&scope=repository:")
+      parameters.append("&scope=repository:")
           .append(pair.getKey())
           .append(":")
           .append(pair.getValue());
@@ -194,24 +194,26 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  URL getAuthenticationUrl(@Nullable Credential credential, Map<String, String> repositoryScopes)
+  URL getAuthenticationUrl(@Nullable Credential credential,
+                           Map<String, String> repositoryScopes)
       throws MalformedURLException {
     return isOAuth2Auth(credential)
         ? new URL(realm) // Required parameters will be sent via POST .
-        : new URL(realm + "?" + getServiceScopeRequestParameters(repositoryScopes));
+        : new URL(realm + "?" +
+                  getServiceScopeRequestParameters(repositoryScopes));
   }
 
   @VisibleForTesting
-  String getAuthRequestParameters(
-      @Nullable Credential credential, Map<String, String> repositoryScopes) {
+  String getAuthRequestParameters(@Nullable Credential credential,
+                                  Map<String, String> repositoryScopes) {
     String serviceScope = getServiceScopeRequestParameters(repositoryScopes);
     return isOAuth2Auth(credential)
         ? serviceScope
-            // https://github.com/GoogleContainerTools/jib/pull/1545
-            + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
-            + "&grant_type=refresh_token&refresh_token="
-            // If OAuth2, credential.getPassword() is a refresh token.
-            + Verify.verifyNotNull(credential).getPassword()
+              // https://github.com/GoogleContainerTools/jib/pull/1545
+              + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
+              + "&grant_type=refresh_token&refresh_token="
+              // If OAuth2, credential.getPassword() is a refresh token.
+              + Verify.verifyNotNull(credential).getPassword()
         : serviceScope;
   }
 
@@ -221,7 +223,8 @@ public class RegistryAuthenticator {
   }
 
   /**
-   * Sends the authentication request and retrieves the Bearer authorization token.
+   * Sends the authentication request and retrieves the Bearer authorization
+   * token.
    *
    * @param credential the credential used to authenticate
    * @param scope the scope of permissions to authenticate for
@@ -230,64 +233,69 @@ public class RegistryAuthenticator {
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
-  private Authorization authenticate(@Nullable Credential credential, String scope)
+  private Authorization authenticate(@Nullable Credential credential,
+                                     String scope)
       throws RegistryAuthenticationFailedException {
-    // try authorizing against both the main repository and the source repository too
-    // to enable cross-repository mounts on pushes
-    String sourceImageName = registryEndpointRequestProperties.getSourceImageName();
+    // try authorizing against both the main repository and the source
+    // repository too to enable cross-repository mounts on pushes
+    String sourceImageName =
+        registryEndpointRequestProperties.getSourceImageName();
     String imageName = registryEndpointRequestProperties.getImageName();
     if (sourceImageName != null && !sourceImageName.equals(imageName)) {
       try {
-        return authenticate(credential, ImmutableMap.of(imageName, scope, sourceImageName, "pull"));
+        return authenticate(
+            credential,
+            ImmutableMap.of(imageName, scope, sourceImageName, "pull"));
       } catch (RegistryAuthenticationFailedException ex) {
-        // Unable to obtain authorization with source image: fallthrough and try without
+        // Unable to obtain authorization with source image: fallthrough and try
+        // without
       }
     }
     return authenticate(credential, ImmutableMap.of(imageName, scope));
   }
 
-  private Authorization authenticate(
-      @Nullable Credential credential, Map<String, String> repositoryScopes)
+  private Authorization authenticate(@Nullable Credential credential,
+                                     Map<String, String> repositoryScopes)
       throws RegistryAuthenticationFailedException {
-    try (Connection connection =
-        Connection.getConnectionFactory()
-            .apply(getAuthenticationUrl(credential, repositoryScopes))) {
+    try (Connection connection = Connection.getConnectionFactory().apply(
+             getAuthenticationUrl(credential, repositoryScopes))) {
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setUserAgent(userAgent);
 
       if (isOAuth2Auth(credential)) {
-        String parameters = getAuthRequestParameters(credential, repositoryScopes);
-        requestBuilder.setBody(
-            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
+        String parameters =
+            getAuthRequestParameters(credential, repositoryScopes);
+        requestBuilder.setBody(new BlobHttpContent(
+            Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
-        requestBuilder.setAuthorization(
-            Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
+        requestBuilder.setAuthorization(Authorization.fromBasicCredentials(
+            credential.getUsername(), credential.getPassword()));
       }
 
-      String httpMethod = isOAuth2Auth(credential) ? HttpMethods.POST : HttpMethods.GET;
+      String httpMethod =
+          isOAuth2Auth(credential) ? HttpMethods.POST : HttpMethods.GET;
       Response response = connection.send(httpMethod, requestBuilder.build());
 
-      AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
+      AuthenticationResponseTemplate responseJson = JsonTemplateMapper.readJson(
+          response.getBody(), AuthenticationResponseTemplate.class);
 
       if (responseJson.getToken() == null) {
         throw new RegistryAuthenticationFailedException(
             registryEndpointRequestProperties.getServerUrl(),
             registryEndpointRequestProperties.getImageName(),
-            "Did not get token in authentication response from "
-                + getAuthenticationUrl(credential, repositoryScopes)
-                + "; parameters: "
-                + getAuthRequestParameters(credential, repositoryScopes));
+            "Did not get token in authentication response from " +
+                getAuthenticationUrl(credential, repositoryScopes) +
+                "; parameters: " +
+                getAuthRequestParameters(credential, repositoryScopes));
       }
       return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(
           registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          ex);
+          registryEndpointRequestProperties.getImageName(), ex);
     }
   }
 }

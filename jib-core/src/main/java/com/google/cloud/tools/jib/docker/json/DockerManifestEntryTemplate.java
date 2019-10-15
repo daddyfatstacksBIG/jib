@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JSON Template for a loadable Docker Manifest entry. The repoTags property requires a tag; i.e. if
- * a tag is missing, it explicitly should use "latest".
+ * JSON Template for a loadable Docker Manifest entry. The repoTags property
+ * requires a tag; i.e. if a tag is missing, it explicitly should use "latest".
  *
- * <p>Note that this is a template for a single Manifest entry, while the entire Docker Manifest
- * should be {@code List<DockerLoadManifestEntryTemplate>}.
+ * <p>Note that this is a template for a single Manifest entry, while the entire
+ * Docker Manifest should be {@code List<DockerLoadManifestEntryTemplate>}.
  *
  * <p>Example manifest entry JSON:
  *
@@ -42,8 +42,9 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
- *     source</a>
+ * @see <a
+ *     href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker
+ *     load source</a>
  */
 public class DockerManifestEntryTemplate implements JsonTemplate {
 
@@ -51,25 +52,15 @@ public class DockerManifestEntryTemplate implements JsonTemplate {
   private final List<String> repoTags = new ArrayList<>();
   private final List<String> layers = new ArrayList<>();
 
-  public void setConfig(String config) {
-    this.config = config;
-  }
+  public void setConfig(String config) { this.config = config; }
 
-  public void addRepoTag(String repoTag) {
-    repoTags.add(repoTag);
-  }
+  public void addRepoTag(String repoTag) { repoTags.add(repoTag); }
 
-  public void addLayerFile(String layer) {
-    layers.add(layer);
-  }
+  public void addLayerFile(String layer) { layers.add(layer); }
 
-  public String getConfig() {
-    return config;
-  }
+  public String getConfig() { return config; }
 
-  public List<String> getLayerFiles() {
-    return layers;
-  }
+  public List<String> getLayerFiles() { return layers; }
 
   @VisibleForTesting
   public List<String> getRepoTags() {

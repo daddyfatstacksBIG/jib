@@ -38,26 +38,33 @@ public class DockerManifestEntryTemplateTest {
   @Test
   public void testToJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
-    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
+    String expectedJson =
+        new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     DockerManifestEntryTemplate template = new DockerManifestEntryTemplate();
-    template.addRepoTag(ImageReference.of("testregistry", "testrepo", "testtag").toStringWithTag());
+    template.addRepoTag(ImageReference.of("testregistry", "testrepo", "testtag")
+                            .toStringWithTag());
     template.addLayerFile("layer1.tar.gz");
     template.addLayerFile("layer2.tar.gz");
     template.addLayerFile("layer3.tar.gz");
 
-    List<DockerManifestEntryTemplate> loadManifest = Collections.singletonList(template);
-    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(loadManifest));
+    List<DockerManifestEntryTemplate> loadManifest =
+        Collections.singletonList(template);
+    Assert.assertEquals(expectedJson,
+                        JsonTemplateMapper.toUtf8String(loadManifest));
   }
 
   @Test
   public void testFromJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
-    String sourceJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
-    DockerManifestEntryTemplate template =
-        new ObjectMapper().readValue(sourceJson, DockerManifestEntryTemplate[].class)[0];
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
+    String sourceJson =
+        new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    DockerManifestEntryTemplate template = new ObjectMapper().readValue(
+        sourceJson, DockerManifestEntryTemplate[].class)[0];
 
     Assert.assertEquals(
         ImmutableList.of("layer1.tar.gz", "layer2.tar.gz", "layer3.tar.gz"),

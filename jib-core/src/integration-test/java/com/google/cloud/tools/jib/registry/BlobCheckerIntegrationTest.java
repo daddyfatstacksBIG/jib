@@ -30,7 +30,8 @@ import org.junit.Test;
 /** Integration tests for {@link BlobChecker}. */
 public class BlobCheckerIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule
+  public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
@@ -44,21 +45,24 @@ public class BlobCheckerIntegrationTest {
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
-    DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
+        registryClient.pullManifest("latest", V22ManifestTemplate.class)
+            .getManifest();
+    DescriptorDigest blobDigest =
+        manifestTemplate.getLayers().get(0).getDigest();
 
-    Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
+    Assert.assertEquals(blobDigest,
+                        registryClient.checkBlob(blobDigest).get().getDigest());
   }
 
   @Test
-  public void testCheck_doesNotExist() throws IOException, RegistryException, DigestException {
+  public void testCheck_doesNotExist()
+      throws IOException, RegistryException, DigestException {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    DescriptorDigest fakeBlobDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    DescriptorDigest fakeBlobDigest = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     Assert.assertFalse(registryClient.checkBlob(fakeBlobDigest).isPresent());
   }

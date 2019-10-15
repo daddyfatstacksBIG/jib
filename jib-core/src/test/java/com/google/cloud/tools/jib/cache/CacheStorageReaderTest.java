@@ -61,7 +61,8 @@ public class CacheStorageReaderTest {
         Paths.get(Resources.getResource("core/json/v22manifest.json").toURI()),
         imageDirectory.resolve("manifest.json"));
     Files.copy(
-        Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
+        Paths.get(
+            Resources.getResource("core/json/containerconfig.json").toURI()),
         imageDirectory.resolve("config.json"));
   }
 
@@ -72,12 +73,10 @@ public class CacheStorageReaderTest {
 
   @Before
   public void setUp() throws DigestException {
-    layerDigest1 =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    layerDigest2 =
-        DescriptorDigest.fromHash(
-            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    layerDigest1 = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    layerDigest2 = DescriptorDigest.fromHash(
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
   }
 
   @Test
@@ -85,11 +84,14 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     // Creates test layer directories.
-    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
-    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
+    Files.createDirectories(
+        cacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
+    Files.createDirectories(
+        cacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
 
     // Checks that layer directories created are all listed.
     Assert.assertEquals(
@@ -97,15 +99,18 @@ public class CacheStorageReaderTest {
         cacheStorageReader.fetchDigests());
 
     // Checks that non-digest directories means the cache is corrupted.
-    Files.createDirectory(cacheStorageFiles.getLayersDirectory().resolve("not a hash"));
+    Files.createDirectory(
+        cacheStorageFiles.getLayersDirectory().resolve("not a hash"));
     try {
       cacheStorageReader.fetchDigests();
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {
       Assert.assertThat(
-          ex.getMessage(), CoreMatchers.startsWith("Found non-digest file in layers directory"));
-      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
+          ex.getMessage(),
+          CoreMatchers.startsWith("Found non-digest file in layers directory"));
+      Assert.assertThat(ex.getCause(),
+                        CoreMatchers.instanceOf(DigestException.class));
     }
   }
 
@@ -116,14 +121,14 @@ public class CacheStorageReaderTest {
     setupCachedMetadataV21(cacheDirectory);
 
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     V21ManifestTemplate manifestTemplate =
-        (V21ManifestTemplate)
-            cacheStorageReader
-                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
-                .get()
-                .getManifest();
+        (V21ManifestTemplate)cacheStorageReader
+            .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+            .get()
+            .getManifest();
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
   }
 
@@ -134,14 +139,14 @@ public class CacheStorageReaderTest {
     setupCachedMetadataV22(cacheDirectory);
 
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     V22ManifestTemplate manifestTemplate =
-        (V22ManifestTemplate)
-            cacheStorageReader
-                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
-                .get()
-                .getManifest();
+        (V22ManifestTemplate)cacheStorageReader
+            .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+            .get()
+            .getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
   }
 
@@ -152,7 +157,8 @@ public class CacheStorageReaderTest {
     setupCachedMetadataV22(cacheDirectory);
 
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     ContainerConfigurationTemplate configurationTemplate =
         cacheStorageReader
@@ -169,24 +175,28 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     // Creates the test layer directory.
     DescriptorDigest layerDigest = layerDigest1;
     DescriptorDigest layerDiffId = layerDigest2;
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
-    try (OutputStream out =
-        Files.newOutputStream(cacheStorageFiles.getLayerFile(layerDigest, layerDiffId))) {
+    try (OutputStream out = Files.newOutputStream(
+             cacheStorageFiles.getLayerFile(layerDigest, layerDiffId))) {
       out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
     }
 
     // Checks that the CachedLayer is retrieved correctly.
-    Optional<CachedLayer> optionalCachedLayer = cacheStorageReader.retrieve(layerDigest);
+    Optional<CachedLayer> optionalCachedLayer =
+        cacheStorageReader.retrieve(layerDigest);
     Assert.assertTrue(optionalCachedLayer.isPresent());
     Assert.assertEquals(layerDigest, optionalCachedLayer.get().getDigest());
     Assert.assertEquals(layerDiffId, optionalCachedLayer.get().getDiffId());
-    Assert.assertEquals("layerBlob".length(), optionalCachedLayer.get().getSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
+    Assert.assertEquals("layerBlob".length(),
+                        optionalCachedLayer.get().getSize());
+    Assert.assertEquals(
+        "layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
 
     // Checks that multiple .layer files means the cache is corrupted.
     Files.createFile(cacheStorageFiles.getLayerFile(layerDigest, layerDigest));
@@ -195,22 +205,22 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.startsWith(
-              "No or multiple layer files found for layer hash "
-                  + layerDigest.getHash()
-                  + " in directory: "
-                  + cacheStorageFiles.getLayerDirectory(layerDigest)));
+      Assert.assertThat(ex.getMessage(),
+                        CoreMatchers.startsWith(
+                            "No or multiple layer files found for layer hash " +
+                            layerDigest.getHash() + " in directory: " +
+                            cacheStorageFiles.getLayerDirectory(layerDigest)));
     }
   }
 
   @Test
-  public void testRetrieveTarLayer() throws IOException, CacheCorruptedException {
+  public void testRetrieveTarLayer()
+      throws IOException, CacheCorruptedException {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     // Creates the test layer directory.
     Path localDirectory = cacheStorageFiles.getLocalDirectory();
@@ -218,62 +228,65 @@ public class CacheStorageReaderTest {
     DescriptorDigest layerDiffId = layerDigest2;
     Files.createDirectories(localDirectory.resolve(layerDiffId.getHash()));
     try (OutputStream out =
-        Files.newOutputStream(
-            localDirectory.resolve(layerDiffId.getHash()).resolve(layerDigest.getHash()))) {
+             Files.newOutputStream(localDirectory.resolve(layerDiffId.getHash())
+                                       .resolve(layerDigest.getHash()))) {
       out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
     }
 
     // Checks that the CachedLayer is retrieved correctly.
-    Optional<CachedLayer> optionalCachedLayer = cacheStorageReader.retrieveTarLayer(layerDiffId);
+    Optional<CachedLayer> optionalCachedLayer =
+        cacheStorageReader.retrieveTarLayer(layerDiffId);
     Assert.assertTrue(optionalCachedLayer.isPresent());
     Assert.assertEquals(layerDigest, optionalCachedLayer.get().getDigest());
     Assert.assertEquals(layerDiffId, optionalCachedLayer.get().getDiffId());
-    Assert.assertEquals("layerBlob".length(), optionalCachedLayer.get().getSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
+    Assert.assertEquals("layerBlob".length(),
+                        optionalCachedLayer.get().getSize());
+    Assert.assertEquals(
+        "layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
 
     // Checks that multiple layer files means the cache is corrupted.
-    Files.createFile(localDirectory.resolve(layerDiffId.getHash()).resolve(layerDiffId.getHash()));
+    Files.createFile(localDirectory.resolve(layerDiffId.getHash())
+                         .resolve(layerDiffId.getHash()));
     try {
       cacheStorageReader.retrieveTarLayer(layerDiffId);
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.startsWith(
-              "No or multiple layer files found for layer hash "
-                  + layerDiffId.getHash()
-                  + " in directory: "
-                  + localDirectory.resolve(layerDiffId.getHash())));
+      Assert.assertThat(ex.getMessage(),
+                        CoreMatchers.startsWith(
+                            "No or multiple layer files found for layer hash " +
+                            layerDiffId.getHash() + " in directory: " +
+                            localDirectory.resolve(layerDiffId.getHash())));
     }
   }
 
   @Test
-  public void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
+  public void testRetrieveLocalConfig()
+      throws IOException, URISyntaxException, DigestException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     Path configDirectory = cacheDirectory.resolve("local").resolve("config");
     Files.createDirectories(configDirectory);
     Files.copy(
-        Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
+        Paths.get(
+            Resources.getResource("core/json/containerconfig.json").toURI()),
         configDirectory.resolve(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     ContainerConfigurationTemplate configurationTemplate =
         cacheStorageReader
-            .retrieveLocalConfig(
-                DescriptorDigest.fromHash(
-                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+            .retrieveLocalConfig(DescriptorDigest.fromHash(
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
             .get();
     Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
     Assert.assertEquals("js", configurationTemplate.getOs());
 
     Optional<ContainerConfigurationTemplate> missingConfigurationTemplate =
-        cacheStorageReader.retrieveLocalConfig(
-            DescriptorDigest.fromHash(
-                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+        cacheStorageReader.retrieveLocalConfig(DescriptorDigest.fromHash(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
     Assert.assertFalse(missingConfigurationTemplate.isPresent());
   }
 
@@ -282,12 +295,14 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
-    Files.write(selectorFile, "not a valid layer digest".getBytes(StandardCharsets.UTF_8));
+    Files.write(selectorFile,
+                "not a valid layer digest".getBytes(StandardCharsets.UTF_8));
 
     try {
       cacheStorageReader.select(selector);
@@ -297,9 +312,9 @@ public class CacheStorageReaderTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
-              "Expected valid layer digest as contents of selector file `"
-                  + selectorFile
-                  + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest"));
+              "Expected valid layer digest as contents of selector file `" +
+              selectorFile +
+              "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest"));
     }
   }
 
@@ -308,14 +323,17 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    CacheStorageReader cacheStorageReader =
+        new CacheStorageReader(cacheStorageFiles);
 
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
-    Files.write(selectorFile, layerDigest2.getHash().getBytes(StandardCharsets.UTF_8));
+    Files.write(selectorFile,
+                layerDigest2.getHash().getBytes(StandardCharsets.UTF_8));
 
-    Optional<DescriptorDigest> selectedLayerDigest = cacheStorageReader.select(selector);
+    Optional<DescriptorDigest> selectedLayerDigest =
+        cacheStorageReader.select(selector);
     Assert.assertTrue(selectedLayerDigest.isPresent());
     Assert.assertEquals(layerDigest2, selectedLayerDigest.get());
   }

@@ -64,31 +64,42 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
-  private static BuildConfiguration getBuildConfiguration(JibContainerBuilder jibContainerBuilder)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+  private static BuildConfiguration
+  getBuildConfiguration(JibContainerBuilder jibContainerBuilder)
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException {
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
   }
 
-  private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
-    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
-    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+  private static <T> void
+  assertLayerEntriesUnordered(List<T> expectedPaths, List<LayerEntry> entries,
+                              Function<LayerEntry, T> fieldSelector) {
+    List<T> expected =
+        expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream()
+                         .map(fieldSelector)
+                         .sorted()
+                         .collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
-  private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  private static void assertSourcePathsUnordered(List<Path> expectedPaths,
+                                                 List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries,
+                                LayerEntry::getSourceFile);
   }
 
-  private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+  private static void assertExtractionPathsUnordered(List<String> expectedPaths,
+                                                     List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
-        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
+        expectedPaths, entries,
+        layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private RawConfiguration rawConfiguration;
@@ -99,77 +110,97 @@ public class PluginConfigurationProcessorTest {
   @Mock private Consumer<LogEvent> logger;
 
   @Before
-  public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
+  public void setUp() throws IOException, InvalidImageReferenceException,
+                             InferredAuthException {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
-    Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
+    Mockito.when(rawConfiguration.getFilesModificationTime())
+        .thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("exploded");
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
-    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
-    Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
-    Mockito.when(
-            projectProperties.createJibContainerBuilder(
-                Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
+    Mockito.when(projectProperties.getMainClassFromJar())
+        .thenReturn("java.lang.Object");
+    Mockito.when(projectProperties.getDefaultCacheDirectory())
+        .thenReturn(Paths.get("cache"));
+    Mockito
+        .when(projectProperties.createJibContainerBuilder(
+            Mockito.any(JavaContainerBuilder.class),
+            Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
-    Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
+    Mockito.when(inferredAuthProvider.inferAuth(Mockito.any()))
+        .thenReturn(Optional.empty());
 
-    Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
+    Mockito.when(containerizer.setToolName(Mockito.anyString()))
+        .thenReturn(containerizer);
     Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
         .thenReturn(containerizer);
     Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))
         .thenReturn(containerizer);
-    Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
+    Mockito
+        .when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
         .thenReturn(containerizer);
-    Mockito.when(containerizer.setOfflineMode(Mockito.anyBoolean())).thenReturn(containerizer);
+    Mockito.when(containerizer.setOfflineMode(Mockito.anyBoolean()))
+        .thenReturn(containerizer);
   }
 
   @Test
   public void testPluginConfigurationProcessor_defaults()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*",
+                      "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
 
     Mockito.verify(containerizer)
         .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("cache"));
 
-    ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+    ArgumentMatcher<LogEvent> isLogWarn =
+        logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
   }
 
   @Test
   public void testPluginConfigurationProcessor_extraDirectory()
-      throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
-          InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
-          InvalidWorkingDirectoryException, InvalidImageReferenceException,
-          CacheDirectoryCreationException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
-    Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
-    Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
+      throws URISyntaxException, InvalidContainerVolumeException,
+             MainClassInferenceException, InvalidAppRootException, IOException,
+             IncompatibleBaseImageJavaVersionException,
+             InvalidWorkingDirectoryException, InvalidImageReferenceException,
+             CacheDirectoryCreationException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
+    Path extraDirectory =
+        Paths.get(Resources.getResource("core/layer").toURI());
+    Mockito.when(rawConfiguration.getExtraDirectories())
+        .thenReturn(Arrays.asList(extraDirectory));
     Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
-        .thenReturn(
-            ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
+        .thenReturn(ImmutableMap.of(AbsoluteUnixPath.get("/foo"),
+                                    FilePermissions.fromOctalString("123")));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
     List<LayerEntry> extraFiles =
-        buildConfiguration
-            .getLayerConfigurations()
+        buildConfiguration.getLayerConfigurations()
             .stream()
             .filter(layer -> layer.getName().equals("extra files"))
             .collect(Collectors.toList())
@@ -178,21 +209,19 @@ public class PluginConfigurationProcessorTest {
 
     assertSourcePathsUnordered(
         Arrays.asList(
-            extraDirectory.resolve("a"),
-            extraDirectory.resolve("a/b"),
-            extraDirectory.resolve("a/b/bar"),
-            extraDirectory.resolve("c"),
-            extraDirectory.resolve("c/cat"),
-            extraDirectory.resolve("foo")),
+            extraDirectory.resolve("a"), extraDirectory.resolve("a/b"),
+            extraDirectory.resolve("a/b/bar"), extraDirectory.resolve("c"),
+            extraDirectory.resolve("c/cat"), extraDirectory.resolve("foo")),
         extraFiles);
     assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        extraFiles);
 
     Optional<LayerEntry> fooEntry =
-        extraFiles
-            .stream()
-            .filter(
-                layerEntry -> layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/foo")))
+        extraFiles.stream()
+            .filter(layerEntry
+                    -> layerEntry.getExtractionPath().equals(
+                        AbsoluteUnixPath.get("/foo")))
             .findFirst();
     Assert.assertTrue(fooEntry.isPresent());
     Assert.assertEquals("123", fooEntry.get().getPermissions().toOctalString());
@@ -200,31 +229,40 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
-      throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+      throws InvalidContainerVolumeException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidImageReferenceException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
-    System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
+    System.setProperty(PropertyNames.APPLICATION_CACHE,
+                       "/new/application/cache");
 
     processCommonConfiguration();
 
-    Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
-    Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
+    Mockito.verify(containerizer)
+        .setBaseImageLayersCache(Paths.get("new/base/cache"));
+    Mockito.verify(containerizer)
+        .setApplicationLayersCache(Paths.get("/new/application/cache"));
   }
 
   @Test
   public void testEntrypoint()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -236,129 +274,161 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testComputeEntrypoint_inheritKeyword()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidContainerizingModeException {
+             InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
 
-    Assert.assertNull(
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    Assert.assertNull(PluginConfigurationProcessor.computeEntrypoint(
+        rawConfiguration, projectProperties));
   }
 
   @Test
   public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidContainerizingModeException {
+             InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
 
-    Assert.assertNotNull(
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    Assert.assertNotNull(PluginConfigurationProcessor.computeEntrypoint(
+        rawConfiguration, projectProperties));
   }
 
   @Test
   public void testComputeEntrypoint_default()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidContainerizingModeException {
+             InvalidContainerizingModeException {
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*",
+                      "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration,
+                                                       projectProperties));
   }
 
   @Test
   public void testComputeEntrypoint_exploded()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+             InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("packaged");
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*",
+                      "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration,
+                                                       projectProperties));
   }
 
   @Test
   public void testEntrypoint_defaultWarPackaging()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNull(
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyNoInteractions(logger);
   }
 
   @Test
   public void testEntrypoint_defaultNonWarPackaging()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*",
+                      "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
 
-    ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+    ArgumentMatcher<LogEvent> isLogWarn =
+        logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
   }
 
   @Test
   public void testEntrypoint_extraClasspathNonWarPackaging()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getExtraClasspath())
         .thenReturn(Collections.singletonList("/foo"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
-        Arrays.asList(
-            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList("java", "-cp",
+                      "/foo:/app/resources:/app/classes:/app/libs/*",
+                      "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
 
-    ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+    ArgumentMatcher<LogEvent> isLogWarn =
+        logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
   }
 
   @Test
   public void testUser()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
+    Mockito.when(rawConfiguration.getUser())
+        .thenReturn(Optional.of("customUser"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertEquals("customUser", buildConfiguration.getContainerConfiguration().getUser());
+    Assert.assertEquals(
+        "customUser", buildConfiguration.getContainerConfiguration().getUser());
   }
 
   @Test
   public void testUser_null()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getUser());
@@ -366,85 +436,107 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testEntrypoint_warningOnJvmFlags()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
-    Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
+    Mockito.when(rawConfiguration.getJvmFlags())
+        .thenReturn(Collections.singletonList("jvmFlag"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
-        .log(
-            LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+        .log(LogEvent.warn(
+            "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
 
   @Test
   public void testEntrypoint_warningOnMainclass()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
-    Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+    Mockito.when(rawConfiguration.getMainClass())
+        .thenReturn(Optional.of("java.util.Object"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
-        .log(
-            LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+        .log(LogEvent.warn(
+            "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
 
   @Test
   public void testEntrypoint_warningOnMainclassForWar()
-      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidFilesModificationTimeException, InvalidContainerizingModeException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+      throws IOException, InvalidCreationTimeException,
+             InvalidImageReferenceException,
+             IncompatibleBaseImageJavaVersionException,
+             InvalidContainerVolumeException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidFilesModificationTimeException,
+             InvalidContainerizingModeException,
+             CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getMainClass())
+        .thenReturn(Optional.of("java.util.Object"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNull(
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
-        .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+        .log(LogEvent.warn(
+            "mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
   }
 
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNotNull(
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertEquals(
-        "java", buildConfiguration.getContainerConfiguration().getEntrypoint().get(0));
+        "java",
+        buildConfiguration.getContainerConfiguration().getEntrypoint().get(0));
     Assert.assertEquals(
-        "-cp", buildConfiguration.getContainerConfiguration().getEntrypoint().get(1));
+        "-cp",
+        buildConfiguration.getContainerConfiguration().getEntrypoint().get(1));
     Assert.assertEquals(
         "/my/app/resources:/my/app/classes:/my/app/libs/*",
         buildConfiguration.getContainerConfiguration().getEntrypoint().get(2));
@@ -452,26 +544,31 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testWebAppEntrypoint_inheritedFromBaseImage()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNull(
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
   }
 
   @Test
   public void testGetAppRootChecked() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/some/root"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    Assert.assertEquals(AbsoluteUnixPath.get("/some/root"),
+                        PluginConfigurationProcessor.getAppRootChecked(
+                            rawConfiguration, projectProperties));
   }
 
   @Test
@@ -479,7 +576,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration,
+                                                     projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
@@ -491,7 +589,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration,
+                                                     projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
@@ -503,7 +602,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration,
+                                                     projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
@@ -511,29 +611,32 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
+  public void testGetAppRootChecked_defaultNonWarProject()
+      throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/app"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    Assert.assertEquals(AbsoluteUnixPath.get("/app"),
+                        PluginConfigurationProcessor.getAppRootChecked(
+                            rawConfiguration, projectProperties));
   }
 
   @Test
-  public void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
+  public void testGetAppRootChecked_defaultWarProject()
+      throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    Assert.assertEquals(AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
+                        PluginConfigurationProcessor.getAppRootChecked(
+                            rawConfiguration, projectProperties));
   }
 
   @Test
   public void testGetContainerizingModeChecked_exploded()
       throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("exploded");
 
     Assert.assertEquals(
         ContainerizingMode.EXPLODED,
@@ -544,7 +647,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetContainerizingModeChecked_packaged()
       throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("packaged");
 
     Assert.assertEquals(
         ContainerizingMode.PACKAGED,
@@ -554,7 +658,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetContainerizingModeChecked_caseSensitive() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("PACKAGED");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("PACKAGED");
 
     try {
       PluginConfigurationProcessor.getContainerizingModeChecked(
@@ -568,7 +673,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetContainerizingModeChecked_invalidValue() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("this is wrong");
 
     try {
       PluginConfigurationProcessor.getContainerizingModeChecked(
@@ -583,7 +689,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetContainerizingModeChecked_packagedWithWar()
       throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+    Mockito.when(rawConfiguration.getContainerizingMode())
+        .thenReturn("packaged");
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     try {
@@ -592,31 +699,38 @@ public class PluginConfigurationProcessorTest {
       Assert.fail();
     } catch (UnsupportedOperationException ex) {
       Assert.assertEquals(
-          "packaged containerizing mode for WAR is not yet supported", ex.getMessage());
+          "packaged containerizing mode for WAR is not yet supported",
+          ex.getMessage());
     }
   }
 
   @Test
-  public void testGetWorkingDirectoryChecked() throws InvalidWorkingDirectoryException {
-    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("/valid/path"));
+  public void testGetWorkingDirectoryChecked()
+      throws InvalidWorkingDirectoryException {
+    Mockito.when(rawConfiguration.getWorkingDirectory())
+        .thenReturn(Optional.of("/valid/path"));
 
     Optional<AbsoluteUnixPath> checkedPath =
-        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
+        PluginConfigurationProcessor.getWorkingDirectoryChecked(
+            rawConfiguration);
     Assert.assertTrue(checkedPath.isPresent());
     Assert.assertEquals(AbsoluteUnixPath.get("/valid/path"), checkedPath.get());
   }
 
   @Test
-  public void testGetWorkingDirectoryChecked_undefined() throws InvalidWorkingDirectoryException {
-    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.empty());
-    Assert.assertEquals(
-        Optional.empty(),
-        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration));
+  public void testGetWorkingDirectoryChecked_undefined()
+      throws InvalidWorkingDirectoryException {
+    Mockito.when(rawConfiguration.getWorkingDirectory())
+        .thenReturn(Optional.empty());
+    Assert.assertEquals(Optional.empty(),
+                        PluginConfigurationProcessor.getWorkingDirectoryChecked(
+                            rawConfiguration));
   }
 
   @Test
   public void testGetWorkingDirectoryChecked_notAbsolute() {
-    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("relative/path"));
+    Mockito.when(rawConfiguration.getWorkingDirectory())
+        .thenReturn(Optional.of("relative/path"));
 
     try {
       PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
@@ -740,9 +854,10 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_dockerBase()
-      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://ima.ge/name"));
+      throws IncompatibleBaseImageJavaVersionException, IOException,
+             InvalidImageReferenceException, CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("docker://ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertTrue(result.getDockerClient().isPresent());
@@ -751,9 +866,10 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_tarBase()
-      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
+      throws IncompatibleBaseImageJavaVersionException, IOException,
+             InvalidImageReferenceException, CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("tar:///path/to.tar"));
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals(Paths.get("/path/to.tar"), result.getTarPath().get());
     Assert.assertFalse(result.getDockerClient().isPresent());
@@ -761,9 +877,11 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_registry()
-      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("ima.ge/name"));
+      throws IncompatibleBaseImageJavaVersionException,
+             InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertFalse(result.getDockerClient().isPresent());
@@ -772,9 +890,11 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_registryWithPrefix()
-      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://ima.ge/name"));
+      throws IncompatibleBaseImageJavaVersionException,
+             InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("registry://ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertFalse(result.getDockerClient().isPresent());
@@ -782,7 +902,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
+  public void
+  testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
@@ -810,7 +931,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage()
+  public void
+  testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
@@ -827,7 +949,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage()
+  public void
+  testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
@@ -844,7 +967,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage()
+  public void
+  testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
@@ -863,10 +987,12 @@ public class PluginConfigurationProcessorTest {
   // https://github.com/GoogleContainerTools/jib/issues/1995
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
-      throws InvalidImageReferenceException, IOException, IncompatibleBaseImageJavaVersionException,
-          CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, IOException,
+             IncompatibleBaseImageJavaVersionException,
+             CacheDirectoryCreationException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("regis.try/java12image"));
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("regis.try/java12image"));
     ImageConfiguration imageConfiguration = getCommonImageConfiguration();
     Assert.assertEquals("regis.try", imageConfiguration.getImageRegistry());
     Assert.assertEquals("java12image", imageConfiguration.getImageRepository());
@@ -889,7 +1015,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetValidVolumesList() throws InvalidContainerVolumeException {
-    Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
+    Mockito.when(rawConfiguration.getVolumes())
+        .thenReturn(Collections.singletonList("/some/root"));
 
     Assert.assertEquals(
         ImmutableSet.of(AbsoluteUnixPath.get("/some/root")),
@@ -898,7 +1025,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetInvalidVolumesList() {
-    Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("`some/root"));
+    Mockito.when(rawConfiguration.getVolumes())
+        .thenReturn(Collections.singletonList("`some/root"));
 
     try {
       PluginConfigurationProcessor.getVolumesSet(rawConfiguration);
@@ -913,7 +1041,8 @@ public class PluginConfigurationProcessorTest {
   public void testCreateModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-        PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
+        PluginConfigurationProcessor.createModificationTimeProvider(
+            "EPOCH_PLUS_SECOND");
     Assert.assertEquals(
         Instant.ofEpochSecond(1),
         timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
@@ -923,52 +1052,61 @@ public class PluginConfigurationProcessorTest {
   public void testCreateModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-        PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
-    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
+        PluginConfigurationProcessor.createModificationTimeProvider(
+            "2011-12-03T10:15:30+09:00");
+    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse(
+        "2011-12-03T01:15:30Z", Instant::from);
     Assert.assertEquals(
-        expected, timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
+        expected,
+        timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
   public void testCreateModificationTimeProvider_invalidValue() {
     try {
       BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-          PluginConfigurationProcessor.createModificationTimeProvider("invalid format");
+          PluginConfigurationProcessor.createModificationTimeProvider(
+              "invalid format");
       timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar"));
       Assert.fail();
     } catch (InvalidFilesModificationTimeException ex) {
       Assert.assertEquals("invalid format", ex.getMessage());
-      Assert.assertEquals("invalid format", ex.getInvalidFilesModificationTime());
+      Assert.assertEquals("invalid format",
+                          ex.getInvalidFilesModificationTime());
     }
   }
 
   @Test
   public void testGetCreationTime_epoch() throws InvalidCreationTimeException {
-    Instant time = PluginConfigurationProcessor.getCreationTime("EPOCH", projectProperties);
+    Instant time = PluginConfigurationProcessor.getCreationTime(
+        "EPOCH", projectProperties);
     Assert.assertEquals(Instant.EPOCH, time);
   }
 
   @Test
-  public void testGetCreationTime_useCurrentTimestamp() throws InvalidCreationTimeException {
+  public void testGetCreationTime_useCurrentTimestamp()
+      throws InvalidCreationTimeException {
     Instant now = Instant.now().minusSeconds(2);
-    Instant time =
-        PluginConfigurationProcessor.getCreationTime("USE_CURRENT_TIMESTAMP", projectProperties);
+    Instant time = PluginConfigurationProcessor.getCreationTime(
+        "USE_CURRENT_TIMESTAMP", projectProperties);
     Assert.assertTrue(time.isAfter(now));
   }
 
   @Test
-  public void testGetCreationTime_isoDateTimeValue() throws InvalidCreationTimeException {
-    Instant time =
-        PluginConfigurationProcessor.getCreationTime(
-            "2011-12-03T10:15:30+09:00", projectProperties);
-    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
+  public void testGetCreationTime_isoDateTimeValue()
+      throws InvalidCreationTimeException {
+    Instant time = PluginConfigurationProcessor.getCreationTime(
+        "2011-12-03T10:15:30+09:00", projectProperties);
+    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse(
+        "2011-12-03T01:15:30Z", Instant::from);
     Assert.assertEquals(expected, time);
   }
 
   @Test
   public void testGetCreationTime_invalidValue() {
     try {
-      PluginConfigurationProcessor.getCreationTime("invalid format", projectProperties);
+      PluginConfigurationProcessor.getCreationTime("invalid format",
+                                                   projectProperties);
       Assert.fail();
     } catch (InvalidCreationTimeException ex) {
       Assert.assertEquals("invalid format", ex.getMessage());
@@ -977,23 +1115,28 @@ public class PluginConfigurationProcessorTest {
   }
 
   private ImageConfiguration getCommonImageConfiguration()
-      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+      throws IncompatibleBaseImageJavaVersionException, IOException,
+             InvalidImageReferenceException, CacheDirectoryCreationException {
     return getBuildConfiguration(
-            PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider)
-                .addClasses(temporaryFolder.getRoot().toPath())
-                .toContainerBuilder())
+               PluginConfigurationProcessor
+                   .getJavaContainerBuilderWithBaseImage(rawConfiguration,
+                                                         projectProperties,
+                                                         inferredAuthProvider)
+                   .addClasses(temporaryFolder.getRoot().toPath())
+                   .toContainerBuilder())
         .getBaseImageConfiguration();
   }
 
   private JibContainerBuilder processCommonConfiguration()
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+      throws InvalidImageReferenceException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     return PluginConfigurationProcessor.processCommonConfiguration(
-        rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
+        rawConfiguration,
+        ignored -> Optional.empty(), projectProperties, containerizer);
   }
 }

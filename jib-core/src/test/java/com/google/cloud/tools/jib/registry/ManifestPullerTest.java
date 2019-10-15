@@ -54,65 +54,74 @@ public class ManifestPullerTest {
     return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
   }
 
-  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
-      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties
+      fakeRegistryEndpointRequestProperties =
+          new RegistryEndpointRequestProperties("someServerUrl",
+                                                "someImageName");
   private final ManifestPuller<ManifestTemplate> testManifestPuller =
-      new ManifestPuller<>(
-          fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class);
+      new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                           "test-image-tag", ManifestTemplate.class);
 
   @Mock private Response mockResponse;
 
   @Test
   public void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v21ManifestFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
-    InputStream v21Manifest = new ByteArrayInputStream(Files.readAllBytes(v21ManifestFile));
+    Path v21ManifestFile =
+        Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
+    InputStream v21Manifest =
+        new ByteArrayInputStream(Files.readAllBytes(v21ManifestFile));
 
-    DescriptorDigest expectedDigest = Digests.computeDigest(v21Manifest).getDigest();
+    DescriptorDigest expectedDigest =
+        Digests.computeDigest(v21Manifest).getDigest();
     v21Manifest.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v21Manifest);
     ManifestAndDigest manifestAndDigest =
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
-        manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V21ManifestTemplate.class));
+    Assert.assertThat(manifestAndDigest.getManifest(),
+                      CoreMatchers.instanceOf(V21ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
   public void testHandleResponse_v22()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v22ManifestFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
-    InputStream v22Manifest = new ByteArrayInputStream(Files.readAllBytes(v22ManifestFile));
+    Path v22ManifestFile =
+        Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
+    InputStream v22Manifest =
+        new ByteArrayInputStream(Files.readAllBytes(v22ManifestFile));
 
-    DescriptorDigest expectedDigest = Digests.computeDigest(v22Manifest).getDigest();
+    DescriptorDigest expectedDigest =
+        Digests.computeDigest(v22Manifest).getDigest();
     v22Manifest.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22Manifest);
     ManifestAndDigest manifestAndDigest =
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
-        manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    Assert.assertThat(manifestAndDigest.getManifest(),
+                      CoreMatchers.instanceOf(V22ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
   public void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v22ManifestListFile =
-        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
-    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+    Path v22ManifestListFile = Paths.get(
+        Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList =
+        new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
     try {
-      new ManifestPuller<>(
-              fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
+      new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                           "test-image-tag", V22ManifestTemplate.class)
           .handleResponse(mockResponse);
       Assert.fail();
     } catch (ClassCastException ex) {
@@ -123,70 +132,79 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_v22ManifestListFromParentType()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v22ManifestListFile =
-        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
-    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
-    DescriptorDigest expectedDigest = Digests.computeDigest(v22ManifestList).getDigest();
+    Path v22ManifestListFile = Paths.get(
+        Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList =
+        new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+    DescriptorDigest expectedDigest =
+        Digests.computeDigest(v22ManifestList).getDigest();
     v22ManifestList.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
     ManifestAndDigest manifestAndDigest =
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", ManifestTemplate.class)
             .handleResponse(mockResponse);
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestTemplate).getManifests().size() > 0);
+    Assert.assertThat(manifestTemplate,
+                      CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(
+        ((V22ManifestListTemplate)manifestTemplate).getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
   public void testHandleResponse_v22ManifestList()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v22ManifestListFile =
-        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
-    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+    Path v22ManifestListFile = Paths.get(
+        Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList =
+        new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
 
-    DescriptorDigest expectedDigest = Digests.computeDigest(v22ManifestList).getDigest();
+    DescriptorDigest expectedDigest =
+        Digests.computeDigest(v22ManifestList).getDigest();
     v22ManifestList.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
     ManifestAndDigest<V22ManifestListTemplate> manifestAndDigest =
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties,
-                "test-image-tag",
-                V22ManifestListTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V22ManifestListTemplate.class)
             .handleResponse(mockResponse);
     V22ManifestListTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertThat(manifestTemplate,
+                      CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
   public void testHandleResponse_noSchemaVersion() throws IOException {
-    Mockito.when(mockResponse.getBody()).thenReturn(stringToInputStreamUtf8("{}"));
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(stringToInputStreamUtf8("{}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An empty manifest should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
-      Assert.assertEquals("Cannot find field 'schemaVersion' in manifest", ex.getMessage());
+      Assert.assertEquals("Cannot find field 'schemaVersion' in manifest",
+                          ex.getMessage());
     }
   }
 
   @Test
   public void testHandleResponse_invalidSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody())
-        .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\":\"not valid\"}"));
+        .thenReturn(
+            stringToInputStreamUtf8("{\"schemaVersion\":\"not valid\"}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("A non-integer schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
-      Assert.assertEquals("`schemaVersion` field is not an integer", ex.getMessage());
+      Assert.assertEquals("`schemaVersion` field is not an integer",
+                          ex.getMessage());
     }
   }
 
@@ -199,7 +217,9 @@ public class ManifestPullerTest {
       Assert.fail("An unknown manifest schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
-      Assert.assertEquals("Unknown schemaVersion: 0 - only 1 and 2 are supported", ex.getMessage());
+      Assert.assertEquals(
+          "Unknown schemaVersion: 0 - only 1 and 2 are supported",
+          ex.getMessage());
     }
   }
 
@@ -229,34 +249,30 @@ public class ManifestPullerTest {
 
   @Test
   public void testGetAccept() {
-    Assert.assertEquals(
-        Arrays.asList(
-            OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
-            V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-            V21ManifestTemplate.MEDIA_TYPE),
-        testManifestPuller.getAccept());
+    Assert.assertEquals(Arrays.asList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+                                      V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
+                                      V21ManifestTemplate.MEDIA_TYPE),
+                        testManifestPuller.getAccept());
 
     Assert.assertEquals(
         Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE),
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", OCIManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", OCIManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
         Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE),
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V22ManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
         Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE),
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V21ManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
         Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE),
-        new ManifestPuller<>(
-                fakeRegistryEndpointRequestProperties,
-                "test-image-tag",
-                V22ManifestListTemplate.class)
+        new ManifestPuller<>(fakeRegistryEndpointRequestProperties,
+                             "test-image-tag", V22ManifestListTemplate.class)
             .getAccept());
   }
 }

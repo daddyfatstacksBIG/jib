@@ -37,7 +37,8 @@ public class ManifestPullerIntegrationTest {
   public static final String KNOWN_MANIFEST_LIST_SHA =
       "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule
+  public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
@@ -51,7 +52,8 @@ public class ManifestPullerIntegrationTest {
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
+        registryClient.pullManifest("latest", V21ManifestTemplate.class)
+            .getManifest();
 
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
     Assert.assertTrue(manifestTemplate.getFsLayers().size() > 0);
@@ -60,36 +62,49 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v22() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java")
+            .newRegistryClient();
+    ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest").getManifest();
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
+    V22ManifestTemplate v22ManifestTemplate =
+        (V22ManifestTemplate)manifestTemplate;
     Assert.assertTrue(v22ManifestTemplate.getLayers().size() > 0);
   }
 
   @Test
   public void testPull_v22ManifestList() throws IOException, RegistryException {
-    RegistryClient.Factory factory =
-        RegistryClient.factory(EventHandlers.NONE, "registry-1.docker.io", "library/openjdk");
-    Authorization authorization =
-        factory.newRegistryClient().getRegistryAuthenticator().get().authenticatePull(null);
-    RegistryClient registryClient = factory.setAuthorization(authorization).newRegistryClient();
+    RegistryClient.Factory factory = RegistryClient.factory(
+        EventHandlers.NONE, "registry-1.docker.io", "library/openjdk");
+    Authorization authorization = factory.newRegistryClient()
+                                      .getRegistryAuthenticator()
+                                      .get()
+                                      .authenticatePull(null);
+    RegistryClient registryClient =
+        factory.setAuthorization(authorization).newRegistryClient();
 
     // Ensure 11-jre-slim is a manifest list
     V22ManifestListTemplate manifestListTemplate =
-        registryClient.pullManifest("11-jre-slim", V22ManifestListTemplate.class).getManifest();
+        registryClient
+            .pullManifest("11-jre-slim", V22ManifestListTemplate.class)
+            .getManifest();
     Assert.assertEquals(2, manifestListTemplate.getSchemaVersion());
     Assert.assertTrue(manifestListTemplate.getManifests().size() > 0);
 
-    // Generic call to 11-jre-slim should NOT pull a manifest list (delegate to registry default)
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("11-jre-slim").getManifest();
+    // Generic call to 11-jre-slim should NOT pull a manifest list (delegate to
+    // registry default)
+    ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("11-jre-slim").getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    Assert.assertThat(manifestTemplate,
+                      CoreMatchers.instanceOf(V22ManifestTemplate.class));
 
-    // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate in ManifestPuller
+    // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate
+    // in ManifestPuller
     try {
-      registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA, V22ManifestTemplate.class);
+      registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA,
+                                  V22ManifestTemplate.class);
       Assert.fail();
     } catch (ClassCastException ex) {
       // pass
@@ -99,15 +114,19 @@ public class ManifestPullerIntegrationTest {
     ManifestTemplate sha256ManifestList =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
     Assert.assertEquals(2, sha256ManifestList.getSchemaVersion());
-    Assert.assertThat(sha256ManifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) sha256ManifestList).getManifests().size() > 0);
+    Assert.assertThat(sha256ManifestList,
+                      CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(
+        ((V22ManifestListTemplate)sha256ManifestList).getManifests().size() >
+        0);
   }
 
   @Test
   public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
+          RegistryClient
+              .factory(EventHandlers.NONE, "localhost:5000", "busybox")
               .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");

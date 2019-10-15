@@ -61,18 +61,16 @@ public class ImageTarballTest {
   @Test
   public void testWriteTo()
       throws InvalidImageReferenceException, IOException, URISyntaxException,
-          LayerPropertyNotFoundException, DigestException {
+             LayerPropertyNotFoundException, DigestException {
     Path fileA = Paths.get(Resources.getResource("core/fileA").toURI());
     Path fileB = Paths.get(Resources.getResource("core/fileB").toURI());
     long fileASize = Files.size(fileA);
     long fileBSize = Files.size(fileB);
 
-    DescriptorDigest fakeDigestA =
-        DescriptorDigest.fromHash(
-            "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5");
-    DescriptorDigest fakeDigestB =
-        DescriptorDigest.fromHash(
-            "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc6");
+    DescriptorDigest fakeDigestA = DescriptorDigest.fromHash(
+        "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5");
+    DescriptorDigest fakeDigestB = DescriptorDigest.fromHash(
+        "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc6");
 
     Mockito.when(mockLayer1.getBlob()).thenReturn(Blobs.from(fileA));
     Mockito.when(mockLayer1.getBlobDescriptor())
@@ -82,54 +80,61 @@ public class ImageTarballTest {
     Mockito.when(mockLayer2.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
-    Image testImage =
-        Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
+    Image testImage = Image.builder(V22ManifestTemplate.class)
+                          .addLayer(mockLayer1)
+                          .addLayer(mockLayer2)
+                          .build();
     ImageTarball imageToTarball =
-        new ImageTarball(
-            testImage,
-            ImageReference.parse("my/image:tag"),
-            ImmutableSet.of("tag", "another-tag", "tag3"));
+        new ImageTarball(testImage, ImageReference.parse("my/image:tag"),
+                         ImmutableSet.of("tag", "another-tag", "tag3"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     imageToTarball.writeTo(out);
     ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-    try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
+    try (TarArchiveInputStream tarArchiveInputStream =
+             new TarArchiveInputStream(in)) {
 
       // Verifies layer with fileA was added.
-      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals(fakeDigestA.getHash() + ".tar.gz", headerFileALayer.getName());
-      String fileAString =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+      TarArchiveEntry headerFileALayer =
+          tarArchiveInputStream.getNextTarEntry();
+      Assert.assertEquals(fakeDigestA.getHash() + ".tar.gz",
+                          headerFileALayer.getName());
+      String fileAString = CharStreams.toString(
+          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileA)), fileAString);
 
       // Verifies layer with fileB was added.
-      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals(fakeDigestB.getHash() + ".tar.gz", headerFileBLayer.getName());
-      String fileBString =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+      TarArchiveEntry headerFileBLayer =
+          tarArchiveInputStream.getNextTarEntry();
+      Assert.assertEquals(fakeDigestB.getHash() + ".tar.gz",
+                          headerFileBLayer.getName());
+      String fileBString = CharStreams.toString(
+          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileB)), fileBString);
 
       // Verifies container configuration was added.
-      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals("config.json", headerContainerConfiguration.getName());
-      String containerConfigJson =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readJson(containerConfigJson, ContainerConfigurationTemplate.class);
+      TarArchiveEntry headerContainerConfiguration =
+          tarArchiveInputStream.getNextTarEntry();
+      Assert.assertEquals("config.json",
+                          headerContainerConfiguration.getName());
+      String containerConfigJson = CharStreams.toString(
+          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+      JsonTemplateMapper.readJson(containerConfigJson,
+                                  ContainerConfigurationTemplate.class);
 
       // Verifies manifest was added.
       TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
       Assert.assertEquals("manifest.json", headerManifest.getName());
-      String manifestJson =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+      String manifestJson = CharStreams.toString(
+          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
       DockerManifestEntryTemplate manifest =
-          JsonTemplateMapper.readListOfJson(manifestJson, DockerManifestEntryTemplate.class).get(0);
-      Assert.assertEquals(
-          ImmutableList.of("my/image:tag", "my/image:another-tag", "my/image:tag3"),
-          manifest.getRepoTags());
+          JsonTemplateMapper
+              .readListOfJson(manifestJson, DockerManifestEntryTemplate.class)
+              .get(0);
+      Assert.assertEquals(ImmutableList.of("my/image:tag",
+                                           "my/image:another-tag",
+                                           "my/image:tag3"),
+                          manifest.getRepoTags());
     }
   }
 }

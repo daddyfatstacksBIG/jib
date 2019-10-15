@@ -35,16 +35,12 @@ public class ManifestAndDigest<T extends ManifestTemplate> {
    *
    * @return the manifest
    */
-  public T getManifest() {
-    return manifest;
-  }
+  public T getManifest() { return manifest; }
 
   /**
    * Gets the digest.
    *
    * @return the digest
    */
-  public DescriptorDigest getDigest() {
-    return digest;
-  }
+  public DescriptorDigest getDigest() { return digest; }
 }

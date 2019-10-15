@@ -57,10 +57,14 @@ public class LocalBaseImageStepsTest {
   public void setup() throws IOException {
     Mockito.when(buildConfiguration.getBaseImageLayersCache())
         .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
-    Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(eventHandlers);
-    Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+    Mockito.when(buildConfiguration.getEventHandlers())
+        .thenReturn(eventHandlers);
+    Mockito
+        .when(progressEventDispatcherFactory.create(Mockito.anyString(),
+                                                    Mockito.anyLong()))
         .thenReturn(progressEventDispatcher);
-    Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
+    Mockito.when(progressEventDispatcher.newChildProducer())
+        .thenReturn(childFactory);
     Mockito.when(childFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(childDispatcher);
   }
@@ -68,14 +72,12 @@ public class LocalBaseImageStepsTest {
   @Test
   public void testCacheDockerImageTar_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
-    LocalImage result =
-        LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration,
-            MoreExecutors.newDirectExecutorService(),
-            dockerBuild,
-            progressEventDispatcherFactory);
+    LocalImage result = LocalBaseImageSteps.cacheDockerImageTar(
+        buildConfiguration, MoreExecutors.newDirectExecutorService(),
+        dockerBuild, progressEventDispatcherFactory);
 
-    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
+    Mockito.verify(progressEventDispatcher, Mockito.times(2))
+        .newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
@@ -95,14 +97,12 @@ public class LocalBaseImageStepsTest {
   @Test
   public void testCacheDockerImageTar_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
-    LocalImage result =
-        LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration,
-            MoreExecutors.newDirectExecutorService(),
-            tarBuild,
-            progressEventDispatcherFactory);
+    LocalImage result = LocalBaseImageSteps.cacheDockerImageTar(
+        buildConfiguration, MoreExecutors.newDirectExecutorService(), tarBuild,
+        progressEventDispatcherFactory);
 
-    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
+    Mockito.verify(progressEventDispatcher, Mockito.times(2))
+        .newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
@@ -121,9 +121,9 @@ public class LocalBaseImageStepsTest {
 
   @Test
   public void testIsGzipped() throws URISyntaxException, IOException {
-    Assert.assertTrue(
-        LocalBaseImageSteps.isGzipped(getResource("core/extraction/compressed.tar.gz")));
-    Assert.assertFalse(
-        LocalBaseImageSteps.isGzipped(getResource("core/extraction/not-compressed.tar")));
+    Assert.assertTrue(LocalBaseImageSteps.isGzipped(
+        getResource("core/extraction/compressed.tar.gz")));
+    Assert.assertFalse(LocalBaseImageSteps.isGzipped(
+        getResource("core/extraction/not-compressed.tar")));
   }
 }
