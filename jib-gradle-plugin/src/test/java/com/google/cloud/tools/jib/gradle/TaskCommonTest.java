@@ -39,7 +39,9 @@ import org.springframework.boot.gradle.tasks.bundling.BootWar;
 @RunWith(MockitoJUnitRunner.class)
 public class TaskCommonTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
 
   @Mock private JibExtension jibExtension;
   @Mock private ContainerParameters containerParameters;
@@ -74,8 +76,8 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
+            + "are deprecated; use 'jib.extraDirectories.paths' and "
+            + "'jib.extraDirectories.permissions'");
   }
 
   @Test
@@ -85,12 +87,13 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
+            + "are deprecated; use 'jib.extraDirectories.paths' and "
+            + "'jib.extraDirectories.permissions'");
   }
 
   @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesPropertiesSet() {
+  public void
+  testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesPropertiesSet() {
     System.setProperty("jib.extraDirectory.path", "something");
     System.setProperty("jib.extraDirectories.permissions", "something");
 
@@ -111,12 +114,13 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
+            + "are deprecated; use 'jib.extraDirectories.paths' and "
+            + "'jib.extraDirectories.permissions'");
   }
 
   @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesConfigured() {
+  public void
+  testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesConfigured() {
     jibExtension.extraDirectoryConfigured = true;
     jibExtension.extraDirectoriesConfigured = true;
     try {
@@ -134,16 +138,17 @@ public class TaskCommonTest {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger)
-        .warn(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-                + "with the value 'USE_CURRENT_TIMESTAMP' instead");
+    Mockito.verify(logger).warn(
+        "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+        + "with the value 'USE_CURRENT_TIMESTAMP' instead");
   }
 
   @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
+  public void
+  testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
+    Mockito.when(containerParameters.getCreationTime())
+        .thenReturn("USE_CURRENT_TIMESTAMP");
     try {
       TaskCommon.checkDeprecatedUsage(jibExtension, logger);
       Assert.fail();

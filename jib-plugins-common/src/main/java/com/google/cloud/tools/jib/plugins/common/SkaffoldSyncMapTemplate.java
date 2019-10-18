@@ -14,8 +14,8 @@ import java.util.List;
 
 /**
  * Builds a JSON string containing files and directories that <a
- * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> can use for synchronizing
- * files against a remote container.
+ * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> can use
+ * for synchronizing files against a remote container.
  *
  * <p>Example:
  *
@@ -47,17 +47,18 @@ import java.util.List;
 public class SkaffoldSyncMapTemplate implements JsonTemplate {
 
   /**
-   * A single entry in the skaffold sync map, may be eventually extended to support permissions and
-   * ownership.
+   * A single entry in the skaffold sync map, may be eventually extended to
+   * support permissions and ownership.
    */
   public static class FileTemplate implements JsonTemplate {
     private final String src;
     private final String dest;
 
     @JsonCreator
-    public FileTemplate(
-        @JsonProperty(value = "src", required = true) String src,
-        @JsonProperty(value = "dest", required = true) String dest) {
+    public FileTemplate(@JsonProperty(value = "src",
+                                      required = true) String src,
+                        @JsonProperty(value = "dest",
+                                      required = true) String dest) {
       this.src = src;
       this.dest = dest;
     }
@@ -68,21 +69,20 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
 
   @VisibleForTesting
   static SkaffoldSyncMapTemplate from(String jsonString) throws IOException {
-    return new ObjectMapper().readValue(jsonString, SkaffoldSyncMapTemplate.class);
+    return new ObjectMapper().readValue(jsonString,
+                                        SkaffoldSyncMapTemplate.class);
   }
 
   public void addGenerated(LayerEntry layerEntry) {
     generated.add(
-        new FileTemplate(
-            layerEntry.getSourceFile().toAbsolutePath().toString(),
-            layerEntry.getExtractionPath().toString()));
+        new FileTemplate(layerEntry.getSourceFile().toAbsolutePath().toString(),
+                         layerEntry.getExtractionPath().toString()));
   }
 
   public void addDirect(LayerEntry layerEntry) {
     direct.add(
-        new FileTemplate(
-            layerEntry.getSourceFile().toAbsolutePath().toString(),
-            layerEntry.getExtractionPath().toString()));
+        new FileTemplate(layerEntry.getSourceFile().toAbsolutePath().toString(),
+                         layerEntry.getExtractionPath().toString()));
   }
 
   public String getJsonString() throws IOException {

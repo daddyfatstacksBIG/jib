@@ -37,40 +37,45 @@ import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
-  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.9");
+  @VisibleForTesting
+  static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.9");
 
   @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
   @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
-  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
+  @VisibleForTesting
+  static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
-  @VisibleForTesting static final String FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
+  @VisibleForTesting
+  static final String FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   @VisibleForTesting static final String INIT_TASK_NAME = "_jibSkaffoldInit";
 
-  @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
+  @VisibleForTesting
+  static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
 
-  static final String CHECK_REQUIRED_VERSION_TASK_NAME = "_skaffoldFailIfJibOutOfDate";
+  static final String CHECK_REQUIRED_VERSION_TASK_NAME =
+      "_skaffoldFailIfJibOutOfDate";
 
   static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   /**
-   * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
-   * configuration [compile, runtime, etc]. It potentially will collect common test libraries in
-   * configs like [test, integrationTest, etc], but it's either that or filter based on a
-   * configuration containing the word "test" which feels dangerous.
+   * Collects all project dependencies of the style "compile project(':mylib')"
+   * for any kind of configuration [compile, runtime, etc]. It potentially will
+   * collect common test libraries in configs like [test, integrationTest, etc],
+   * but it's either that or filter based on a configuration containing the word
+   * "test" which feels dangerous.
    *
    * @param project this project we are containerizing
    * @return a list of projects that this project depends on.
    */
   @VisibleForTesting
   static List<Project> getProjectDependencies(Project project) {
-    return project
-        .getConfigurations()
+    return project.getConfigurations()
         .stream()
         .map(Configuration::getDependencies)
         .flatMap(DependencySet::stream)
-        .filter(ProjectDependency.class::isInstance)
-        .map(ProjectDependency.class::cast)
+        .filter(ProjectDependency.class ::isInstance)
+        .map(ProjectDependency.class ::cast)
         .map(ProjectDependency::getDependencyProject)
         .collect(Collectors.toList());
   }
@@ -78,13 +83,10 @@ public class JibPlugin implements Plugin<Project> {
   private static void checkGradleVersion() {
     if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
       throw new GradleException(
-          "Detected "
-              + GradleVersion.current()
-              + ", but jib requires "
-              + GRADLE_MIN_VERSION
-              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
-              + GRADLE_MIN_VERSION.getVersion()
-              + "'.");
+          "Detected " + GradleVersion.current() + ", but jib requires " +
+          GRADLE_MIN_VERSION +
+          " or higher. You can upgrade by running 'gradle wrapper --gradle-version=" +
+          GRADLE_MIN_VERSION.getVersion() + "'.");
     }
   }
 
@@ -99,11 +101,12 @@ public class JibPlugin implements Plugin<Project> {
     if (actualVersion == null) {
       throw new GradleException("Could not determine Jib plugin version");
     }
-    VersionChecker<GradleVersion> checker = new VersionChecker<>(GradleVersion::version);
+    VersionChecker<GradleVersion> checker =
+        new VersionChecker<>(GradleVersion::version);
     if (!checker.compatibleVersion(requiredVersion, actualVersion)) {
       String failure =
-          String.format(
-              "Jib plugin version is %s but is required to be %s", actualVersion, requiredVersion);
+          String.format("Jib plugin version is %s but is required to be %s",
+                        actualVersion, requiredVersion);
       throw new GradleException(failure);
     }
   }
@@ -113,106 +116,91 @@ public class JibPlugin implements Plugin<Project> {
     checkGradleVersion();
     checkJibVersion(project);
 
-    JibExtension jibExtension =
-        project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
+    JibExtension jibExtension = project.getExtensions().create(
+        JIB_EXTENSION_NAME, JibExtension.class, project);
 
     TaskContainer tasks = project.getTasks();
     TaskProvider<BuildImageTask> buildImageTask =
-        tasks.register(
-            BUILD_IMAGE_TASK_NAME,
-            BuildImageTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a registry.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_IMAGE_TASK_NAME, BuildImageTask.class, task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a registry.");
+          task.setJibExtension(jibExtension);
+        });
 
     TaskProvider<BuildDockerTask> buildDockerTask =
-        tasks.register(
-            BUILD_DOCKER_TASK_NAME,
-            BuildDockerTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a Docker daemon.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class, task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a Docker daemon.");
+          task.setJibExtension(jibExtension);
+        });
 
     TaskProvider<BuildTarTask> buildTarTask =
-        tasks.register(
-            BUILD_TAR_TASK_NAME,
-            BuildTarTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a tarball.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_TAR_TASK_NAME, BuildTarTask.class, task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a tarball.");
+          task.setJibExtension(jibExtension);
+        });
 
-    tasks
-        .register(FILES_TASK_NAME, FilesTask.class)
+    tasks.register(FILES_TASK_NAME, FilesTask.class)
         .configure(task -> task.setJibExtension(jibExtension));
-    tasks
-        .register(FILES_TASK_V2_NAME, FilesTaskV2.class)
+    tasks.register(FILES_TASK_V2_NAME, FilesTaskV2.class)
         .configure(task -> task.setJibExtension(jibExtension));
-    tasks
-        .register(INIT_TASK_NAME, SkaffoldInitTask.class)
+    tasks.register(INIT_TASK_NAME, SkaffoldInitTask.class)
         .configure(task -> task.setJibExtension(jibExtension));
 
-    // A check to catch older versions of Jib.  This can be removed once we are certain people
-    // are using Jib 1.3.1 or later.
+    // A check to catch older versions of Jib.  This can be removed once we are
+    // certain people are using Jib 1.3.1 or later.
     tasks.register(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
-    project.afterEvaluate(
-        projectAfterEvaluation -> {
-          try {
-            TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-            TaskProvider<?> dependsOnTask;
-            if (warTask != null) {
-              TaskProvider<ExplodedWarTask> explodedWarTask =
-                  tasks.register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
-              explodedWarTask.configure(
-                  task -> {
-                    task.dependsOn(warTask);
-                    task.setWarFile(((War) warTask.get()).getArchivePath().toPath());
-                    task.setExplodedWarDirectory(
-                        GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
-                  });
-              // Have all tasks depend on the 'jibExplodedWar' task.
-              dependsOnTask = explodedWarTask;
-            } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
-              // Have all tasks depend on the 'jar' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
-            } else {
-              // Have all tasks depend on the 'classes' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("classes");
-            }
-            buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
-            buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
-            buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
+    project.afterEvaluate(projectAfterEvaluation -> {
+      try {
+        TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
+        TaskProvider<?> dependsOnTask;
+        if (warTask != null) {
+          TaskProvider<ExplodedWarTask> explodedWarTask =
+              tasks.register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
+          explodedWarTask.configure(task -> {
+            task.dependsOn(warTask);
+            task.setWarFile(((War)warTask.get()).getArchivePath().toPath());
+            task.setExplodedWarDirectory(
+                GradleProjectProperties.getExplodedWarDirectory(
+                    projectAfterEvaluation));
+          });
+          // Have all tasks depend on the 'jibExplodedWar' task.
+          dependsOnTask = explodedWarTask;
+        } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
+          // Have all tasks depend on the 'jar' task.
+          dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
+        } else {
+          // Have all tasks depend on the 'classes' task.
+          dependsOnTask = projectAfterEvaluation.getTasks().named("classes");
+        }
+        buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
+        buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
+        buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
 
-            // Find project dependencies and add a dependency to their assemble task. We make sure
-            // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
-            // task may not be available yet.
-            List<Project> computedDependencies = getProjectDependencies(projectAfterEvaluation);
-            for (Project dependencyProject : computedDependencies) {
-              dependencyProject
-                  .getPlugins()
-                  .withType(
-                      BasePlugin.class,
-                      unused -> {
-                        TaskProvider<Task> assembleTask =
-                            dependencyProject.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME);
-                        buildImageTask.configure(task -> task.dependsOn(assembleTask));
-                        buildDockerTask.configure(task -> task.dependsOn(assembleTask));
-                        buildTarTask.configure(task -> task.dependsOn(assembleTask));
-                      });
-            }
-          } catch (UnknownTaskException ex) {
-            throw new GradleException(
-                "Could not find task 'classes' on project "
-                    + projectAfterEvaluation.getDisplayName()
-                    + " - perhaps you did not apply the 'java' plugin?",
-                ex);
-          }
-        });
+        // Find project dependencies and add a dependency to their assemble
+        // task. We make sure to only add the dependency after BasePlugin is
+        // evaluated as otherwise the assemble task may not be available yet.
+        List<Project> computedDependencies =
+            getProjectDependencies(projectAfterEvaluation);
+        for (Project dependencyProject : computedDependencies) {
+          dependencyProject.getPlugins().withType(BasePlugin.class, unused -> {
+            TaskProvider<Task> assembleTask =
+                dependencyProject.getTasks().named(
+                    BasePlugin.ASSEMBLE_TASK_NAME);
+            buildImageTask.configure(task -> task.dependsOn(assembleTask));
+            buildDockerTask.configure(task -> task.dependsOn(assembleTask));
+            buildTarTask.configure(task -> task.dependsOn(assembleTask));
+          });
+        }
+      } catch (UnknownTaskException ex) {
+        throw new GradleException(
+            "Could not find task 'classes' on project " +
+                projectAfterEvaluation.getDisplayName() +
+                " - perhaps you did not apply the 'java' plugin?",
+            ex);
+      }
+    });
   }
 }
