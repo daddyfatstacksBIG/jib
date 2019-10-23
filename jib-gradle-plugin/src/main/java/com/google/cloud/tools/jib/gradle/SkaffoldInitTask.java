@@ -25,7 +25,8 @@ import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
 
 /**
- * Prints out to.image configuration and project name, used for Jib project detection in Skaffold.
+ * Prints out to.image configuration and project name, used for Jib project
+ * detection in Skaffold.
  *
  * <p>Expected use: {@code ./gradlew _jibSkaffoldInit -q}
  */
@@ -46,7 +47,8 @@ public class SkaffoldInitTask extends DefaultTask {
       return;
     }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
-    skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
+    skaffoldInitOutput.setImage(
+        Preconditions.checkNotNull(jibExtension).getTo().getImage());
     if (!project.equals(project.getRootProject())) {
       skaffoldInitOutput.setProject(project.getName());
     }
