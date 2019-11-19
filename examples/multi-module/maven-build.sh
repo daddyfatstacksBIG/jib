@@ -2,7 +2,7 @@
 
 set -ex
 
-export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
+export PROJECT_ID="$(gcloud config list --format 'value(core.project)')"
 # if there are no intermodule dependencies, compile is enough to complete a jib build.
 ./mvnw compile jib:build -pl hello-service
 
