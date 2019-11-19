@@ -33,26 +33,23 @@ import javax.annotation.Nullable;
 
 class PushLayerStep implements Callable<BlobDescriptor> {
 
-  static ImmutableList<PushLayerStep> makeList(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Authorization pushAuthorization,
-      List<Future<PreparedLayer>> cachedLayers) {
-    try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildContext.getEventHandlers(), "Preparing layer pushers");
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching layer pushers", cachedLayers.size())) {
+  static ImmutableList<PushLayerStep>
+  makeList(BuildContext buildContext,
+           ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+           @Nullable Authorization pushAuthorization,
+           List<Future<PreparedLayer>> cachedLayers) {
+    try (TimerEventDispatcher ignored = new TimerEventDispatcher(
+             buildContext.getEventHandlers(), "Preparing layer pushers");
+         ProgressEventDispatcher progressEventDispatcher =
+             progressEventDispatcherFactory.create("launching layer pushers",
+                                                   cachedLayers.size())) {
 
       // Constructs a PushBlobStep for each layer.
-      return cachedLayers
-          .stream()
-          .map(
-              layer ->
-                  new PushLayerStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      pushAuthorization,
-                      layer))
+      return cachedLayers.stream()
+          .map(layer
+               -> new PushLayerStep(buildContext,
+                                    progressEventDispatcher.newChildProducer(),
+                                    pushAuthorization, layer))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -75,22 +72,19 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   }
 
   @Override
-  public BlobDescriptor call()
-      throws IOException, RegistryException, ExecutionException, InterruptedException {
+  public BlobDescriptor call() throws IOException, RegistryException,
+                                      ExecutionException, InterruptedException {
     PreparedLayer layer = preparedLayer.get();
 
     if (layer.getStateInTarget() == StateInTarget.EXISTING) {
-      return layer.getBlobDescriptor(); // skip pushing if known to exist in registry
+      return layer
+          .getBlobDescriptor(); // skip pushing if known to exist in registry
     }
 
     boolean forcePush = layer.getStateInTarget() == StateInTarget.MISSING;
-    return new PushBlobStep(
-            buildContext,
-            progressEventDispatcherFactory,
-            pushAuthorization,
-            layer.getBlobDescriptor(),
-            layer.getBlob(),
-            forcePush)
+    return new PushBlobStep(buildContext, progressEventDispatcherFactory,
+                            pushAuthorization, layer.getBlobDescriptor(),
+                            layer.getBlob(), forcePush)
         .call();
   }
 }

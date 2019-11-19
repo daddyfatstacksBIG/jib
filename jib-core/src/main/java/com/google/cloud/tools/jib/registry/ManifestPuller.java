@@ -45,14 +45,14 @@ import javax.annotation.Nullable;
 class ManifestPuller<T extends ManifestTemplate>
     implements RegistryEndpointProvider<ManifestAndDigest<T>> {
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final String imageTag;
   private final Class<T> manifestTemplateClass;
 
   ManifestPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String imageTag,
-      Class<T> manifestTemplateClass) {
+      String imageTag, Class<T> manifestTemplateClass) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.imageTag = imageTag;
     this.manifestTemplateClass = manifestTemplateClass;
@@ -76,16 +76,17 @@ class ManifestPuller<T extends ManifestTemplate>
       return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
     if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
-      return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
+      return Collections.singletonList(
+          V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
     }
 
-    // V22ManifestListTemplate is not included by default, we don't explicitly accept
-    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
-    // case registries ignore the "accept" directive and just return a manifest list anyway.
-    return Arrays.asList(
-        OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
-        V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-        V21ManifestTemplate.MEDIA_TYPE);
+    // V22ManifestListTemplate is not included by default, we don't explicitly
+    // accept it, we only handle it if referenced by sha256 (see
+    // getManifestTemplateFromJson) in which case registries ignore the "accept"
+    // directive and just return a manifest list anyway.
+    return Arrays.asList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+                         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
+                         V21ManifestTemplate.MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestAndDigest}. */
@@ -94,16 +95,19 @@ class ManifestPuller<T extends ManifestTemplate>
       throws IOException, UnknownManifestFormatException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     DescriptorDigest digest =
-        Digests.computeDigest(response.getBody(), byteArrayOutputStream).getDigest();
-    String jsonString = byteArrayOutputStream.toString(StandardCharsets.UTF_8.name());
+        Digests.computeDigest(response.getBody(), byteArrayOutputStream)
+            .getDigest();
+    String jsonString =
+        byteArrayOutputStream.toString(StandardCharsets.UTF_8.name());
     T manifestTemplate = getManifestTemplateFromJson(jsonString);
     return new ManifestAndDigest<>(manifestTemplate, digest);
   }
 
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(
-        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/manifests/" + imageTag);
+    return new URL(apiRouteBase +
+                   registryEndpointRequestProperties.getImageName() +
+                   "/manifests/" + imageTag);
   }
 
   @Override
@@ -113,28 +117,29 @@ class ManifestPuller<T extends ManifestTemplate>
 
   @Override
   public String getActionDescription() {
-    return "pull image manifest for "
-        + registryEndpointRequestProperties.getServerUrl()
-        + "/"
-        + registryEndpointRequestProperties.getImageName()
-        + ":"
-        + imageTag;
+    return "pull image manifest for " +
+        registryEndpointRequestProperties.getServerUrl() + "/" +
+        registryEndpointRequestProperties.getImageName() + ":" + imageTag;
   }
 
   /**
-   * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
-   * schemaVersion} field of the JSON to determine which manifest version to use.
+   * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the
+   * {@code schemaVersion} field of the JSON to determine which manifest version
+   * to use.
    */
   private T getManifestTemplateFromJson(String jsonString)
       throws IOException, UnknownManifestFormatException {
-    ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
+    ObjectNode node =
+        new ObjectMapper().readValue(jsonString, ObjectNode.class);
     if (!node.has("schemaVersion")) {
-      throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
+      throw new UnknownManifestFormatException(
+          "Cannot find field 'schemaVersion' in manifest");
     }
 
     int schemaVersion = node.get("schemaVersion").asInt(-1);
     if (schemaVersion == -1) {
-      throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
+      throw new UnknownManifestFormatException(
+          "`schemaVersion` field is not an integer");
     }
 
     if (schemaVersion == 1) {
@@ -153,17 +158,20 @@ class ManifestPuller<T extends ManifestTemplate>
             JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
       }
       if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V22ManifestListTemplate.class));
+        return manifestTemplateClass.cast(JsonTemplateMapper.readJson(
+            jsonString, V22ManifestListTemplate.class));
       }
-      throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
+      throw new UnknownManifestFormatException("Unknown mediaType: " +
+                                               mediaType);
     }
     throw new UnknownManifestFormatException(
-        "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
+        "Unknown schemaVersion: " + schemaVersion +
+        " - only 1 and 2 are supported");
   }
 
   @Override
-  public ManifestAndDigest<T> handleHttpResponseException(ResponseException responseException)
+  public ManifestAndDigest<T>
+  handleHttpResponseException(ResponseException responseException)
       throws ResponseException, RegistryErrorException {
     throw responseException;
   }

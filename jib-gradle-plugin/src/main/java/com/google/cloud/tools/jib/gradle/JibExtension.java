@@ -86,9 +86,11 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
+    extraDirectories =
+        objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
-    outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
+    outputPaths =
+        objectFactory.newInstance(OutputPathsParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -110,7 +112,8 @@ public class JibExtension {
     action.execute(container);
   }
 
-  public void extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
+  public void
+  extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
     action.execute(extraDirectories);
   }
 

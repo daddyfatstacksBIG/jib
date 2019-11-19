@@ -54,45 +54,46 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.graph.DependencyFilter;
 
 /**
- * Print out changing source dependencies on a module. In multimodule applications it should be run
- * by activating a single module and its dependent modules. Dependency collection will ignore
- * project level snapshots (sub-modules) unless the user has explicitly installed them (by only
+ * Print out changing source dependencies on a module. In multimodule
+ * applications it should be run by activating a single module and its dependent
+ * modules. Dependency collection will ignore project level snapshots
+ * (sub-modules) unless the user has explicitly installed them (by only
  * requiring dependencyCollection). For use only within skaffold.
  *
- * <p>Expected use: "./mvnw jib:_skaffold-files-v2 -q" or "./mvnw jib:_skaffold-files-v2 -pl module
- * -am -q"
+ * <p>Expected use: "./mvnw jib:_skaffold-files-v2 -q" or "./mvnw
+ * jib:_skaffold-files-v2 -pl module -am -q"
  */
-@Mojo(
-    name = FilesMojoV2.GOAL_NAME,
-    requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME,
-    aggregator = true)
+@Mojo(name = FilesMojoV2.GOAL_NAME,
+      requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME,
+      aggregator = true)
 public class FilesMojoV2 extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files-v2";
 
-  // extracting source directories based on https://kotlinlang.org/docs/reference/using-maven.html
+  // extracting source directories based on
+  // https://kotlinlang.org/docs/reference/using-maven.html
   @VisibleForTesting
   static Set<Path> getKotlinSourceDirectories(MavenProject project) {
-    Plugin kotlinPlugin = project.getPlugin("org.jetbrains.kotlin:kotlin-maven-plugin");
+    Plugin kotlinPlugin =
+        project.getPlugin("org.jetbrains.kotlin:kotlin-maven-plugin");
     if (kotlinPlugin == null) {
       return Collections.emptySet();
     }
 
     Path projectBaseDir = project.getBasedir().toPath();
 
-    // Extract <sourceDir> values from <configuration> in the plugin <executions>. Sample:
-    // <executions><execution><configuration>
+    // Extract <sourceDir> values from <configuration> in the plugin
+    // <executions>. Sample: <executions><execution><configuration>
     //   <sourceDirs>
     //     <sourceDir>src/main/kotlin</sourceDir>
     //     <sourceDir>${project.basedir}/src/main/java</sourceDir>
     //   </sourceDirs>
     // </configuration></execution></executions>
     Set<Path> kotlinSourceDirectories =
-        kotlinPlugin
-            .getExecutions()
+        kotlinPlugin.getExecutions()
             .stream()
             .filter(execution -> !execution.getGoals().contains("test-compile"))
-            .map(execution -> (Xpp3Dom) execution.getConfiguration())
+            .map(execution -> (Xpp3Dom)execution.getConfiguration())
             .filter(Objects::nonNull)
             .map(configuration -> configuration.getChild("sourceDirs"))
             .filter(Objects::nonNull)
@@ -101,10 +102,12 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
             .map(Xpp3Dom::getValue)
             .filter(value -> !Strings.isNullOrEmpty(value))
             .map(Paths::get)
-            .map(path -> path.isAbsolute() ? path : projectBaseDir.resolve(path))
+            .map(
+                path -> path.isAbsolute() ? path : projectBaseDir.resolve(path))
             .collect(Collectors.toSet());
 
-    Path conventionalDirectory = projectBaseDir.resolve(Paths.get("src", "main", "kotlin"));
+    Path conventionalDirectory =
+        projectBaseDir.resolve(Paths.get("src", "main", "kotlin"));
     kotlinSourceDirectories.add(conventionalDirectory);
 
     return kotlinSourceDirectories;
@@ -115,13 +118,17 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
   private MavenSession session;
 
   @Nullable
-  @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
+  @Parameter(defaultValue = "${reactorProjects}", required = true,
+             readonly = true)
   private List<MavenProject> projects;
 
   // TODO: This is internal maven, we should find a better way to do this
-  @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
+  @Nullable
+  @Component
+  private ProjectDependenciesResolver projectDependenciesResolver;
 
-  private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
+  private final SkaffoldFilesOutput skaffoldFilesOutput =
+      new SkaffoldFilesOutput();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -139,61 +146,61 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
       }
 
       // Add sources directory (resolved by maven to be an absolute path)
-      skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
+      skaffoldFilesOutput.addInput(
+          Paths.get(project.getBuild().getSourceDirectory()));
 
       for (Path directory : getKotlinSourceDirectories(project)) {
         skaffoldFilesOutput.addInput(directory);
       }
 
       // Add resources directory (resolved by maven to be an absolute path)
-      project
-          .getBuild()
+      project.getBuild()
           .getResources()
           .stream()
           .map(FileSet::getDirectory)
           .map(Paths::get)
           .forEach(skaffoldFilesOutput::addInput);
 
-      // This seems weird, but we will only print out the jib "extraFiles" directory on projects
-      // where the plugin is explicitly configured (even though _skaffold-files-v2 is a
-      // jib-maven-plugin goal and is expected to run on all projects irrespective of their
-      // configuring of the jib plugin).
+      // This seems weird, but we will only print out the jib "extraFiles"
+      // directory on projects where the plugin is explicitly configured (even
+      // though _skaffold-files-v2 is a jib-maven-plugin goal and is expected to
+      // run on all projects irrespective of their configuring of the jib
+      // plugin).
       if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
         // Add extra directory
         resolveExtraDirectories(project).forEach(skaffoldFilesOutput::addInput);
       }
 
       // Grab non-project SNAPSHOT dependencies for this project
-      // TODO: this whole sections relies on internal maven API, it could break. We need to explore
+      // TODO: this whole sections relies on internal maven API, it could break.
+      // We need to explore
       // TODO: better ways to resolve dependencies using the public maven API.
-      Set<String> projectArtifacts =
-          projects
-              .stream()
-              .map(MavenProject::getArtifact)
-              .map(Artifact::toString)
-              .collect(Collectors.toSet());
+      Set<String> projectArtifacts = projects.stream()
+                                         .map(MavenProject::getArtifact)
+                                         .map(Artifact::toString)
+                                         .collect(Collectors.toSet());
 
-      DependencyFilter ignoreProjectDependenciesFilter =
-          (node, parents) -> {
-            if (node == null || node.getDependency() == null) {
-              // if nothing, then ignore
-              return false;
-            }
-            if (projectArtifacts.contains(node.getArtifact().toString())) {
-              // ignore project dependency artifacts
-              return false;
-            }
-            // we only want compile/runtime deps
-            return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(node.getDependency().getScope());
-          };
+      DependencyFilter ignoreProjectDependenciesFilter = (node, parents) -> {
+        if (node == null || node.getDependency() == null) {
+          // if nothing, then ignore
+          return false;
+        }
+        if (projectArtifacts.contains(node.getArtifact().toString())) {
+          // ignore project dependency artifacts
+          return false;
+        }
+        // we only want compile/runtime deps
+        return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(
+            node.getDependency().getScope());
+      };
 
       try {
         DependencyResolutionResult resolutionResult =
             projectDependenciesResolver.resolve(
-                new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
+                new DefaultDependencyResolutionRequest(
+                    project, session.getRepositorySession())
                     .setResolutionFilter(ignoreProjectDependenciesFilter));
-        resolutionResult
-            .getDependencies()
+        resolutionResult.getDependencies()
             .stream()
             .map(org.eclipse.aether.graph.Dependency::getArtifact)
             .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
@@ -219,25 +226,30 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
   private List<Path> resolveExtraDirectories(MavenProject project) {
     return collectExtraDirectories(project)
         .stream()
-        .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
+        .map(path
+             -> path.isAbsolute() ? path
+                                  : project.getBasedir().toPath().resolve(path))
         .collect(Collectors.toList());
   }
 
   private List<Path> collectExtraDirectories(MavenProject project) {
     // Try getting extra directory from project/session properties
-    String property =
-        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+    String property = MavenProjectProperties.getProperty(
+        PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
     if (property != null) {
-      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      List<String> paths =
+          ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
 
     // Try getting extra directory from project pom
-    Plugin jibMavenPlugin = project.getPlugin(MavenProjectProperties.PLUGIN_KEY);
+    Plugin jibMavenPlugin =
+        project.getPlugin(MavenProjectProperties.PLUGIN_KEY);
     if (jibMavenPlugin != null) {
-      Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
+      Xpp3Dom pluginConfiguration = (Xpp3Dom)jibMavenPlugin.getConfiguration();
       if (pluginConfiguration != null) {
-        Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
+        Xpp3Dom extraDirectoriesConfiguration =
+            pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoriesConfiguration != null) {
           Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
           if (child != null) {
@@ -252,7 +264,10 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     }
 
     // Return default if not found
-    Path projectBase = Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
+    Path projectBase = Preconditions.checkNotNull(project)
+                           .getBasedir()
+                           .getAbsoluteFile()
+                           .toPath();
     Path srcMainJib = Paths.get("src", "main", "jib");
     return Collections.singletonList(projectBase.resolve(srcMainJib));
   }

@@ -41,51 +41,59 @@ public class ExtraDirectoriesParameters {
   @Inject
   public ExtraDirectoriesParameters(Project project) {
     this.project = project;
-    paths =
-        Collections.singletonList(
-            project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
+    paths = Collections.singletonList(
+        project.getProjectDir().toPath().resolve("src").resolve("main").resolve(
+            "jib"));
   }
 
   @Input
   public List<String> getPathStrings() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
+    // Gradle warns about @Input annotations on File objects, so we have to
+    // expose a getter for a String to make them go away.
     return getPaths().stream().map(Path::toString).collect(Collectors.toList());
   }
 
   @Internal
   public List<Path> getPaths() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
+    // Gradle warns about @Input annotations on File objects, so we have to
+    // expose a getter for a String to make them go away.
     String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
-      List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
+      List<String> pathStrings =
+          ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
     }
     return paths;
   }
 
   /**
-   * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
-   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code List<String>}).
+   * Sets paths. {@code paths} can be any suitable object describing file paths
+   * convertible by
+   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code
+   * List<String>}).
    *
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-    this.paths =
-        project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
+    this.paths = project.files(paths)
+                     .getFiles()
+                     .stream()
+                     .map(File::toPath)
+                     .collect(Collectors.toList());
   }
 
   /**
-   * Gets the permissions for files in the extra layer on the container. Maps from absolute path on
-   * the container to a 3-digit octal string representation of the file permission bits (e.g. {@code
+   * Gets the permissions for files in the extra layer on the container. Maps
+   * from absolute path on the container to a 3-digit octal string
+   * representation of the file permission bits (e.g. {@code
    * "/path/on/container" -> "755"}).
    *
    * @return the permissions map from path on container to file permissions
    */
   @Input
   public Map<String, String> getPermissions() {
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+    String property =
+        System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }

@@ -28,18 +28,23 @@ import org.junit.Test;
 /** Tests for {@link CheckJibVersionMojo}. */
 public class CheckJibVersionMojoTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject("simple");
 
   @Test
   public void testIdentifiers() {
     // These identifiers will be baked into Skaffold and should not be changed
-    Assert.assertEquals("_skaffold-fail-if-jib-out-of-date", CheckJibVersionMojo.GOAL_NAME);
-    Assert.assertEquals("jib.requiredVersion", MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
+    Assert.assertEquals("_skaffold-fail-if-jib-out-of-date",
+                        CheckJibVersionMojo.GOAL_NAME);
+    Assert.assertEquals("jib.requiredVersion",
+                        MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
   }
 
   @Test
-  public void testFailOnMissingProperty() throws VerificationException, IOException {
-    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+  public void testFailOnMissingProperty()
+      throws VerificationException, IOException {
+    Verifier verifier =
+        new Verifier(simpleTestProject.getProjectRoot().toString());
     try {
       verifier.executeGoal("jib:" + CheckJibVersionMojo.GOAL_NAME);
       Assert.fail("build should have failed");
@@ -50,8 +55,10 @@ public class CheckJibVersionMojoTest {
 
   @Test
   public void testFailOnOutOfDate() throws VerificationException, IOException {
-    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
-    verifier.setSystemProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME, "[,1.0)");
+    Verifier verifier =
+        new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME,
+                               "[,1.0)");
     try {
       verifier.executeGoal("jib:" + CheckJibVersionMojo.GOAL_NAME);
       Assert.fail("build should have failed");
@@ -62,8 +69,10 @@ public class CheckJibVersionMojoTest {
 
   @Test
   public void testSuccess() throws VerificationException, IOException {
-    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
-    verifier.setSystemProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME, "[1.0,)");
+    Verifier verifier =
+        new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME,
+                               "[1.0,)");
     verifier.executeGoal("jib:" + CheckJibVersionMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
   }

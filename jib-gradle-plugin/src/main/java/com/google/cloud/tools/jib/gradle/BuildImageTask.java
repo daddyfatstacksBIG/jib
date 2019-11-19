@@ -49,8 +49,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   @Nullable private JibExtension jibExtension;
 
   /**
-   * This will call the property {@code "jib"} so that it is the same name as the extension. This
-   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   * This will call the property {@code "jib"} so that it is the same name as
+   * the extension. This way, the user would see error messages for missing
+   * configuration with the prefix {@code jib.}.
    *
    * @return the {@link JibExtension}.
    */
@@ -61,19 +62,22 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * The target image can be overridden with the {@code --image} command line option.
+   * The target image can be overridden with the {@code --image} command line
+   * option.
    *
    * @param targetImage the name of the 'to' image.
    */
-  @Option(option = "image", description = "The image reference for the target image")
-  public void setTargetImage(String targetImage) {
+  @Option(option = "image",
+          description = "The image reference for the target image")
+  public void
+  setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
   @TaskAction
   public void buildImage()
-      throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
-          MainClassInferenceException {
+      throws IOException, BuildStepsExecutionException,
+             CacheDirectoryCreationException, MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
@@ -81,66 +85,74 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
     GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+        GradleProjectProperties.getForProject(getProject(), getLogger(),
+                                              tempDirectoryProvider);
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
-        throw new GradleException(
-            HelpfulSuggestions.forToNotConfigured(
-                "Missing target image parameter",
-                "'jib.to.image'",
-                "build.gradle",
-                "gradle jib --image <your image name>"));
+        throw new GradleException(HelpfulSuggestions.forToNotConfigured(
+            "Missing target image parameter", "'jib.to.image'", "build.gradle",
+            "gradle jib --image <your image name>"));
       }
 
-      PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
+      PluginConfigurationProcessor
+          .createJibBuildRunnerForRegistryImage(
               new GradleRawConfiguration(jibExtension),
-              ignored -> Optional.empty(),
+              ignored
+              -> Optional.empty(),
               projectProperties,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
+          "container.appRoot is not an absolute Unix-style path: " +
+              ex.getInvalidPathValue(),
+          ex);
 
     } catch (InvalidContainerizingModeException ex) {
-      throw new GradleException(
-          "invalid value for containerizingMode: " + ex.getInvalidContainerizingMode(), ex);
+      throw new GradleException("invalid value for containerizingMode: " +
+                                    ex.getInvalidContainerizingMode(),
+                                ex);
 
     } catch (InvalidWorkingDirectoryException ex) {
       throw new GradleException(
-          "container.workingDirectory is not an absolute Unix-style path: "
-              + ex.getInvalidPathValue(),
+          "container.workingDirectory is not an absolute Unix-style path: " +
+              ex.getInvalidPathValue(),
           ex);
 
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
-          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+          "container.volumes is not an absolute Unix-style path: " +
+              ex.getInvalidVolume(),
+          ex);
 
     } catch (InvalidFilesModificationTimeException ex) {
       throw new GradleException(
           "container.filesModificationTime should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
-              + ex.getInvalidFilesModificationTime(),
+              +
+              "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": " +
+              ex.getInvalidFilesModificationTime(),
           ex);
 
     } catch (InvalidCreationTimeException ex) {
       throw new GradleException(
           "container.creationTime should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
-              + "\"USE_CURRENT_TIMESTAMP\"): "
-              + ex.getInvalidCreationTime(),
+              +
+              "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): " + ex.getInvalidCreationTime(),
           ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(
           HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForGradle(
-              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+              ex.getBaseImageMajorJavaVersion(),
+              ex.getProjectMajorJavaVersion()),
           ex);
 
     } catch (InvalidImageReferenceException ex) {
       throw new GradleException(
-          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()),
+          ex);
 
     } finally {
       tempDirectoryProvider.close();

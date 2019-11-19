@@ -42,36 +42,38 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   private static final String RESPONSE_DIGEST_HEADER = "Docker-Content-Digest";
 
   /**
-   * Makes the warning for when the registry responds with an image digest that is not the expected
-   * digest of the image.
+   * Makes the warning for when the registry responds with an image digest that
+   * is not the expected digest of the image.
    *
    * @param expectedDigest the expected image digest
    * @param receivedDigests the received image digests
    * @return the warning message
    */
-  private static String makeUnexpectedImageDigestWarning(
-      DescriptorDigest expectedDigest, List<String> receivedDigests) {
+  private static String
+  makeUnexpectedImageDigestWarning(DescriptorDigest expectedDigest,
+                                   List<String> receivedDigests) {
     if (receivedDigests.isEmpty()) {
       return "Expected image digest " + expectedDigest + ", but received none";
     }
 
-    StringJoiner message =
-        new StringJoiner(", ", "Expected image digest " + expectedDigest + ", but received: ", "");
+    StringJoiner message = new StringJoiner(
+        ", ",
+        "Expected image digest " + expectedDigest + ", but received: ", "");
     for (String receivedDigest : receivedDigests) {
       message.add(receivedDigest);
     }
     return message.toString();
   }
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
   private final String imageTag;
   private final EventHandlers eventHandlers;
 
   ManifestPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      BuildableManifestTemplate manifestTemplate,
-      String imageTag,
+      BuildableManifestTemplate manifestTemplate, String imageTag,
       EventHandlers eventHandlers) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.manifestTemplate = manifestTemplate;
@@ -82,8 +84,8 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public BlobHttpContent getContent() {
     // TODO: Consider giving progress on manifest push as well?
-    return new BlobHttpContent(
-        Blobs.from(manifestTemplate), manifestTemplate.getManifestMediaType());
+    return new BlobHttpContent(Blobs.from(manifestTemplate),
+                               manifestTemplate.getManifestMediaType());
   }
 
   @Override
@@ -92,30 +94,36 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   @Override
-  public DescriptorDigest handleHttpResponseException(ResponseException responseException)
+  public DescriptorDigest
+  handleHttpResponseException(ResponseException responseException)
       throws ResponseException, RegistryErrorException {
     // docker registry 2.0 and 2.1 returns:
     //   400 Bad Request
-    //   {"errors":[{"code":"TAG_INVALID","message":"manifest tag did not match URI"}]}
+    //   {"errors":[{"code":"TAG_INVALID","message":"manifest tag did not match
+    //   URI"}]}
     // docker registry:2.2 returns:
     //   400 Bad Request
-    //   {"errors":[{"code":"MANIFEST_INVALID","message":"manifest invalid","detail":{}}]}
+    //   {"errors":[{"code":"MANIFEST_INVALID","message":"manifest
+    //   invalid","detail":{}}]}
     // quay.io returns:
     //   415 UNSUPPORTED MEDIA TYPE
     //   {"errors":[{"code":"MANIFEST_INVALID","detail":
-    //   {"message":"manifest schema version not supported"},"message":"manifest invalid"}]}
+    //   {"message":"manifest schema version not supported"},"message":"manifest
+    //   invalid"}]}
 
-    if (responseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST
-        && responseException.getStatusCode() != HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
+    if (responseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST &&
+        responseException.getStatusCode() !=
+            HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
       throw responseException;
     }
 
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
-    if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
-          .addReason(
-              "Registry may not support pushing OCI Manifest or "
-                  + "Docker Image Manifest Version 2, Schema 2")
+    if (errorCode == ErrorCodes.MANIFEST_INVALID ||
+        errorCode == ErrorCodes.TAG_INVALID) {
+      throw new RegistryErrorExceptionBuilder(getActionDescription(),
+                                              responseException)
+          .addReason("Registry may not support pushing OCI Manifest or "
+                     + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.
@@ -125,12 +133,14 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public DescriptorDigest handleResponse(Response response) throws IOException {
     // Checks if the image digest is as expected.
-    DescriptorDigest expectedDigest = Digests.computeJsonDigest(manifestTemplate);
+    DescriptorDigest expectedDigest =
+        Digests.computeJsonDigest(manifestTemplate);
 
     List<String> receivedDigests = response.getHeader(RESPONSE_DIGEST_HEADER);
     if (receivedDigests.size() == 1) {
       try {
-        DescriptorDigest receivedDigest = DescriptorDigest.fromDigest(receivedDigests.get(0));
+        DescriptorDigest receivedDigest =
+            DescriptorDigest.fromDigest(receivedDigests.get(0));
         if (expectedDigest.equals(receivedDigest)) {
           return expectedDigest;
         }
@@ -141,15 +151,16 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     }
 
     // The received digest is not as expected. Warns about this.
-    eventHandlers.dispatch(
-        LogEvent.warn(makeUnexpectedImageDigestWarning(expectedDigest, receivedDigests)));
+    eventHandlers.dispatch(LogEvent.warn(
+        makeUnexpectedImageDigestWarning(expectedDigest, receivedDigests)));
     return expectedDigest;
   }
 
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(
-        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/manifests/" + imageTag);
+    return new URL(apiRouteBase +
+                   registryEndpointRequestProperties.getImageName() +
+                   "/manifests/" + imageTag);
   }
 
   @Override
@@ -159,11 +170,8 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
 
   @Override
   public String getActionDescription() {
-    return "push image manifest for "
-        + registryEndpointRequestProperties.getServerUrl()
-        + "/"
-        + registryEndpointRequestProperties.getImageName()
-        + ":"
-        + imageTag;
+    return "push image manifest for " +
+        registryEndpointRequestProperties.getServerUrl() + "/" +
+        registryEndpointRequestProperties.getImageName() + ":" + imageTag;
   }
 }

@@ -50,7 +50,8 @@ public class LocalBaseImageStepsTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
+  private final TempDirectoryProvider tempDirectoryProvider =
+      new TempDirectoryProvider();
 
   @Mock private BuildContext buildContext;
   @Mock private EventHandlers eventHandlers;
@@ -70,9 +71,12 @@ public class LocalBaseImageStepsTest {
     Mockito.when(buildContext.getBaseImageLayersCache())
         .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
     Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
-    Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+    Mockito
+        .when(progressEventDispatcherFactory.create(Mockito.anyString(),
+                                                    Mockito.anyLong()))
         .thenReturn(progressEventDispatcher);
-    Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
+    Mockito.when(progressEventDispatcher.newChildProducer())
+        .thenReturn(childFactory);
     Mockito.when(childFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(childDispatcher);
   }
@@ -85,11 +89,12 @@ public class LocalBaseImageStepsTest {
   @Test
   public void testCacheDockerImageTar_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
-    LocalImage result =
-        LocalBaseImageSteps.cacheDockerImageTar(
-            buildContext, dockerBuild, progressEventDispatcherFactory, tempDirectoryProvider);
+    LocalImage result = LocalBaseImageSteps.cacheDockerImageTar(
+        buildContext, dockerBuild, progressEventDispatcherFactory,
+        tempDirectoryProvider);
 
-    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
+    Mockito.verify(progressEventDispatcher, Mockito.times(2))
+        .newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
@@ -109,11 +114,12 @@ public class LocalBaseImageStepsTest {
   @Test
   public void testCacheDockerImageTar_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
-    LocalImage result =
-        LocalBaseImageSteps.cacheDockerImageTar(
-            buildContext, tarBuild, progressEventDispatcherFactory, tempDirectoryProvider);
+    LocalImage result = LocalBaseImageSteps.cacheDockerImageTar(
+        buildContext, tarBuild, progressEventDispatcherFactory,
+        tempDirectoryProvider);
 
-    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
+    Mockito.verify(progressEventDispatcher, Mockito.times(2))
+        .newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
@@ -132,14 +138,14 @@ public class LocalBaseImageStepsTest {
 
   @Test
   public void testGetCachedDockerImage()
-      throws IOException, DigestException, CacheCorruptedException, URISyntaxException {
-    DockerImageDetails dockerImageDetails =
-        new DockerImageDetails(
-            0,
-            "sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0",
-            ImmutableList.of(
-                "sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
-                "sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
+      throws IOException, DigestException, CacheCorruptedException,
+             URISyntaxException {
+    DockerImageDetails dockerImageDetails = new DockerImageDetails(
+        0,
+        "sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0",
+        ImmutableList.of(
+            "sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
+            "sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
     Path cachePath = temporaryFolder.newFolder("cache").toPath();
     Files.createDirectories(cachePath.resolve("local/config"));
     Cache cache = Cache.withDirectory(cachePath);
@@ -150,31 +156,37 @@ public class LocalBaseImageStepsTest {
     Assert.assertFalse(localImage.isPresent());
 
     // Config in cache, but not layers
-    String configHash = "066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0";
+    String configHash =
+        "066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0";
     Files.copy(
         getResource("core/extraction/test-cache/local/config/" + configHash),
         cachePath.resolve("local/config/" + configHash));
-    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    localImage =
+        LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
 
     // One layer missing
-    String diffId = "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd";
-    String digest = "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f";
+    String diffId =
+        "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd";
+    String digest =
+        "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f";
     Files.createDirectories(cachePath.resolve("local").resolve(diffId));
-    Files.copy(
-        getResource("core/extraction/test-cache/local/" + diffId + "/" + digest),
-        cachePath.resolve("local").resolve(diffId).resolve(digest));
-    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Files.copy(getResource("core/extraction/test-cache/local/" + diffId + "/" +
+                           digest),
+               cachePath.resolve("local").resolve(diffId).resolve(digest));
+    localImage =
+        LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
 
     // Image fully in cache
     diffId = "f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e";
     digest = "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94";
     Files.createDirectories(cachePath.resolve("local").resolve(diffId));
-    Files.copy(
-        getResource("core/extraction/test-cache/local/" + diffId + "/" + digest),
-        cachePath.resolve("local").resolve(diffId).resolve(digest));
-    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Files.copy(getResource("core/extraction/test-cache/local/" + diffId + "/" +
+                           digest),
+               cachePath.resolve("local").resolve(diffId).resolve(digest));
+    localImage =
+        LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertTrue(localImage.isPresent());
     LocalImage image = localImage.get();
     Assert.assertEquals(2, image.configurationTemplate.getLayerCount());
@@ -183,9 +195,9 @@ public class LocalBaseImageStepsTest {
 
   @Test
   public void testIsGzipped() throws URISyntaxException, IOException {
-    Assert.assertTrue(
-        LocalBaseImageSteps.isGzipped(getResource("core/extraction/compressed.tar.gz")));
-    Assert.assertFalse(
-        LocalBaseImageSteps.isGzipped(getResource("core/extraction/not-compressed.tar")));
+    Assert.assertTrue(LocalBaseImageSteps.isGzipped(
+        getResource("core/extraction/compressed.tar.gz")));
+    Assert.assertFalse(LocalBaseImageSteps.isGzipped(
+        getResource("core/extraction/not-compressed.tar")));
   }
 }

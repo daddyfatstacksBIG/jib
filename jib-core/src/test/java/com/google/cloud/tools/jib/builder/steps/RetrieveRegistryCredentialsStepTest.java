@@ -47,56 +47,68 @@ public class RetrieveRegistryCredentialsStepTest {
   @Mock private EventHandlers mockEventHandlers;
 
   @Test
-  public void testCall_retrieved() throws CredentialRetrievalException, IOException {
-    BuildContext buildContext =
-        makeFakeBuildContext(
-            Arrays.asList(
-                Optional::empty,
-                () -> Optional.of(Credential.from("baseusername", "basepassword"))),
-            Arrays.asList(
-                () -> Optional.of(Credential.from("targetusername", "targetpassword")),
-                () -> Optional.of(Credential.from("ignored", "ignored"))));
+  public void testCall_retrieved()
+      throws CredentialRetrievalException, IOException {
+    BuildContext buildContext = makeFakeBuildContext(
+        Arrays.asList(
+            Optional::empty,
+            () -> Optional.of(Credential.from("baseusername", "basepassword"))),
+        Arrays.asList(
+            ()
+                -> Optional.of(
+                    Credential.from("targetusername", "targetpassword")),
+            () -> Optional.of(Credential.from("ignored", "ignored"))));
 
     Assert.assertEquals(
         Optional.of(Credential.from("baseusername", "basepassword")),
-        RetrieveRegistryCredentialsStep.forBaseImage(
+        RetrieveRegistryCredentialsStep
+            .forBaseImage(
                 buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
+                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1)
+                    .newChildProducer())
             .call());
     Assert.assertEquals(
         Optional.of(Credential.from("targetusername", "targetpassword")),
-        RetrieveRegistryCredentialsStep.forTargetImage(
+        RetrieveRegistryCredentialsStep
+            .forTargetImage(
                 buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
+                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1)
+                    .newChildProducer())
             .call());
   }
 
   @Test
   public void testCall_none() throws CredentialRetrievalException, IOException {
     BuildContext buildContext =
-        makeFakeBuildContext(
-            Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
+        makeFakeBuildContext(Arrays.asList(Optional::empty, Optional::empty),
+                             Collections.emptyList());
     Assert.assertFalse(
-        RetrieveRegistryCredentialsStep.forBaseImage(
+        RetrieveRegistryCredentialsStep
+            .forBaseImage(
                 buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
+                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1)
+                    .newChildProducer())
             .call()
             .isPresent());
 
     Mockito.verify(mockEventHandlers, Mockito.atLeastOnce())
         .dispatch(Mockito.any(ProgressEvent.class));
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(LogEvent.info(
+            "No credentials could be retrieved for registry baseregistry"));
 
     Assert.assertFalse(
-        RetrieveRegistryCredentialsStep.forTargetImage(
+        RetrieveRegistryCredentialsStep
+            .forTargetImage(
                 buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
+                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1)
+                    .newChildProducer())
             .call()
             .isPresent());
 
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(LogEvent.info(
+            "No credentials could be retrieved for registry baseregistry"));
   }
 
   @Test
@@ -104,16 +116,15 @@ public class RetrieveRegistryCredentialsStepTest {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
     BuildContext buildContext =
-        makeFakeBuildContext(
-            Collections.singletonList(
-                () -> {
-                  throw credentialRetrievalException;
-                }),
-            Collections.emptyList());
+        makeFakeBuildContext(Collections.singletonList(
+                                 () -> { throw credentialRetrievalException; }),
+                             Collections.emptyList());
     try {
-      RetrieveRegistryCredentialsStep.forBaseImage(
+      RetrieveRegistryCredentialsStep
+          .forBaseImage(
               buildContext,
-              ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
+              ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1)
+                  .newChildProducer())
           .call();
       Assert.fail("Should have thrown exception");
 
@@ -122,12 +133,14 @@ public class RetrieveRegistryCredentialsStepTest {
     }
   }
 
-  private BuildContext makeFakeBuildContext(
-      List<CredentialRetriever> baseCredentialRetrievers,
-      List<CredentialRetriever> targetCredentialRetrievers)
+  private BuildContext
+  makeFakeBuildContext(List<CredentialRetriever> baseCredentialRetrievers,
+                       List<CredentialRetriever> targetCredentialRetrievers)
       throws IOException {
-    ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
-    ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
+    ImageReference baseImage =
+        ImageReference.of("baseregistry", "ignored", null);
+    ImageReference targetImage =
+        ImageReference.of("targetregistry", "ignored", null);
     return BuildContext.builder()
         .setEventHandlers(mockEventHandlers)
         .setBaseImageConfiguration(

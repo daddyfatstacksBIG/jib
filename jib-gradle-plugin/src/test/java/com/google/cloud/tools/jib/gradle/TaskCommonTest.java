@@ -40,7 +40,9 @@ import org.springframework.boot.gradle.tasks.bundling.BootWar;
 @RunWith(MockitoJUnitRunner.class)
 public class TaskCommonTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
 
   @Mock private JibExtension jibExtension;
   @Mock private ContainerParameters containerParameters;
@@ -64,16 +66,17 @@ public class TaskCommonTest {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger)
-        .warn(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-                + "with the value 'USE_CURRENT_TIMESTAMP' instead");
+    Mockito.verify(logger).warn(
+        "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+        + "with the value 'USE_CURRENT_TIMESTAMP' instead");
   }
 
   @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
+  public void
+  testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
+    Mockito.when(containerParameters.getCreationTime())
+        .thenReturn("USE_CURRENT_TIMESTAMP");
     try {
       TaskCommon.checkDeprecatedUsage(jibExtension, logger);
       Assert.fail();

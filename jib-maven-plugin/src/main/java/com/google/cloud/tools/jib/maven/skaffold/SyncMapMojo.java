@@ -29,9 +29,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-@Mojo(
-    name = SyncMapMojo.GOAL_NAME,
-    requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = SyncMapMojo.GOAL_NAME,
+      requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class SyncMapMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-sync-map";
@@ -47,36 +46,34 @@ public class SyncMapMojo extends JibPluginConfiguration {
     // add check that means this is only for jars
     if (!"jar".equals(getProject().getPackaging())) {
       throw new MojoExecutionException(
-          "Skaffold sync is currently only available for 'jar' style Jib projects, but the packaging of "
-              + getProject().getArtifactId()
-              + " is '"
-              + getProject().getPackaging()
-              + "'");
+          "Skaffold sync is currently only available for 'jar' style Jib projects, but the packaging of " +
+          getProject().getArtifactId() + " is '" + getProject().getPackaging() +
+          "'");
     }
     // add check for exploded containerization
     try {
-      if (!ContainerizingMode.EXPLODED.equals(ContainerizingMode.from(getContainerizingMode()))) {
+      if (!ContainerizingMode.EXPLODED.equals(
+              ContainerizingMode.from(getContainerizingMode()))) {
         throw new MojoExecutionException(
-            "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of "
-                + getProject().getArtifactId()
-                + " is '"
-                + getContainerizingMode()
-                + "'");
+            "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of " +
+            getProject().getArtifactId() + " is '" + getContainerizingMode() +
+            "'");
       }
     } catch (InvalidContainerizingModeException ex) {
       throw new MojoExecutionException("Invalid containerizing mode", ex);
     }
 
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+    try (TempDirectoryProvider tempDirectoryProvider =
+             new TempDirectoryProvider()) {
       MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(
-              getProject(), getSession(), getLog(), tempDirectoryProvider);
+          MavenProjectProperties.getForProject(getProject(), getSession(),
+                                               getLog(), tempDirectoryProvider);
 
       MavenRawConfiguration configuration = new MavenRawConfiguration(this);
 
       try {
-        String syncMapJson =
-            PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+        String syncMapJson = PluginConfigurationProcessor.getSkaffoldSyncMap(
+            configuration, projectProperties);
 
         System.out.println();
         System.out.println("BEGIN JIB JSON");

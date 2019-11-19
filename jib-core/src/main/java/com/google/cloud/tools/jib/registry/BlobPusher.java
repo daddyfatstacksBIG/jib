@@ -47,7 +47,8 @@ import javax.annotation.Nullable;
  */
 class BlobPusher {
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
   @Nullable private final String sourceRepository;
@@ -67,22 +68,23 @@ class BlobPusher {
     }
 
     /**
-     * @return a URL to continue pushing the BLOB to, or {@link Optional#empty()} if the BLOB
-     *     already exists on the registry
+     * @return a URL to continue pushing the BLOB to, or {@link
+     *     Optional#empty()} if the BLOB already exists on the registry
      */
     @Override
-    public Optional<URL> handleResponse(Response response) throws RegistryErrorException {
+    public Optional<URL> handleResponse(Response response)
+        throws RegistryErrorException {
       switch (response.getStatusCode()) {
-        case HttpURLConnection.HTTP_CREATED:
-          // The BLOB exists in the registry.
-          return Optional.empty();
+      case HttpURLConnection.HTTP_CREATED:
+        // The BLOB exists in the registry.
+        return Optional.empty();
 
-        case HttpURLConnection.HTTP_ACCEPTED:
-          return Optional.of(getRedirectLocation(response));
+      case HttpURLConnection.HTTP_ACCEPTED:
+        return Optional.of(getRedirectLocation(response));
 
-        default:
-          throw buildRegistryErrorException(
-              "Received unrecognized status code " + response.getStatusCode());
+      default:
+        throw buildRegistryErrorException("Received unrecognized status code " +
+                                          response.getStatusCode());
       }
     }
 
@@ -93,7 +95,10 @@ class BlobPusher {
               .append(registryEndpointRequestProperties.getImageName())
               .append("/blobs/uploads/");
       if (sourceRepository != null) {
-        url.append("?mount=").append(blobDigest).append("&from=").append(sourceRepository);
+        url.append("?mount=")
+            .append(blobDigest)
+            .append("&from=")
+            .append(sourceRepository);
       }
 
       return new URL(url.toString());
@@ -110,7 +115,8 @@ class BlobPusher {
     }
 
     @Override
-    public Optional<URL> handleHttpResponseException(ResponseException responseException)
+    public Optional<URL>
+    handleHttpResponseException(ResponseException responseException)
         throws ResponseException, RegistryErrorException {
       throw responseException;
     }
@@ -125,7 +131,8 @@ class BlobPusher {
     @Nullable
     @Override
     public BlobHttpContent getContent() {
-      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), writtenByteCountListener);
+      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(),
+                                 writtenByteCountListener);
     }
 
     @Override
@@ -188,7 +195,10 @@ class BlobPusher {
       return null;
     }
 
-    /** @return {@code location} with query parameter 'digest' set to the BLOB's digest */
+    /**
+     * @return {@code location} with query parameter 'digest' set to the BLOB's
+     *     digest
+     */
     @Override
     public URL getApiRoute(String apiRouteBase) {
       return new GenericUrl(location).set("digest", blobDigest).toURL();
@@ -204,9 +214,7 @@ class BlobPusher {
       return BlobPusher.this.getActionDescription();
     }
 
-    private Committer(URL location) {
-      this.location = location;
-    }
+    private Committer(URL location) { this.location = location; }
 
     @Override
     public Void handleHttpResponseException(ResponseException responseException)
@@ -217,8 +225,7 @@ class BlobPusher {
 
   BlobPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      DescriptorDigest blobDigest,
-      Blob blob,
+      DescriptorDigest blobDigest, Blob blob,
       @Nullable String sourceRepository) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
@@ -227,8 +234,8 @@ class BlobPusher {
   }
 
   /**
-   * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
-   *     check
+   * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload
+   *     with an existence check
    */
   RegistryEndpointProvider<Optional<URL>> initializer() {
     return new Initializer();
@@ -236,16 +243,20 @@ class BlobPusher {
 
   /**
    * @param location the upload URL
-   * @param writtenByteCountListener the listener for {@link Blob} push progress (written bytes)
-   * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
+   * @param writtenByteCountListener the listener for {@link Blob} push progress
+   *     (written bytes)
+   * @return a {@link RegistryEndpointProvider} for writing the BLOB to an
+   *     upload location
    */
-  RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> writtenByteCountListener) {
+  RegistryEndpointProvider<URL>
+  writer(URL location, Consumer<Long> writtenByteCountListener) {
     return new Writer(location, writtenByteCountListener);
   }
 
   /**
    * @param location the upload URL
-   * @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest
+   * @return a {@link RegistryEndpointProvider} for committing the written BLOB
+   *     with its digest
    */
   RegistryEndpointProvider<Void> committer(URL location) {
     return new Committer(location);
@@ -259,21 +270,18 @@ class BlobPusher {
   }
 
   /**
-   * @return the common action description for {@link Initializer}, {@link Writer}, and {@link
-   *     Committer}
+   * @return the common action description for {@link Initializer}, {@link
+   *     Writer}, and {@link Committer}
    */
   private String getActionDescription() {
-    return "push BLOB for "
-        + registryEndpointRequestProperties.getServerUrl()
-        + "/"
-        + registryEndpointRequestProperties.getImageName()
-        + " with digest "
-        + blobDigest;
+    return "push BLOB for " + registryEndpointRequestProperties.getServerUrl() +
+        "/" + registryEndpointRequestProperties.getImageName() +
+        " with digest " + blobDigest;
   }
 
   /**
-   * Extract the {@code Location} header from the response to get the new location for the next
-   * request.
+   * Extract the {@code Location} header from the response to get the new
+   * location for the next request.
    *
    * <p>The {@code Location} header can be relative or absolute.
    *
@@ -283,7 +291,8 @@ class BlobPusher {
    * @return the new location for the next request
    * @throws RegistryErrorException if there was not a single 'Location' header
    */
-  private URL getRedirectLocation(Response response) throws RegistryErrorException {
+  private URL getRedirectLocation(Response response)
+      throws RegistryErrorException {
     // Extracts and returns the 'Location' header.
     List<String> locationHeaders = response.getHeader("Location");
     if (locationHeaders.size() != 1) {

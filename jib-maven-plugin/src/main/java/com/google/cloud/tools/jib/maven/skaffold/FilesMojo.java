@@ -49,17 +49,17 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
 
 /**
- * Print out changing source dependencies on a module. In multimodule applications it should be run
- * by activating a single module and its dependent modules. Dependency collection will ignore
- * project level snapshots (sub-modules) unless the user has explicitly installed them (by only
+ * Print out changing source dependencies on a module. In multimodule
+ * applications it should be run by activating a single module and its dependent
+ * modules. Dependency collection will ignore project level snapshots
+ * (sub-modules) unless the user has explicitly installed them (by only
  * requiring dependencyCollection). For use only within skaffold.
  *
- * <p>Expected use: "./mvnw jib:_skaffold-files -q" or "./mvnw jib:_skaffold-files -pl module -am
- * -q"
+ * <p>Expected use: "./mvnw jib:_skaffold-files -q" or "./mvnw
+ * jib:_skaffold-files -pl module -am -q"
  */
-@Mojo(
-    name = FilesMojo.GOAL_NAME,
-    requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = FilesMojo.GOAL_NAME,
+      requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class FilesMojo extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files";
@@ -73,14 +73,19 @@ public class FilesMojo extends SkaffoldBindingMojo {
   private MavenProject project;
 
   @Nullable
-  @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
+  @Parameter(defaultValue = "${reactorProjects}", required = true,
+             readonly = true)
   private List<MavenProject> projects;
 
   // TODO: This is internal maven, we should find a better way to do this
-  @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
+  @Nullable
+  @Component
+  private ProjectDependenciesResolver projectDependenciesResolver;
 
   // This parameter is cloned from JibPluginConfiguration
-  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
+  @Parameter
+  private ExtraDirectoriesParameters extraDirectories =
+      new ExtraDirectoriesParameters();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -106,45 +111,45 @@ public class FilesMojo extends SkaffoldBindingMojo {
         .map(FileSet::getDirectory)
         .forEach(System.out::println);
 
-    // this seems weird, but we will only print out the jib "extraFiles" directory on projects where
-    // the plugin is explicitly configured (even though _skaffold-files is a jib-maven-plugin goal
-    // and is expected to run on all projects irrespective of their configuring of the jib plugin).
+    // this seems weird, but we will only print out the jib "extraFiles"
+    // directory on projects where the plugin is explicitly configured (even
+    // though _skaffold-files is a jib-maven-plugin goal and is expected to run
+    // on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
       resolveExtraDirectories().stream().forEach(System.out::println);
     }
 
     // Grab non-project SNAPSHOT dependencies for this project
-    // TODO: this whole sections relies on internal maven API, it could break. We need to explore
+    // TODO: this whole sections relies on internal maven API, it could break.
+    // We need to explore
     // TODO: better ways to resolve dependencies using the public maven API.
-    Set<String> projectArtifacts =
-        projects
-            .stream()
-            .map(MavenProject::getArtifact)
-            .map(Artifact::toString)
-            .collect(Collectors.toSet());
+    Set<String> projectArtifacts = projects.stream()
+                                       .map(MavenProject::getArtifact)
+                                       .map(Artifact::toString)
+                                       .collect(Collectors.toSet());
 
-    DependencyFilter ignoreProjectDependenciesFilter =
-        (node, parents) -> {
-          if (node == null || node.getDependency() == null) {
-            // if nothing, then ignore
-            return false;
-          }
-          if (projectArtifacts.contains(node.getArtifact().toString())) {
-            // ignore project dependency artifacts
-            return false;
-          }
-          // we only want compile/runtime deps
-          return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(node.getDependency().getScope());
-        };
+    DependencyFilter ignoreProjectDependenciesFilter = (node, parents) -> {
+      if (node == null || node.getDependency() == null) {
+        // if nothing, then ignore
+        return false;
+      }
+      if (projectArtifacts.contains(node.getArtifact().toString())) {
+        // ignore project dependency artifacts
+        return false;
+      }
+      // we only want compile/runtime deps
+      return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(
+          node.getDependency().getScope());
+    };
 
     try {
       DependencyResolutionResult resolutionResult =
           projectDependenciesResolver.resolve(
-              new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
+              new DefaultDependencyResolutionRequest(
+                  project, session.getRepositorySession())
                   .setResolutionFilter(ignoreProjectDependenciesFilter));
-      resolutionResult
-          .getDependencies()
+      resolutionResult.getDependencies()
           .stream()
           .map(Dependency::getArtifact)
           .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
@@ -157,22 +162,28 @@ public class FilesMojo extends SkaffoldBindingMojo {
   }
 
   private List<Path> resolveExtraDirectories() {
-    // TODO: Should inform user about nonexistent directory if using custom directory.
-    String property =
-        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+    // TODO: Should inform user about nonexistent directory if using custom
+    // directory.
+    String property = MavenProjectProperties.getProperty(
+        PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
     if (property != null) {
-      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
-      return paths.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toList());
+      List<String> paths =
+          ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream()
+          .map(Paths::get)
+          .map(Path::toAbsolutePath)
+          .collect(Collectors.toList());
     }
 
     if (extraDirectories.getPaths().isEmpty()) {
-      Path projectBase =
-          Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
+      Path projectBase = Preconditions.checkNotNull(project)
+                             .getBasedir()
+                             .getAbsoluteFile()
+                             .toPath();
       Path srcMainJib = Paths.get("src", "main", "jib");
       return Collections.singletonList(projectBase.resolve(srcMainJib));
     }
-    return extraDirectories
-        .getPaths()
+    return extraDirectories.getPaths()
         .stream()
         .map(File::getAbsoluteFile)
         .map(File::toPath)

@@ -63,38 +63,45 @@ public class PullBaseImageStepTest {
   public void setUp() {
     containerConfig.setOs("fat system");
 
-    Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
-    Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(imageConfiguration);
+    Mockito.when(buildContext.getEventHandlers())
+        .thenReturn(EventHandlers.NONE);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
 
-    pullBaseImageStep = new PullBaseImageStep(buildContext, progressDispatcherFactory);
+    pullBaseImageStep =
+        new PullBaseImageStep(buildContext, progressDispatcherFactory);
   }
 
   @Test
   public void testCall_digestBaseImage()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
-          LayerCountMismatchException, BadContainerConfigurationFormatException,
-          CacheCorruptedException, CredentialRetrievalException, InvalidImageReferenceException {
-    ImageReference imageReference =
-        ImageReference.parse(
-            "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+             LayerCountMismatchException,
+             BadContainerConfigurationFormatException, CacheCorruptedException,
+             CredentialRetrievalException, InvalidImageReferenceException {
+    ImageReference imageReference = ImageReference.parse(
+        "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     Assert.assertTrue(imageReference.isTagDigest());
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference))
+        .thenReturn(Optional.of(manifestAndConfig));
 
     ImageAndAuthorization result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.getImage().getOs());
     Assert.assertNull(result.getAuthorization());
 
-    Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
+    Mockito.verify(buildContext, Mockito.never())
+        .newBaseImageRegistryClientFactory();
   }
 
   @Test
   public void testCall_offlineMode_notCached()
-      throws LayerPropertyNotFoundException, RegistryException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, CacheCorruptedException,
-          CredentialRetrievalException, InvalidImageReferenceException {
-    Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.parse("cat"));
+      throws LayerPropertyNotFoundException, RegistryException,
+             LayerCountMismatchException,
+             BadContainerConfigurationFormatException, CacheCorruptedException,
+             CredentialRetrievalException, InvalidImageReferenceException {
+    Mockito.when(imageConfiguration.getImage())
+        .thenReturn(ImageReference.parse("cat"));
     Mockito.when(buildContext.isOffline()).thenReturn(true);
 
     try {
@@ -102,24 +109,29 @@ public class PullBaseImageStepTest {
       Assert.fail();
     } catch (IOException ex) {
       Assert.assertEquals(
-          "Cannot run Jib in offline mode; cat not found in local Jib cache", ex.getMessage());
+          "Cannot run Jib in offline mode; cat not found in local Jib cache",
+          ex.getMessage());
     }
   }
 
   @Test
   public void testCall_offlineMode_cached()
-      throws LayerPropertyNotFoundException, RegistryException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, CacheCorruptedException,
-          CredentialRetrievalException, InvalidImageReferenceException, IOException {
+      throws LayerPropertyNotFoundException, RegistryException,
+             LayerCountMismatchException,
+             BadContainerConfigurationFormatException, CacheCorruptedException,
+             CredentialRetrievalException, InvalidImageReferenceException,
+             IOException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(buildContext.isOffline()).thenReturn(true);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference))
+        .thenReturn(Optional.of(manifestAndConfig));
 
     ImageAndAuthorization result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.getImage().getOs());
     Assert.assertNull(result.getAuthorization());
 
-    Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
+    Mockito.verify(buildContext, Mockito.never())
+        .newBaseImageRegistryClientFactory();
   }
 }

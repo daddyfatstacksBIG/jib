@@ -68,8 +68,8 @@ public class LocalBaseImageSteps {
     final List<Future<PreparedLayer>> layers;
     final ContainerConfigurationTemplate configurationTemplate;
 
-    LocalImage(
-        List<Future<PreparedLayer>> layers, ContainerConfigurationTemplate configurationTemplate) {
+    LocalImage(List<Future<PreparedLayer>> layers,
+               ContainerConfigurationTemplate configurationTemplate) {
       this.layers = layers;
       this.configurationTemplate = configurationTemplate;
     }
@@ -81,13 +81,15 @@ public class LocalBaseImageSteps {
    * @param path the file to check
    * @return {@code true} if the file is gzipped, {@code false} if not
    * @throws IOException if reading the file fails
-   * @see <a href="http://www.zlib.org/rfc-gzip.html#file-format">GZIP file format</a>
+   * @see <a href="http://www.zlib.org/rfc-gzip.html#file-format">GZIP file
+   *     format</a>
    */
   @VisibleForTesting
   static boolean isGzipped(Path path) throws IOException {
     try (InputStream inputStream = Files.newInputStream(path)) {
       inputStream.mark(2);
-      int magic = (inputStream.read() & 0xff) | ((inputStream.read() << 8) & 0xff00);
+      int magic =
+          (inputStream.read() & 0xff) | ((inputStream.read() << 8) & 0xff00);
       return magic == GZIPInputStream.GZIP_MAGIC;
     }
   }
@@ -95,19 +97,20 @@ public class LocalBaseImageSteps {
   static Callable<LocalImage> retrieveDockerDaemonLayersStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      DockerClient dockerClient,
-      TempDirectoryProvider tempDirectoryProvider) {
+      DockerClient dockerClient, TempDirectoryProvider tempDirectoryProvider) {
     return () -> {
-      ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
+      ImageReference imageReference =
+          buildContext.getBaseImageConfiguration().getImage();
       try (ProgressEventDispatcher progressEventDispatcher =
-              progressEventDispatcherFactory.create("processing base image " + imageReference, 2);
-          TimerEventDispatcher ignored =
-              new TimerEventDispatcher(
-                  buildContext.getEventHandlers(),
-                  "Saving " + imageReference + " from Docker daemon")) {
-        DockerClient.DockerImageDetails dockerImageDetails = dockerClient.inspect(imageReference);
-        Optional<LocalImage> cachedImage =
-            getCachedDockerImage(buildContext.getBaseImageLayersCache(), dockerImageDetails);
+               progressEventDispatcherFactory.create(
+                   "processing base image " + imageReference, 2);
+           TimerEventDispatcher ignored = new TimerEventDispatcher(
+               buildContext.getEventHandlers(),
+               "Saving " + imageReference + " from Docker daemon")) {
+        DockerClient.DockerImageDetails dockerImageDetails =
+            dockerClient.inspect(imageReference);
+        Optional<LocalImage> cachedImage = getCachedDockerImage(
+            buildContext.getBaseImageLayersCache(), dockerImageDetails);
         if (cachedImage.isPresent()) {
           return cachedImage.get();
         }
@@ -115,19 +118,17 @@ public class LocalBaseImageSteps {
         Path tarPath = tempDirectoryProvider.newDirectory().resolve("out.tar");
         long size = dockerClient.inspect(imageReference).getSize();
         try (ProgressEventDispatcher dockerProgress =
-                progressEventDispatcher
-                    .newChildProducer()
-                    .create("saving base image " + imageReference, size);
-            ThrottledAccumulatingConsumer throttledProgressReporter =
-                new ThrottledAccumulatingConsumer(dockerProgress::dispatchProgress)) {
+                 progressEventDispatcher.newChildProducer().create(
+                     "saving base image " + imageReference, size);
+             ThrottledAccumulatingConsumer throttledProgressReporter =
+                 new ThrottledAccumulatingConsumer(
+                     dockerProgress::dispatchProgress)) {
           dockerClient.save(imageReference, tarPath, throttledProgressReporter);
         }
 
-        return cacheDockerImageTar(
-            buildContext,
-            tarPath,
-            progressEventDispatcher.newChildProducer(),
-            tempDirectoryProvider);
+        return cacheDockerImageTar(buildContext, tarPath,
+                                   progressEventDispatcher.newChildProducer(),
+                                   tempDirectoryProvider);
       }
     };
   }
@@ -135,15 +136,16 @@ public class LocalBaseImageSteps {
   static Callable<LocalImage> retrieveTarLayersStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Path tarPath,
-      TempDirectoryProvider tempDirectoryProvider) {
-    return () ->
-        cacheDockerImageTar(
-            buildContext, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
+      Path tarPath, TempDirectoryProvider tempDirectoryProvider) {
+    return ()
+               -> cacheDockerImageTar(buildContext, tarPath,
+                                      progressEventDispatcherFactory,
+                                      tempDirectoryProvider);
   }
 
   static Callable<ImageAndAuthorization> returnImageAndAuthorizationStep(
-      List<PreparedLayer> layers, ContainerConfigurationTemplate configurationTemplate) {
+      List<PreparedLayer> layers,
+      ContainerConfigurationTemplate configurationTemplate) {
     return () -> {
       // Collect compressed layers and add to manifest
       V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
@@ -153,17 +155,19 @@ public class LocalBaseImageSteps {
       }
 
       BlobDescriptor configDescriptor =
-          Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
-      v22Manifest.setContainerConfiguration(
-          configDescriptor.getSize(), configDescriptor.getDigest());
+          Blobs.from(configurationTemplate)
+              .writeTo(ByteStreams.nullOutputStream());
+      v22Manifest.setContainerConfiguration(configDescriptor.getSize(),
+                                            configDescriptor.getDigest());
       return new ImageAndAuthorization(
-          JsonToImageTranslator.toImage(v22Manifest, configurationTemplate), null);
+          JsonToImageTranslator.toImage(v22Manifest, configurationTemplate),
+          null);
     };
   }
 
   @VisibleForTesting
-  static Optional<LocalImage> getCachedDockerImage(
-      Cache cache, DockerImageDetails dockerImageDetails)
+  static Optional<LocalImage>
+  getCachedDockerImage(Cache cache, DockerImageDetails dockerImageDetails)
       throws DigestException, IOException, CacheCorruptedException {
     // Get config
     Optional<ContainerConfigurationTemplate> cachedConfig =
@@ -180,7 +184,8 @@ public class LocalBaseImageSteps {
         return Optional.empty();
       }
       CachedLayer layer = cachedLayer.get();
-      cachedLayers.add(Futures.immediateFuture(new PreparedLayer.Builder(layer).build()));
+      cachedLayers.add(
+          Futures.immediateFuture(new PreparedLayer.Builder(layer).build()));
     }
 
     return Optional.of(new LocalImage(cachedLayers, cachedConfig.get()));
@@ -188,55 +193,56 @@ public class LocalBaseImageSteps {
 
   @VisibleForTesting
   static LocalImage cacheDockerImageTar(
-      BuildContext buildContext,
-      Path tarPath,
+      BuildContext buildContext, Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       TempDirectoryProvider tempDirectoryProvider)
       throws IOException, LayerCountMismatchException {
     ExecutorService executorService = buildContext.getExecutorService();
     Path destination = tempDirectoryProvider.newDirectory();
 
-    try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(
-            buildContext.getEventHandlers(),
-            "Extracting tar " + tarPath + " into " + destination)) {
+    try (TimerEventDispatcher ignored = new TimerEventDispatcher(
+             buildContext.getEventHandlers(),
+             "Extracting tar " + tarPath + " into " + destination)) {
       TarExtractor.extract(tarPath, destination);
 
-      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
+      InputStream manifestStream =
+          Files.newInputStream(destination.resolve("manifest.json"));
       DockerManifestEntryTemplate loadManifest =
           new ObjectMapper()
               .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+              .readValue(manifestStream,
+                         DockerManifestEntryTemplate[].class)[0];
       manifestStream.close();
 
       Path configPath = destination.resolve(loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
-          JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+          JsonTemplateMapper.readJsonFromFile(
+              configPath, ContainerConfigurationTemplate.class);
       BlobDescriptor originalConfigDescriptor =
           Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
 
       List<String> layerFiles = loadManifest.getLayerFiles();
       if (configurationTemplate.getLayerCount() != layerFiles.size()) {
         throw new LayerCountMismatchException(
-            "Invalid base image format: manifest contains "
-                + layerFiles.size()
-                + " layers, but container configuration contains "
-                + configurationTemplate.getLayerCount()
-                + " layers");
+            "Invalid base image format: manifest contains " +
+            layerFiles.size() +
+            " layers, but container configuration contains " +
+            configurationTemplate.getLayerCount() + " layers");
       }
-      buildContext
-          .getBaseImageLayersCache()
-          .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
+      buildContext.getBaseImageLayersCache().writeLocalConfig(
+          originalConfigDescriptor.getDigest(), configurationTemplate);
 
-      // Check the first layer to see if the layers are compressed already. 'docker save' output
-      // is uncompressed, but a jib-built tar has compressed layers.
+      // Check the first layer to see if the layers are compressed already.
+      // 'docker save' output is uncompressed, but a jib-built tar has
+      // compressed layers.
       boolean layersAreCompressed =
-          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
+          layerFiles.size() > 0 &&
+          isGzipped(destination.resolve(layerFiles.get(0)));
 
       // Process layer blobs
       try (ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create(
-              "processing base image layers", layerFiles.size())) {
+               progressEventDispatcherFactory.create(
+                   "processing base image layers", layerFiles.size())) {
         // Start compressing layers in parallel
         List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
         for (int index = 0; index < layerFiles.size(); index++) {
@@ -244,15 +250,11 @@ public class LocalBaseImageSteps {
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
           ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
               progressEventDispatcher.newChildProducer();
-          preparedLayers.add(
-              executorService.submit(
-                  () ->
-                      compressAndCacheTarLayer(
-                          buildContext.getBaseImageLayersCache(),
-                          diffId,
-                          layerFile,
-                          layersAreCompressed,
-                          layerProgressDispatcherFactory)));
+          preparedLayers.add(executorService.submit(
+              ()
+                  -> compressAndCacheTarLayer(
+                      buildContext.getBaseImageLayersCache(), diffId, layerFile,
+                      layersAreCompressed, layerProgressDispatcherFactory)));
         }
         return new LocalImage(preparedLayers, configurationTemplate);
       }
@@ -260,17 +262,16 @@ public class LocalBaseImageSteps {
   }
 
   private static PreparedLayer compressAndCacheTarLayer(
-      Cache cache,
-      DescriptorDigest diffId,
-      Path layerFile,
+      Cache cache, DescriptorDigest diffId, Path layerFile,
       boolean layersAreCompressed,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws IOException, CacheCorruptedException {
     try (ProgressEventDispatcher childDispatcher =
-            progressEventDispatcherFactory.create(
-                "compressing layer " + diffId, Files.size(layerFile));
-        ThrottledAccumulatingConsumer throttledProgressReporter =
-            new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
+             progressEventDispatcherFactory.create(
+                 "compressing layer " + diffId, Files.size(layerFile));
+         ThrottledAccumulatingConsumer throttledProgressReporter =
+             new ThrottledAccumulatingConsumer(
+                 childDispatcher::dispatchProgress)) {
       // Retrieve pre-compressed layer from cache
       Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
       if (optionalLayer.isPresent()) {
@@ -279,21 +280,24 @@ public class LocalBaseImageSteps {
 
       // Just write layers that are already compressed
       if (layersAreCompressed) {
-        return new PreparedLayer.Builder(cache.writeTarLayer(diffId, Blobs.from(layerFile)))
+        return new PreparedLayer
+            .Builder(cache.writeTarLayer(diffId, Blobs.from(layerFile)))
             .build();
       }
 
       // Compress uncompressed layers while writing
-      Blob compressedBlob =
-          Blobs.from(
-              outputStream -> {
-                try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream);
-                    NotifyingOutputStream notifyingOutputStream =
-                        new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
-                  Blobs.from(layerFile).writeTo(notifyingOutputStream);
-                }
-              });
-      return new PreparedLayer.Builder(cache.writeTarLayer(diffId, compressedBlob)).build();
+      Blob compressedBlob = Blobs.from(outputStream -> {
+        try (GZIPOutputStream compressorStream =
+                 new GZIPOutputStream(outputStream);
+             NotifyingOutputStream notifyingOutputStream =
+                 new NotifyingOutputStream(compressorStream,
+                                           throttledProgressReporter)) {
+          Blobs.from(layerFile).writeTo(notifyingOutputStream);
+        }
+      });
+      return new PreparedLayer
+          .Builder(cache.writeTarLayer(diffId, compressedBlob))
+          .build();
     }
   }
 }

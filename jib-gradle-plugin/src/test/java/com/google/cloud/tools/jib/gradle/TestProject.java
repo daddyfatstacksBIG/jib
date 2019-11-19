@@ -30,7 +30,10 @@ import org.gradle.testkit.runner.GradleRunner;
 import org.junit.rules.TemporaryFolder;
 
 // TODO: Consolidate with TestProject in jib-maven-plugin.
-/** Works with the test Gradle projects in the {@code resources/projects} directory. */
+/**
+ * Works with the test Gradle projects in the {@code resources/projects}
+ * directory.
+ */
 public class TestProject extends TemporaryFolder implements Closeable {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "gradle/projects/";
@@ -38,20 +41,19 @@ public class TestProject extends TemporaryFolder implements Closeable {
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
       throws IOException, URISyntaxException {
-    Path projectPathInResources =
-        Paths.get(Resources.getResource(PROJECTS_PATH_IN_RESOURCES + projectName).toURI());
-    new DirectoryWalker(projectPathInResources)
-        .filterRoot()
-        .walk(
-            path -> {
-              // Creates the same path in the destDir.
-              Path destPath = destination.resolve(projectPathInResources.relativize(path));
-              if (Files.isDirectory(path)) {
-                Files.createDirectory(destPath);
-              } else {
-                Files.copy(path, destPath);
-              }
-            });
+    Path projectPathInResources = Paths.get(
+        Resources.getResource(PROJECTS_PATH_IN_RESOURCES + projectName)
+            .toURI());
+    new DirectoryWalker(projectPathInResources).filterRoot().walk(path -> {
+      // Creates the same path in the destDir.
+      Path destPath =
+          destination.resolve(projectPathInResources.relativize(path));
+      if (Files.isDirectory(path)) {
+        Files.createDirectory(destPath);
+      } else {
+        Files.copy(path, destPath);
+      }
+    });
   }
 
   private final String testProjectName;
@@ -91,7 +93,5 @@ public class TestProject extends TemporaryFolder implements Closeable {
     return gradleRunner.withArguments(gradleArguments).build();
   }
 
-  public Path getProjectRoot() {
-    return projectRoot;
-  }
+  public Path getProjectRoot() { return projectRoot; }
 }

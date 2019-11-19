@@ -37,13 +37,15 @@ import org.junit.Test;
 /** Tests for {@link InitMojo}. */
 public class InitMojoTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
+  @ClassRule
+  public static final TestProject multiTestProject = new TestProject("multi");
 
   /**
-   * Verifies that the files task succeeded and returns the list of JSON strings printed by the
-   * task.
+   * Verifies that the files task succeeded and returns the list of JSON strings
+   * printed by the task.
    *
    * @param project the project to run the task on
    * @return the JSON strings printed by the task
@@ -57,8 +59,11 @@ public class InitMojoTest {
     verifier.executeGoal("jib:" + InitMojo.GOAL_NAME);
 
     verifier.verifyErrorFreeLog();
-    Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
-    String output = String.join("\n", Files.readAllLines(logFile, StandardCharsets.UTF_8)).trim();
+    Path logFile =
+        Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
+    String output =
+        String.join("\n", Files.readAllLines(logFile, StandardCharsets.UTF_8))
+            .trim();
     Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
 
     Pattern pattern = Pattern.compile("BEGIN JIB JSON\r?\n(\\{.*})");
@@ -72,21 +77,25 @@ public class InitMojoTest {
   }
 
   @Test
-  public void testFilesMojo_singleModule() throws IOException, VerificationException {
+  public void testFilesMojo_singleModule()
+      throws IOException, VerificationException {
     List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
+    SkaffoldInitOutput skaffoldInitOutput =
+        new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertNull(skaffoldInitOutput.getProject());
   }
 
   @Test
-  public void testFilesMojo_multiModule() throws IOException, VerificationException {
+  public void testFilesMojo_multiModule()
+      throws IOException, VerificationException {
     List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(3, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
+    SkaffoldInitOutput skaffoldInitOutput =
+        new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
 

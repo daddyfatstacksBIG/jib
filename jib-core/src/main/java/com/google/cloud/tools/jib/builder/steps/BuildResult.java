@@ -36,11 +36,14 @@ public class BuildResult {
    * @return a new {@link BuildResult} with the image's digest and id
    * @throws IOException if writing the digest or container configuration fails
    */
-  static BuildResult fromImage(Image image, Class<? extends BuildableManifestTemplate> targetFormat)
+  static BuildResult
+  fromImage(Image image,
+            Class<? extends BuildableManifestTemplate> targetFormat)
       throws IOException {
-    ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
-    BlobDescriptor containerConfigurationBlobDescriptor =
-        Digests.computeDigest(imageToJsonTranslator.getContainerConfiguration());
+    ImageToJsonTranslator imageToJsonTranslator =
+        new ImageToJsonTranslator(image);
+    BlobDescriptor containerConfigurationBlobDescriptor = Digests.computeDigest(
+        imageToJsonTranslator.getContainerConfiguration());
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             targetFormat, containerConfigurationBlobDescriptor);
@@ -57,13 +60,9 @@ public class BuildResult {
     this.imageId = imageId;
   }
 
-  public DescriptorDigest getImageDigest() {
-    return imageDigest;
-  }
+  public DescriptorDigest getImageDigest() { return imageDigest; }
 
-  public DescriptorDigest getImageId() {
-    return imageId;
-  }
+  public DescriptorDigest getImageId() { return imageId; }
 
   @Override
   public int hashCode() {
@@ -78,8 +77,8 @@ public class BuildResult {
     if (!(other instanceof BuildResult)) {
       return false;
     }
-    BuildResult otherBuildResult = (BuildResult) other;
-    return imageDigest.equals(otherBuildResult.imageDigest)
-        && imageId.equals(otherBuildResult.imageId);
+    BuildResult otherBuildResult = (BuildResult)other;
+    return imageDigest.equals(otherBuildResult.imageDigest) &&
+        imageId.equals(otherBuildResult.imageId);
   }
 }

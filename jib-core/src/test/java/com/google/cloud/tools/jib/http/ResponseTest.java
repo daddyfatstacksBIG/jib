@@ -36,13 +36,16 @@ public class ResponseTest {
 
   @Test
   public void testGetContent() throws IOException {
-    byte[] expectedResponse = "crepecake\nis\ngood!".getBytes(StandardCharsets.UTF_8);
-    ByteArrayInputStream responseInputStream = new ByteArrayInputStream(expectedResponse);
+    byte[] expectedResponse =
+        "crepecake\nis\ngood!".getBytes(StandardCharsets.UTF_8);
+    ByteArrayInputStream responseInputStream =
+        new ByteArrayInputStream(expectedResponse);
 
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
     try (Response response = new Response(httpResponseMock)) {
-      Assert.assertArrayEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
+      Assert.assertArrayEquals(expectedResponse,
+                               ByteStreams.toByteArray(response.getBody()));
     }
   }
 }

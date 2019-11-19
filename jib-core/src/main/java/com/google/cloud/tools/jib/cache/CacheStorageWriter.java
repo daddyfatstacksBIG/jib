@@ -58,8 +58,8 @@ class CacheStorageWriter {
     private final DescriptorDigest layerDiffId;
     private final long layerSize;
 
-    private WrittenLayer(
-        DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize) {
+    private WrittenLayer(DescriptorDigest layerDigest,
+                         DescriptorDigest layerDiffId, long layerSize) {
       this.layerDigest = layerDigest;
       this.layerDiffId = layerDiffId;
       this.layerSize = layerSize;
@@ -67,39 +67,41 @@ class CacheStorageWriter {
   }
 
   /**
-   * Attempts to move {@code source} to {@code destination}. If {@code destination} already exists,
-   * this does nothing. Attempts an atomic move first, and falls back to non-atomic if the
-   * filesystem does not support atomic moves.
+   * Attempts to move {@code source} to {@code destination}. If {@code
+   * destination} already exists, this does nothing. Attempts an atomic move
+   * first, and falls back to non-atomic if the filesystem does not support
+   * atomic moves.
    *
    * @param source the source path
    * @param destination the destination path
    * @throws IOException if an I/O exception occurs
    */
-  private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
-    // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
-    // by anti-virus programs, like Windows Defender, that open new files for scanning.
-    // Retry the rename up to 5 times, with 15ms pause between each retry.
+  private static void moveIfDoesNotExist(Path source, Path destination)
+      throws IOException {
+    // Some Windows users report java.nio.file.AccessDeniedException that we
+    // suspect is caused by anti-virus programs, like Windows Defender, that
+    // open new files for scanning. Retry the rename up to 5 times, with 15ms
+    // pause between each retry.
     boolean success =
-        Retry.action(
-                () -> {
-                  if (Files.exists(destination)) {
-                    // If the file already exists, we skip renaming and use the existing file.
-                    // This happens if a new layer happens to have the same content as a
-                    // previously-cached layer.
-                    return true;
-                  }
-                  Files.move(source, destination);
-                  return Files.exists(destination);
-                })
+        Retry
+            .action(() -> {
+              if (Files.exists(destination)) {
+                // If the file already exists, we skip renaming and use the
+                // existing file. This happens if a new layer happens to have
+                // the same content as a previously-cached layer.
+                return true;
+              }
+              Files.move(source, destination);
+              return Files.exists(destination);
+            })
             .maximumRetries(5)
             .retryOnException(ex -> ex instanceof FileSystemException)
             .sleep(15, TimeUnit.MILLISECONDS)
             .run();
     if (!success) {
-      String message =
-          String.format(
-              "unable to move: %s to %s; such failures are often caused by interference from antivirus",
-              source, destination);
+      String message = String.format(
+          "unable to move: %s to %s; such failures are often caused by interference from antivirus",
+          source, destination);
       throw new IOException(message);
     }
   }
@@ -111,17 +113,17 @@ class CacheStorageWriter {
    * @return the digest of the decompressed file
    * @throws IOException if an I/O exception occurs
    */
-  private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
-      throws IOException {
-    try (InputStream fileInputStream =
-        new BufferedInputStream(new GZIPInputStream(Files.newInputStream(compressedFile)))) {
+  private static DescriptorDigest
+  getDiffIdByDecompressingFile(Path compressedFile) throws IOException {
+    try (InputStream fileInputStream = new BufferedInputStream(
+             new GZIPInputStream(Files.newInputStream(compressedFile)))) {
       return Digests.computeDigest(fileInputStream).getDigest();
     }
   }
 
   /**
-   * Writes a json template to the destination path by writing to a temporary file then moving the
-   * file.
+   * Writes a json template to the destination path by writing to a temporary
+   * file then moving the file.
    *
    * @param jsonTemplate the json template
    * @param destination the destination path
@@ -129,23 +131,22 @@ class CacheStorageWriter {
    */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
-    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+    Path temporaryFile =
+        Files.createTempFile(destination.getParent(), null, null);
     temporaryFile.toFile().deleteOnExit();
     try (OutputStream outputStream = Files.newOutputStream(temporaryFile)) {
       JsonTemplateMapper.writeTo(jsonTemplate, outputStream);
     }
 
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
+    // Attempts an atomic move first, and falls back to non-atomic if the file
+    // system does not support atomic moves.
     try {
-      Files.move(
-          temporaryFile,
-          destination,
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
+      Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE,
+                 StandardCopyOption.REPLACE_EXISTING);
 
     } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      Files.move(temporaryFile, destination,
+                 StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
@@ -158,8 +159,8 @@ class CacheStorageWriter {
   /**
    * Writes a compressed layer {@link Blob}.
    *
-   * <p>The {@code compressedLayerBlob} is written to the layer directory under the layers directory
-   * corresponding to the layer blob.
+   * <p>The {@code compressedLayerBlob} is written to the layer directory under
+   * the layers directory corresponding to the layer blob.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob} to write out
    * @return the {@link CachedLayer} representing the written entry
@@ -171,21 +172,23 @@ class CacheStorageWriter {
 
     // Creates the temporary directory.
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-      Path temporaryLayerDirectory =
-          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
+    try (TempDirectoryProvider tempDirectoryProvider =
+             new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory = tempDirectoryProvider.newDirectory(
+          cacheStorageFiles.getTemporaryDirectory());
 
       // Writes the layer file to the temporary directory.
-      WrittenLayer writtenLayer =
-          writeCompressedLayerBlobToDirectory(compressedLayerBlob, temporaryLayerDirectory);
+      WrittenLayer writtenLayer = writeCompressedLayerBlobToDirectory(
+          compressedLayerBlob, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
-          temporaryLayerDirectory, cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
+          temporaryLayerDirectory,
+          cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
       // Updates cachedLayer with the blob information.
-      Path layerFile =
-          cacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      Path layerFile = cacheStorageFiles.getLayerFile(writtenLayer.layerDigest,
+                                                      writtenLayer.layerDiffId);
       return CachedLayer.builder()
           .setLayerDigest(writtenLayer.layerDigest)
           .setLayerDiffId(writtenLayer.layerDiffId)
@@ -199,42 +202,45 @@ class CacheStorageWriter {
    * Writes an uncompressed {@link Blob} out to the cache directory in the form:
    *
    * <ul>
-   *   <li>The {@code uncompressedLayerBlob} is written to the layer directory under the layers
-   *       directory corresponding to the layer blob.
-   *   <li>The {@code selector} is written to the selector file under the selectors directory.
+   *   <li>The {@code uncompressedLayerBlob} is written to the layer directory
+   * under the layers directory corresponding to the layer blob. <li>The {@code
+   * selector} is written to the selector file under the selectors directory.
    * </ul>
    *
-   * @param uncompressedLayerBlob the {@link Blob} containing the uncompressed layer contents to
-   *     write out
-   * @param selector the optional selector digest to also reference this layer data. A selector
-   *     digest may be a secondary identifier for a layer that is distinct from the default layer
-   *     digest.
+   * @param uncompressedLayerBlob the {@link Blob} containing the uncompressed
+   *     layer contents to write out
+   * @param selector the optional selector digest to also reference this layer
+   *     data. A selector digest may be a secondary identifier for a layer that
+   *     is distinct from the default layer digest.
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer writeUncompressed(Blob uncompressedLayerBlob, @Nullable DescriptorDigest selector)
+  CachedLayer writeUncompressed(Blob uncompressedLayerBlob,
+                                @Nullable DescriptorDigest selector)
       throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
-    // Creates the temporary directory. The temporary directory must be in the same FileStore as the
-    // final location for Files.move to work.
+    // Creates the temporary directory. The temporary directory must be in the
+    // same FileStore as the final location for Files.move to work.
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-      Path temporaryLayerDirectory =
-          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
+    try (TempDirectoryProvider tempDirectoryProvider =
+             new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory = tempDirectoryProvider.newDirectory(
+          cacheStorageFiles.getTemporaryDirectory());
 
       // Writes the layer file to the temporary directory.
-      WrittenLayer writtenLayer =
-          writeUncompressedLayerBlobToDirectory(uncompressedLayerBlob, temporaryLayerDirectory);
+      WrittenLayer writtenLayer = writeUncompressedLayerBlobToDirectory(
+          uncompressedLayerBlob, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
-          temporaryLayerDirectory, cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
+          temporaryLayerDirectory,
+          cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
       // Updates cachedLayer with the blob information.
-      Path layerFile =
-          cacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      Path layerFile = cacheStorageFiles.getLayerFile(writtenLayer.layerDigest,
+                                                      writtenLayer.layerDiffId);
       CachedLayer.Builder cachedLayerBuilder =
           CachedLayer.builder()
               .setLayerDigest(writtenLayer.layerDigest)
@@ -258,17 +264,20 @@ class CacheStorageWriter {
    * @param compressedBlob the blob to save
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob) throws IOException {
+  CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob)
+      throws IOException {
     Files.createDirectories(cacheStorageFiles.getLocalDirectory());
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-      Path temporaryLayerDirectory =
-          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
-      Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(temporaryLayerDirectory);
+    try (TempDirectoryProvider tempDirectoryProvider =
+             new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory = tempDirectoryProvider.newDirectory(
+          cacheStorageFiles.getTemporaryDirectory());
+      Path temporaryLayerFile =
+          cacheStorageFiles.getTemporaryLayerFile(temporaryLayerDirectory);
 
       BlobDescriptor layerBlobDescriptor;
-      try (OutputStream fileOutputStream =
-          new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile))) {
+      try (OutputStream fileOutputStream = new BufferedOutputStream(
+               Files.newOutputStream(temporaryLayerFile))) {
         layerBlobDescriptor = compressedBlob.writeTo(fileOutputStream);
       }
 
@@ -280,7 +289,8 @@ class CacheStorageWriter {
 
       // Moves the temporary directory to directory named with diff ID
       // (temp/<digest> -> <diffID>/<digest>)
-      Path destination = cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
+      Path destination =
+          cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
       moveIfDoesNotExist(temporaryLayerDirectory, destination);
 
       return CachedLayer.builder()
@@ -299,20 +309,21 @@ class CacheStorageWriter {
    * @param manifestTemplate the manifest
    * @param containerConfiguration the container configuration
    */
-  void writeMetadata(
-      ImageReference imageReference,
-      BuildableManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfiguration)
+  void writeMetadata(ImageReference imageReference,
+                     BuildableManifestTemplate manifestTemplate,
+                     ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
-    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
+    Preconditions.checkNotNull(
+        manifestTemplate.getContainerConfiguration().getDigest());
 
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
-      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+      writeMetadata(containerConfiguration,
+                    imageDirectory.resolve("config.json"));
     }
   }
 
@@ -322,8 +333,8 @@ class CacheStorageWriter {
    * @param imageReference the image reference to store the metadata for
    * @param manifestTemplate the manifest
    */
-  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
-      throws IOException {
+  void writeMetadata(ImageReference imageReference,
+                     V21ManifestTemplate manifestTemplate) throws IOException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
@@ -333,18 +344,21 @@ class CacheStorageWriter {
   }
 
   /**
-   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   * Writes a container configuration to {@code (cache
+   * directory)/local/config/(image id)}.
    *
    * @param imageId the ID of the image to store the container configuration for
    * @param containerConfiguration the container configuration
    * @throws IOException if an I/O exception occurs
    */
-  void writeLocalConfig(
-      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+  void writeLocalConfig(DescriptorDigest imageId,
+                        ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
-    Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
+    Path configDirectory =
+        cacheStorageFiles.getLocalDirectory().resolve("config");
     Files.createDirectories(configDirectory);
-    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
+    writeMetadata(containerConfiguration,
+                  configDirectory.resolve(imageId.getHash()));
   }
 
   /**
@@ -355,26 +369,30 @@ class CacheStorageWriter {
    * @return a {@link WrittenLayer} with the written layer information
    * @throws IOException if an I/O exception occurs
    */
-  private WrittenLayer writeCompressedLayerBlobToDirectory(
-      Blob compressedLayerBlob, Path layerDirectory) throws IOException {
+  private WrittenLayer
+  writeCompressedLayerBlobToDirectory(Blob compressedLayerBlob,
+                                      Path layerDirectory) throws IOException {
     // Writes the layer file to the temporary directory.
-    Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
+    Path temporaryLayerFile =
+        cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     BlobDescriptor layerBlobDescriptor;
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile))) {
+    try (OutputStream fileOutputStream = new BufferedOutputStream(
+             Files.newOutputStream(temporaryLayerFile))) {
       layerBlobDescriptor = compressedLayerBlob.writeTo(fileOutputStream);
     }
 
     // Gets the diff ID.
-    DescriptorDigest layerDiffId = getDiffIdByDecompressingFile(temporaryLayerFile);
+    DescriptorDigest layerDiffId =
+        getDiffIdByDecompressingFile(temporaryLayerFile);
 
     // Renames the temporary layer file to the correct filename.
-    Path layerFile = layerDirectory.resolve(cacheStorageFiles.getLayerFilename(layerDiffId));
+    Path layerFile =
+        layerDirectory.resolve(cacheStorageFiles.getLayerFilename(layerDiffId));
     moveIfDoesNotExist(temporaryLayerFile, layerFile);
 
-    return new WrittenLayer(
-        layerBlobDescriptor.getDigest(), layerDiffId, layerBlobDescriptor.getSize());
+    return new WrittenLayer(layerBlobDescriptor.getDigest(), layerDiffId,
+                            layerBlobDescriptor.getSize());
   }
 
   /**
@@ -387,25 +405,31 @@ class CacheStorageWriter {
    */
   private WrittenLayer writeUncompressedLayerBlobToDirectory(
       Blob uncompressedLayerBlob, Path layerDirectory) throws IOException {
-    Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
+    Path temporaryLayerFile =
+        cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(
-            new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile)))) {
-      // Writes the layer with GZIP compression. The original bytes are captured as the layer's
-      // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
-      // content descriptor.
-      GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
-      DescriptorDigest layerDiffId = uncompressedLayerBlob.writeTo(compressorStream).getDigest();
+             new CountingDigestOutputStream(new BufferedOutputStream(
+                 Files.newOutputStream(temporaryLayerFile)))) {
+      // Writes the layer with GZIP compression. The original bytes are captured
+      // as the layer's diff ID and the bytes outputted from the GZIP
+      // compression are captured as the layer's content descriptor.
+      GZIPOutputStream compressorStream =
+          new GZIPOutputStream(compressedDigestOutputStream);
+      DescriptorDigest layerDiffId =
+          uncompressedLayerBlob.writeTo(compressorStream).getDigest();
 
-      // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
+      // The GZIPOutputStream must be closed in order to write out the remaining
+      // compressed data.
       compressorStream.close();
-      BlobDescriptor blobDescriptor = compressedDigestOutputStream.computeDigest();
+      BlobDescriptor blobDescriptor =
+          compressedDigestOutputStream.computeDigest();
       DescriptorDigest layerDigest = blobDescriptor.getDigest();
       long layerSize = blobDescriptor.getSize();
 
       // Renames the temporary layer file to the correct filename.
-      Path layerFile = layerDirectory.resolve(cacheStorageFiles.getLayerFilename(layerDiffId));
+      Path layerFile = layerDirectory.resolve(
+          cacheStorageFiles.getLayerFilename(layerDiffId));
       moveIfDoesNotExist(temporaryLayerFile, layerFile);
 
       return new WrittenLayer(layerDigest, layerDiffId, layerSize);
@@ -413,38 +437,39 @@ class CacheStorageWriter {
   }
 
   /**
-   * Writes the {@code selector} to a file in the selectors directory, with contents {@code
-   * layerDigest}.
+   * Writes the {@code selector} to a file in the selectors directory, with
+   * contents {@code layerDigest}.
    *
    * @param selector the selector
    * @param layerDigest the layer digest it selects
    * @throws IOException if an I/O exception occurs
    */
-  private void writeSelector(DescriptorDigest selector, DescriptorDigest layerDigest)
-      throws IOException {
+  private void writeSelector(DescriptorDigest selector,
+                             DescriptorDigest layerDigest) throws IOException {
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
 
     // Creates the selectors directory if it doesn't exist.
     Files.createDirectories(selectorFile.getParent());
 
-    // Writes the selector to a temporary file and then moves the file to the intended location.
+    // Writes the selector to a temporary file and then moves the file to the
+    // intended location.
     Path temporarySelectorFile = Files.createTempFile(null, null);
     temporarySelectorFile.toFile().deleteOnExit();
-    try (OutputStream fileOut = FileOperations.newLockingOutputStream(temporarySelectorFile)) {
+    try (OutputStream fileOut =
+             FileOperations.newLockingOutputStream(temporarySelectorFile)) {
       fileOut.write(layerDigest.getHash().getBytes(StandardCharsets.UTF_8));
     }
 
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
+    // Attempts an atomic move first, and falls back to non-atomic if the file
+    // system does not support atomic moves.
     try {
-      Files.move(
-          temporarySelectorFile,
-          selectorFile,
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
+      Files.move(temporarySelectorFile, selectorFile,
+                 StandardCopyOption.ATOMIC_MOVE,
+                 StandardCopyOption.REPLACE_EXISTING);
 
     } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
+      Files.move(temporarySelectorFile, selectorFile,
+                 StandardCopyOption.REPLACE_EXISTING);
     }
   }
 }

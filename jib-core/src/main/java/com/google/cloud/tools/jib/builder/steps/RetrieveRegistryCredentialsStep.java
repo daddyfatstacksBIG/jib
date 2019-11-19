@@ -29,24 +29,25 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Attempts to retrieve registry credentials. */
-class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> {
+class RetrieveRegistryCredentialsStep
+    implements Callable<Optional<Credential>> {
 
   /** Retrieves credentials for the base image. */
-  static RetrieveRegistryCredentialsStep forBaseImage(
-      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+  static RetrieveRegistryCredentialsStep
+  forBaseImage(BuildContext buildContext,
+               ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     return new RetrieveRegistryCredentialsStep(
-        buildContext,
-        progressEventDispatcherFactory,
+        buildContext, progressEventDispatcherFactory,
         buildContext.getBaseImageConfiguration().getImageRegistry(),
         buildContext.getBaseImageConfiguration().getCredentialRetrievers());
   }
 
   /** Retrieves credentials for the target image. */
   static RetrieveRegistryCredentialsStep forTargetImage(
-      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      BuildContext buildContext,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     return new RetrieveRegistryCredentialsStep(
-        buildContext,
-        progressEventDispatcherFactory,
+        buildContext, progressEventDispatcherFactory,
         buildContext.getTargetImageConfiguration().getImageRegistry(),
         buildContext.getTargetImageConfiguration().getCredentialRetrievers());
   }
@@ -75,19 +76,23 @@ class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> 
     eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("retrieving credentials for " + registry, 1);
-        TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
+             progressEventDispatcherFactory.create(
+                 "retrieving credentials for " + registry, 1);
+         TimerEventDispatcher ignored2 =
+             new TimerEventDispatcher(eventHandlers, description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
-        Optional<Credential> optionalCredential = credentialRetriever.retrieve();
+        Optional<Credential> optionalCredential =
+            credentialRetriever.retrieve();
         if (optionalCredential.isPresent()) {
           return optionalCredential;
         }
       }
 
-      // If no credentials found, give an info (not warning because in most cases, the base image is
-      // public and does not need extra credentials) and return empty.
-      eventHandlers.dispatch(
-          LogEvent.info("No credentials could be retrieved for registry " + registry));
+      // If no credentials found, give an info (not warning because in most
+      // cases, the base image is public and does not need extra credentials)
+      // and return empty.
+      eventHandlers.dispatch(LogEvent.info(
+          "No credentials could be retrieved for registry " + registry));
       return Optional.empty();
     }
   }

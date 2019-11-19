@@ -30,11 +30,13 @@ import javax.servlet.http.HttpServletResponse;
 public class HelloWorld extends HttpServlet {
 
   @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  public void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     try {
       URL worldFile = getServletContext().getResource("/WEB-INF/classes/world");
       Path path = Paths.get(worldFile.toURI());
-      String world = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+      String world =
+          new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 
       response.setContentType("text/plain");
       response.setCharacterEncoding("UTF-8");

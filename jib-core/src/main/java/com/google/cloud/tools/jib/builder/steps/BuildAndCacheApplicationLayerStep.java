@@ -39,30 +39,32 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
   private static final String DESCRIPTION = "Building %s layer";
 
   /**
-   * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
-   * classes layers. Optionally adds an extra layer if configured to do so.
+   * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies,
+   * resources, and classes layers. Optionally adds an extra layer if configured
+   * to do so.
    */
-  static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
-      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    List<LayerConfiguration> layerConfigurations = buildContext.getLayerConfigurations();
+  static ImmutableList<BuildAndCacheApplicationLayerStep>
+  makeList(BuildContext buildContext,
+           ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+    List<LayerConfiguration> layerConfigurations =
+        buildContext.getLayerConfigurations();
 
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "launching application layer builders", layerConfigurations.size());
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), "Preparing application layer builders")) {
+             progressEventDispatcherFactory.create(
+                 "launching application layer builders",
+                 layerConfigurations.size());
+         TimerEventDispatcher ignored =
+             new TimerEventDispatcher(buildContext.getEventHandlers(),
+                                      "Preparing application layer builders")) {
       return layerConfigurations
           .stream()
           // Skips the layer if empty.
-          .filter(layerConfiguration -> !layerConfiguration.getLayerEntries().isEmpty())
-          .map(
-              layerConfiguration ->
-                  new BuildAndCacheApplicationLayerStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      layerConfiguration.getName(),
-                      layerConfiguration))
+          .filter(layerConfiguration
+                  -> !layerConfiguration.getLayerEntries().isEmpty())
+          .map(layerConfiguration
+               -> new BuildAndCacheApplicationLayerStep(
+                   buildContext, progressEventDispatcher.newChildProducer(),
+                   layerConfiguration.getName(), layerConfiguration))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -76,8 +78,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
   private BuildAndCacheApplicationLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      String layerName,
-      LayerConfiguration layerConfiguration) {
+      String layerName, LayerConfiguration layerConfiguration) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layerName = layerName;
@@ -92,22 +93,29 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
     eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
-        TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
+             progressEventDispatcherFactory.create(
+                 "building " + layerName + " layer", 1);
+         TimerEventDispatcher ignored2 =
+             new TimerEventDispatcher(eventHandlers, description)) {
       Cache cache = buildContext.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
       Optional<CachedLayer> optionalCachedLayer =
           cache.retrieve(layerConfiguration.getLayerEntries());
       if (optionalCachedLayer.isPresent()) {
-        return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
+        return new PreparedLayer.Builder(optionalCachedLayer.get())
+            .setName(layerName)
+            .build();
       }
 
-      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
-      CachedLayer cachedLayer =
-          cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
+      Blob layerBlob =
+          new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries())
+              .build();
+      CachedLayer cachedLayer = cache.writeUncompressedLayer(
+          layerBlob, layerConfiguration.getLayerEntries());
 
-      eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
+      eventHandlers.dispatch(
+          LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
       return new PreparedLayer.Builder(cachedLayer).setName(layerName).build();
     }

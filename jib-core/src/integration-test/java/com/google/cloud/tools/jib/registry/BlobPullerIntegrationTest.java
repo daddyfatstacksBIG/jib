@@ -37,7 +37,8 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule
+  public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
@@ -46,47 +47,49 @@ public class BlobPullerIntegrationTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+  private final FailoverHttpClient httpClient =
+      new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
   public void testPull() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "localhost:5000", "busybox",
+                     httpClient)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
+        registryClient.pullManifest("latest", V21ManifestTemplate.class)
+            .getManifest();
 
     DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
 
     // Pulls a layer BLOB of the busybox image.
     LongAdder totalByteCount = new LongAdder();
     LongAdder expectedSize = new LongAdder();
-    Blob pulledBlob =
-        registryClient.pullBlob(
-            realDigest,
-            size -> {
-              Assert.assertEquals(0, expectedSize.sum());
-              expectedSize.add(size);
-            },
-            totalByteCount::add);
-    Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
+    Blob pulledBlob = registryClient.pullBlob(realDigest, size -> {
+      Assert.assertEquals(0, expectedSize.sum());
+      expectedSize.add(size);
+    }, totalByteCount::add);
+    Assert.assertEquals(
+        realDigest,
+        pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
   }
 
   @Test
   public void testPull_unknownBlob() throws IOException, DigestException {
-    DescriptorDigest nonexistentDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    DescriptorDigest nonexistentDigest = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "localhost:5000", "busybox",
+                     httpClient)
             .newRegistryClient();
 
     try {
-      registryClient
-          .pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
+      registryClient.pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
           .writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
@@ -97,7 +100,8 @@ public class BlobPullerIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));
+              "pull BLOB for localhost:5000/busybox with digest " +
+              nonexistentDigest));
     }
   }
 }

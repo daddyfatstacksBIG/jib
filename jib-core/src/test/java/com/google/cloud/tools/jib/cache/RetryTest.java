@@ -23,21 +23,18 @@ import org.junit.Test;
 /** Tests for {@link Retry}. */
 public class RetryTest {
   private int actionCount = 0;
-  private final Retry.Action<Exception> successfulAction =
-      () -> {
-        ++actionCount;
-        return true;
-      };
-  private final Retry.Action<Exception> unsuccessfulAction =
-      () -> {
-        ++actionCount;
-        return false;
-      };
-  private final Retry.Action<Exception> exceptionAction =
-      () -> {
-        ++actionCount;
-        throw new Exception("whee");
-      };
+  private final Retry.Action<Exception> successfulAction = () -> {
+    ++actionCount;
+    return true;
+  };
+  private final Retry.Action<Exception> unsuccessfulAction = () -> {
+    ++actionCount;
+    return false;
+  };
+  private final Retry.Action<Exception> exceptionAction = () -> {
+    ++actionCount;
+    throw new Exception("whee");
+  };
 
   @Test
   public void testSuccessfulAction() throws Exception {
@@ -90,11 +87,13 @@ public class RetryTest {
     // an InterruptedException
     Thread.currentThread().interrupt();
     try {
-      boolean result = Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
+      boolean result =
+          Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
       Assert.assertFalse(result);
       Assert.assertEquals(1, actionCount);
     } finally {
-      // This thread should be marked as interrupted (plus clear the flag for the test)
+      // This thread should be marked as interrupted (plus clear the flag for
+      // the test)
       Assert.assertTrue(Thread.interrupted());
     }
   }

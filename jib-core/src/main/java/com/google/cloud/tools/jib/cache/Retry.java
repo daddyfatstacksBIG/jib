@@ -21,16 +21,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 /**
- * Retries an action until it succeeds, or has retried too often and failed. By default the action
- * will be run up to 5 times. The action is deemed successful if it runs to completion without
- * throwing an exception, and returns true.
+ * Retries an action until it succeeds, or has retried too often and failed. By
+ * default the action will be run up to 5 times. The action is deemed successful
+ * if it runs to completion without throwing an exception, and returns true.
  *
  * <ul>
- *   <li>Exceptions are caught and, if deemed {@link #retryOnException(Predicate) retryable} then
- *       the action will be re-attempted. By default, any exception is considered retryable.
- *   <li>The retry instance can be configured to {@link #sleep(long, TimeUnit) sleep between
- *       retries}.
- *   <li>The maximum retry count {@link #maximumRetries(int) is configurable} (5 times by default).
+ *   <li>Exceptions are caught and, if deemed {@link
+ * #retryOnException(Predicate) retryable} then the action will be re-attempted.
+ * By default, any exception is considered retryable. <li>The retry instance can
+ * be configured to {@link #sleep(long, TimeUnit) sleep between retries}.
+ *   <li>The maximum retry count {@link #maximumRetries(int) is configurable} (5
+ * times by default).
  * </ul>
  *
  * @param <E> the class of exceptions that may be thrown
@@ -43,7 +44,8 @@ public class Retry<E extends Exception> {
     /**
      * Perform the action.
      *
-     * @return {@code true} if the action was successful and {@code false} otherwise
+     * @return {@code true} if the action was successful and {@code false}
+     *     otherwise
      * @throws E exception thrown during the action
      */
     boolean run() throws E;
@@ -62,12 +64,11 @@ public class Retry<E extends Exception> {
 
   private final Action<E> action;
   private int maximumRetries = 5;
-  private Predicate<Exception> retryOnException = ignored -> true; // continue to retry
+  private Predicate<Exception> retryOnException =
+      ignored -> true;                 // continue to retry
   private long sleepMilliseconds = -1; // no sleep
 
-  private Retry(Action<E> action) {
-    this.action = action;
-  }
+  private Retry(Action<E> action) { this.action = action; }
 
   public Retry<E> maximumRetries(int maximumRetries) {
     Preconditions.checkArgument(maximumRetries > 0);
@@ -100,12 +101,13 @@ public class Retry<E extends Exception> {
   }
 
   /**
-   * Run the action until it runs successfully, to a {@link #maximumRetries(int) maximum number of
-   * retries} (default: 5). If an exception occurs then the action will be retried providing {@link
-   * #retryOnException(Predicate) the exception is retryable}.
+   * Run the action until it runs successfully, to a {@link #maximumRetries(int)
+   * maximum number of retries} (default: 5). If an exception occurs then the
+   * action will be retried providing {@link #retryOnException(Predicate) the
+   * exception is retryable}.
    *
-   * @return true if the action was run successfully, or {@code false} if the action was unable to
-   *     complete
+   * @return true if the action was run successfully, or {@code false} if the
+   *     action was unable to complete
    * @throws E exception thrown during the action
    */
   public boolean run() throws E {

@@ -71,19 +71,18 @@ public class JibContainerBuilder {
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(RegistryImage baseImage) {
-    this(
-        ImageConfiguration.builder(baseImage.getImageReference())
-            .setCredentialRetrievers(baseImage.getCredentialRetrievers())
-            .build(),
-        BuildContext.builder());
+    this(ImageConfiguration.builder(baseImage.getImageReference())
+             .setCredentialRetrievers(baseImage.getCredentialRetrievers())
+             .build(),
+         BuildContext.builder());
   }
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(DockerDaemonImage baseImage) {
     this(
         ImageConfiguration.builder(baseImage.getImageReference())
-            .setDockerClient(
-                new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
+            .setDockerClient(new DockerClient(baseImage.getDockerExecutable(),
+                                              baseImage.getDockerEnvironment()))
             .build(),
         BuildContext.builder());
   }
@@ -91,25 +90,28 @@ public class JibContainerBuilder {
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(TarImage baseImage) {
     // TODO: Cleanup using scratch as placeholder
-    this(
-        ImageConfiguration.builder(baseImage.getImageReference().orElse(ImageReference.scratch()))
-            .setTarPath(baseImage.getPath())
-            .build(),
-        BuildContext.builder());
+    this(ImageConfiguration
+             .builder(
+                 baseImage.getImageReference().orElse(ImageReference.scratch()))
+             .setTarPath(baseImage.getPath())
+             .build(),
+         BuildContext.builder());
   }
 
   @VisibleForTesting
-  JibContainerBuilder(
-      ImageConfiguration imageConfiguration, BuildContext.Builder buildContextBuilder) {
-    this.buildContextBuilder = buildContextBuilder.setBaseImageConfiguration(imageConfiguration);
+  JibContainerBuilder(ImageConfiguration imageConfiguration,
+                      BuildContext.Builder buildContextBuilder) {
+    this.buildContextBuilder =
+        buildContextBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
-   * Adds a new layer to the container with {@code files} as the source files and {@code
-   * pathInContainer} as the path to copy the source files to in the container file system.
+   * Adds a new layer to the container with {@code files} as the source files
+   * and {@code pathInContainer} as the path to copy the source files to in the
+   * container file system.
    *
-   * <p>Source files that are directories will be recursively copied. For example, if the source
-   * files are:
+   * <p>Source files that are directories will be recursively copied. For
+   * example, if the source files are:
    *
    * <ul>
    *   <li>{@code fileA}
@@ -117,25 +119,29 @@ public class JibContainerBuilder {
    *   <li>{@code directory/}
    * </ul>
    *
-   * and the destination to copy to is {@code /path/in/container}, then the new layer will have the
-   * following entries for the container file system:
+   * and the destination to copy to is {@code /path/in/container}, then the new
+   * layer will have the following entries for the container file system:
    *
    * <ul>
    *   <li>{@code /path/in/container/fileA}
    *   <li>{@code /path/in/container/fileB}
    *   <li>{@code /path/in/container/directory/}
-   *   <li>{@code /path/in/container/directory/...} (all contents of {@code directory/})
+   *   <li>{@code /path/in/container/directory/...} (all contents of {@code
+   * directory/})
    * </ul>
    *
    * @param files the source files to copy to a new layer in the container
-   * @param pathInContainer the path in the container file system corresponding to the {@code
-   *     sourceFile}
+   * @param pathInContainer the path in the container file system corresponding
+   *     to the {@code sourceFile}
    * @return this
-   * @throws IOException if an exception occurred when recursively listing any directories
+   * @throws IOException if an exception occurred when recursively listing any
+   *     directories
    */
-  public JibContainerBuilder addLayer(List<Path> files, AbsoluteUnixPath pathInContainer)
+  public JibContainerBuilder addLayer(List<Path> files,
+                                      AbsoluteUnixPath pathInContainer)
       throws IOException {
-    LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+    LayerConfiguration.Builder layerConfigurationBuilder =
+        LayerConfiguration.builder();
 
     for (Path file : files) {
       layerConfigurationBuilder.addEntryRecursive(
@@ -146,18 +152,22 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Adds a new layer to the container with {@code files} as the source files and {@code
-   * pathInContainer} as the path to copy the source files to in the container file system.
+   * Adds a new layer to the container with {@code files} as the source files
+   * and {@code pathInContainer} as the path to copy the source files to in the
+   * container file system.
    *
    * @param files the source files to copy to a new layer in the container
-   * @param pathInContainer the path in the container file system corresponding to the {@code
-   *     sourceFile}
+   * @param pathInContainer the path in the container file system corresponding
+   *     to the {@code sourceFile}
    * @return this
-   * @throws IOException if an exception occurred when recursively listing any directories
-   * @throws IllegalArgumentException if {@code pathInContainer} is not an absolute Unix-style path
+   * @throws IOException if an exception occurred when recursively listing any
+   *     directories
+   * @throws IllegalArgumentException if {@code pathInContainer} is not an
+   *     absolute Unix-style path
    * @see #addLayer(List, AbsoluteUnixPath)
    */
-  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) throws IOException {
+  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer)
+      throws IOException {
     return addLayer(files, AbsoluteUnixPath.get(pathInContainer));
   }
 
@@ -173,13 +183,14 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
-   * previously-added layers.
+   * Sets the layers (defined by a list of {@link LayerConfiguration}s). This
+   * replaces any previously-added layers.
    *
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @return this
    */
-  public JibContainerBuilder setLayers(List<LayerConfiguration> layerConfigurations) {
+  public JibContainerBuilder
+  setLayers(List<LayerConfiguration> layerConfigurations) {
     this.layerConfigurations = new ArrayList<>(layerConfigurations);
     return this;
   }
@@ -190,13 +201,15 @@ public class JibContainerBuilder {
    * @param layerConfigurations the {@link LayerConfiguration}s
    * @return this
    */
-  public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
+  public JibContainerBuilder
+  setLayers(LayerConfiguration... layerConfigurations) {
     return setLayers(Arrays.asList(layerConfigurations));
   }
 
   /**
-   * Sets the container entrypoint. This is the beginning of the command that is run when the
-   * container starts. {@link #setProgramArguments} sets additional tokens.
+   * Sets the container entrypoint. This is the beginning of the command that is
+   * run when the container starts. {@link #setProgramArguments} sets additional
+   * tokens.
    *
    * <p>This is similar to <a
    * href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">{@code
@@ -224,22 +237,25 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the container entrypoint program arguments. These are additional tokens added to the end
-   * of the entrypoint command.
+   * Sets the container entrypoint program arguments. These are additional
+   * tokens added to the end of the entrypoint command.
    *
-   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#cmd">{@code
-   * CMD} in Dockerfiles</a> or {@code args} in the <a
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#cmd">{@code CMD} in
+   * Dockerfiles</a> or {@code args} in the <a
    * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
    * Container spec</a>.
    *
-   * <p>For example, if the entrypoint was {@code myprogram --flag subcommand} and program arguments
-   * were {@code hello world}, then the command that run when the container starts is {@code
-   * myprogram --flag subcommand hello world}.
+   * <p>For example, if the entrypoint was {@code myprogram --flag subcommand}
+   * and program arguments were {@code hello world}, then the command that run
+   * when the container starts is {@code myprogram --flag subcommand hello
+   * world}.
    *
    * @param programArguments a list of program argument tokens
    * @return this
    */
-  public JibContainerBuilder setProgramArguments(@Nullable List<String> programArguments) {
+  public JibContainerBuilder
+  setProgramArguments(@Nullable List<String> programArguments) {
     containerConfigurationBuilder.setProgramArguments(programArguments);
     return this;
   }
@@ -256,19 +272,21 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the container environment. These environment variables are available to the program
-   * launched by the container entrypoint command. This replaces any previously-set environment
-   * variables.
+   * Sets the container environment. These environment variables are available
+   * to the program launched by the container entrypoint command. This replaces
+   * any previously-set environment variables.
    *
-   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#env">{@code
-   * ENV} in Dockerfiles</a> or {@code env} in the <a
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#env">{@code ENV} in
+   * Dockerfiles</a> or {@code env} in the <a
    * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
    * Container spec</a>.
    *
    * @param environmentMap a map of environment variable names to values
    * @return this
    */
-  public JibContainerBuilder setEnvironment(Map<String, String> environmentMap) {
+  public JibContainerBuilder
+  setEnvironment(Map<String, String> environmentMap) {
     containerConfigurationBuilder.setEnvironment(environmentMap);
     return this;
   }
@@ -289,10 +307,12 @@ public class JibContainerBuilder {
   /**
    * Sets the directories that may hold externally mounted volumes.
    *
-   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#volume">{@code
    * VOLUME} in Dockerfiles</a>.
    *
-   * @param volumes the directory paths on the container filesystem to set as volumes
+   * @param volumes the directory paths on the container filesystem to set as
+   *     volumes
    * @return this
    */
   public JibContainerBuilder setVolumes(Set<AbsoluteUnixPath> volumes) {
@@ -303,7 +323,8 @@ public class JibContainerBuilder {
   /**
    * Sets the directories that may hold externally mounted volumes.
    *
-   * @param volumes the directory paths on the container filesystem to set as volumes
+   * @param volumes the directory paths on the container filesystem to set as
+   *     volumes
    * @return this
    * @see #setVolumes(Set)
    */
@@ -314,7 +335,8 @@ public class JibContainerBuilder {
   /**
    * Adds a directory that may hold an externally mounted volume.
    *
-   * @param volume a directory path on the container filesystem to represent a volume
+   * @param volume a directory path on the container filesystem to represent a
+   *     volume
    * @return this
    * @see #setVolumes(Set)
    */
@@ -323,13 +345,14 @@ public class JibContainerBuilder {
     return this;
   }
   /**
-   * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
-   * replaces any previously-set exposed ports.
+   * Sets the ports to expose from the container. Ports exposed will allow
+   * ingress traffic. This replaces any previously-set exposed ports.
    *
-   * <p>Use {@link Port#tcp} to expose a port for TCP traffic and {@link Port#udp} to expose a port
-   * for UDP traffic.
+   * <p>Use {@link Port#tcp} to expose a port for TCP traffic and {@link
+   * Port#udp} to expose a port for UDP traffic.
    *
-   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#expose">{@code
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#expose">{@code
    * EXPOSE} in Dockerfiles</a> or {@code ports} in the <a
    * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
    * Container spec</a>.
@@ -343,7 +366,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the ports to expose from the container. This replaces any previously-set exposed ports.
+   * Sets the ports to expose from the container. This replaces any
+   * previously-set exposed ports.
    *
    * @param ports the ports to expose
    * @return this
@@ -368,7 +392,8 @@ public class JibContainerBuilder {
   /**
    * Sets the labels for the container. This replaces any previously-set labels.
    *
-   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#label">{@code
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#label">{@code
    * LABEL} in Dockerfiles</a>.
    *
    * @param labelMap a map of label keys to values
@@ -392,8 +417,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the format to build the container image as. Use {@link ImageFormat#Docker} for Docker V2.2
-   * or {@link ImageFormat#OCI} for OCI.
+   * Sets the format to build the container image as. Use {@link
+   * ImageFormat#Docker} for Docker V2.2 or {@link ImageFormat#OCI} for OCI.
    *
    * @param imageFormat the {@link ImageFormat}
    * @return this
@@ -404,7 +429,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the container image creation time. The default is {@link Instant#EPOCH}.
+   * Sets the container image creation time. The default is {@link
+   * Instant#EPOCH}.
    *
    * @param creationTime the container image creation time
    * @return this
@@ -415,8 +441,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the user and group to run the container as. {@code user} can be a username or UID along
-   * with an optional groupname or GID.
+   * Sets the user and group to run the container as. {@code user} can be a
+   * username or UID along with an optional groupname or GID.
    *
    * <p>The following are valid formats for {@code user}
    *
@@ -443,7 +469,8 @@ public class JibContainerBuilder {
    * @param workingDirectory the working directory
    * @return this
    */
-  public JibContainerBuilder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
+  public JibContainerBuilder
+  setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
     containerConfigurationBuilder.setWorkingDirectory(workingDirectory);
     return this;
   }
@@ -451,46 +478,50 @@ public class JibContainerBuilder {
   /**
    * Builds the container.
    *
-   * @param containerizer the {@link Containerizer} that configures how to containerize
+   * @param containerizer the {@link Containerizer} that configures how to
+   *     containerize
    * @return the built container
    * @throws IOException if an I/O exception occurs
-   * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
-   *     created
+   * @throws CacheDirectoryCreationException if a directory to be used for the
+   *     cache could not be created
    * @throws HttpHostConnectException if jib failed to connect to a registry
-   * @throws RegistryUnauthorizedException if a registry request is unauthorized and needs
-   *     authentication
-   * @throws RegistryAuthenticationFailedException if registry authentication failed
+   * @throws RegistryUnauthorizedException if a registry request is unauthorized
+   *     and needs authentication
+   * @throws RegistryAuthenticationFailedException if registry authentication
+   *     failed
    * @throws UnknownHostException if the registry does not exist
-   * @throws InsecureRegistryException if a server could not be verified due to an insecure
-   *     connection
-   * @throws RegistryException if some other error occurred while interacting with a registry
-   * @throws ExecutionException if some other exception occurred during execution
+   * @throws InsecureRegistryException if a server could not be verified due to
+   *     an insecure connection
+   * @throws RegistryException if some other error occurred while interacting
+   *     with a registry
+   * @throws ExecutionException if some other exception occurred during
+   *     execution
    * @throws InterruptedException if the execution was interrupted
    */
   public JibContainer containerize(Containerizer containerizer)
-      throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
-          ExecutionException {
+      throws InterruptedException, RegistryException, IOException,
+             CacheDirectoryCreationException, ExecutionException {
     try (BuildContext buildContext = toBuildContext(containerizer);
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), containerizer.getDescription())) {
+         TimerEventDispatcher ignored = new TimerEventDispatcher(
+             buildContext.getEventHandlers(), containerizer.getDescription())) {
       logSources(buildContext.getEventHandlers());
 
       BuildResult result = containerizer.run(buildContext);
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
     } catch (ExecutionException ex) {
-      // If an ExecutionException occurs, re-throw the cause to be more easily handled by the user
+      // If an ExecutionException occurs, re-throw the cause to be more easily
+      // handled by the user
       if (ex.getCause() instanceof RegistryException) {
-        throw (RegistryException) ex.getCause();
+        throw(RegistryException) ex.getCause();
       }
       throw ex;
     }
   }
 
   /**
-   * Describes the container contents and configuration without actually physically building a
-   * container.
+   * Describes the container contents and configuration without actually
+   * physically building a container.
    *
    * @return a description of the container being built
    */
@@ -503,7 +534,8 @@ public class JibContainerBuilder {
    *
    * @param containerizer the {@link Containerizer}
    * @return the {@link BuildContext}
-   * @throws CacheDirectoryCreationException if a cache directory could not be created
+   * @throws CacheDirectoryCreationException if a cache directory could not be
+   *     created
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
@@ -512,8 +544,10 @@ public class JibContainerBuilder {
     return buildContextBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
-        .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
-        .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
+        .setBaseImageLayersCacheDirectory(
+            containerizer.getBaseImageLayersCacheDirectory())
+        .setApplicationLayersCacheDirectory(
+            containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
@@ -527,18 +561,20 @@ public class JibContainerBuilder {
 
   private void logSources(EventHandlers eventHandlers) {
     // Logs the different source files used.
-    eventHandlers.dispatch(LogEvent.info("Containerizing application with the following files:"));
+    eventHandlers.dispatch(
+        LogEvent.info("Containerizing application with the following files:"));
 
     for (LayerConfiguration layerConfiguration : layerConfigurations) {
       if (layerConfiguration.getLayerEntries().isEmpty()) {
         continue;
       }
 
-      eventHandlers.dispatch(
-          LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
+      eventHandlers.dispatch(LogEvent.info(
+          "\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
       for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-        eventHandlers.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+        eventHandlers.dispatch(
+            LogEvent.info("\t\t" + layerEntry.getSourceFile()));
       }
     }
   }

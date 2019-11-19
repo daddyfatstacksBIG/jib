@@ -53,7 +53,8 @@ public class RegistryClient {
   public static class Factory {
 
     private final EventHandlers eventHandlers;
-    private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+    private final RegistryEndpointRequestProperties
+        registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
     @Nullable private String userAgentSuffix;
@@ -64,14 +65,17 @@ public class RegistryClient {
         RegistryEndpointRequestProperties registryEndpointRequestProperties,
         FailoverHttpClient httpClient) {
       this.eventHandlers = eventHandlers;
-      this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+      this.registryEndpointRequestProperties =
+          registryEndpointRequestProperties;
       this.httpClient = httpClient;
     }
 
     /**
-     * Sets the authentication credentials to use to authenticate with the registry.
+     * Sets the authentication credentials to use to authenticate with the
+     * registry.
      *
-     * @param authorization the {@link Authorization} to access the registry/repository
+     * @param authorization the {@link Authorization} to access the
+     *     registry/repository
      * @return this
      */
     public Factory setAuthorization(@Nullable Authorization authorization) {
@@ -96,35 +100,33 @@ public class RegistryClient {
      * @return the new {@link RegistryClient}
      */
     public RegistryClient newRegistryClient() {
-      return new RegistryClient(
-          eventHandlers,
-          authorization,
-          registryEndpointRequestProperties,
-          makeUserAgent(),
-          httpClient);
+      return new RegistryClient(eventHandlers, authorization,
+                                registryEndpointRequestProperties,
+                                makeUserAgent(), httpClient);
     }
 
     /**
-     * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code
-     * jib 0.9.0 jib-maven-plugin}.
+     * The {@code User-Agent} is in the form of {@code jib <version> <type>}.
+     * For example: {@code jib 0.9.0 jib-maven-plugin}.
      *
-     * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
-     *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
-     *     string.
+     * @return the {@code User-Agent} header to send. The {@code User-Agent} can
+     *     be disabled by setting the system property variable {@code
+     *     _JIB_DISABLE_USER_AGENT} to any non-empty string.
      */
     private String makeUserAgent() {
       if (!JibSystemProperties.isUserAgentEnabled()) {
         return "";
       }
 
-      StringBuilder userAgentBuilder = new StringBuilder("jib ").append(ProjectInfo.VERSION);
+      StringBuilder userAgentBuilder =
+          new StringBuilder("jib ").append(ProjectInfo.VERSION);
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
-      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
-        userAgentBuilder
-            .append(" ")
-            .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
+      if (!Strings.isNullOrEmpty(
+              System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
+        userAgentBuilder.append(" ").append(
+            System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
       }
       return userAgentBuilder.toString();
     }
@@ -134,39 +136,38 @@ public class RegistryClient {
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
    *
    * @param eventHandlers the event handlers used for dispatching log events
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param serverUrl the server URL for the registry (for example, {@code
+   *     gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @param httpClient HTTP client
    * @return the new {@link Factory}
    */
-  public static Factory factory(
-      EventHandlers eventHandlers,
-      String serverUrl,
-      String imageName,
-      FailoverHttpClient httpClient) {
-    return new Factory(
-        eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName), httpClient);
-  }
-
-  public static Factory factory(
-      EventHandlers eventHandlers,
-      String serverUrl,
-      String imageName,
-      String sourceImageName,
-      FailoverHttpClient httpClient) {
+  public static Factory factory(EventHandlers eventHandlers, String serverUrl,
+                                String imageName,
+                                FailoverHttpClient httpClient) {
     return new Factory(
         eventHandlers,
-        new RegistryEndpointRequestProperties(serverUrl, imageName, sourceImageName),
+        new RegistryEndpointRequestProperties(serverUrl, imageName),
         httpClient);
+  }
+
+  public static Factory factory(EventHandlers eventHandlers, String serverUrl,
+                                String imageName, String sourceImageName,
+                                FailoverHttpClient httpClient) {
+    return new Factory(eventHandlers,
+                       new RegistryEndpointRequestProperties(
+                           serverUrl, imageName, sourceImageName),
+                       httpClient);
   }
 
   /**
    * A simple class representing the payload of a <a
-   * href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2 Bearer Token</a>
-   * which lists the set of access claims granted.
+   * href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2
+   * Bearer Token</a> which lists the set of access claims granted.
    *
    * <pre>
-   * {"access":[{"type": "repository","name": "library/openjdk","actions":["push","pull"]}]}
+   * {"access":[{"type": "repository","name":
+   * "library/openjdk","actions":["push","pull"]}]}
    * </pre>
    *
    * @see AccessClaim
@@ -178,9 +179,11 @@ public class RegistryClient {
   }
 
   /**
-   * Represents an access claim for a repository in a Docker Registry Bearer Token payload.
+   * Represents an access claim for a repository in a Docker Registry Bearer
+   * Token payload.
    *
-   * <pre>{"type": "repository","name": "library/openjdk","actions":["push","pull"]}</pre>
+   * <pre>{"type": "repository","name":
+   * "library/openjdk","actions":["push","pull"]}</pre>
    */
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static class AccessClaim implements JsonTemplate {
@@ -191,22 +194,24 @@ public class RegistryClient {
   }
 
   /**
-   * Decode the <a href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2 Bearer
-   * Token</a> to list the granted repositories with their levels of access.
+   * Decode the <a href="https://docs.docker.com/registry/spec/auth/jwt/">Docker
+   * Registry v2 Bearer Token</a> to list the granted repositories with their
+   * levels of access.
    *
    * @param token a Docker Registry Bearer Token
-   * @return a mapping of repository to granted access scopes, or {@code null} if the token is not a
-   *     Docker Registry Bearer Token
+   * @return a mapping of repository to granted access scopes, or {@code null}
+   *     if the token is not a Docker Registry Bearer Token
    */
   @VisibleForTesting
   @Nullable
   static Multimap<String, String> decodeTokenRepositoryGrants(String token) {
-    // Docker Registry Bearer Tokens are based on JWT.  A valid JWT is a set of 3 base64-encoded
-    // parts (header, payload, signature), collated with a ".".  The header and payload are
-    // JSON objects.
+    // Docker Registry Bearer Tokens are based on JWT.  A valid JWT is a set of
+    // 3 base64-encoded parts (header, payload, signature), collated with a ".".
+    // The header and payload are JSON objects.
     String[] jwtParts = token.split("\\.", -1);
     byte[] payloadData;
-    if (jwtParts.length != 3 || (payloadData = Base64.decodeBase64(jwtParts[1])) == null) {
+    if (jwtParts.length != 3 ||
+        (payloadData = Base64.decodeBase64(jwtParts[1])) == null) {
       return null;
     }
 
@@ -228,14 +233,16 @@ public class RegistryClient {
       if (payload.access == null) {
         return null;
       }
-      return payload
-          .access
-          .stream()
+      return payload.access.stream()
           .filter(claim -> "repository".equals(claim.type))
           .collect(
-              ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(
-                  claim -> claim.name,
-                  claim -> claim.actions == null ? Stream.empty() : claim.actions.stream()));
+              ImmutableSetMultimap
+                  .<AccessClaim, String, String>flatteningToImmutableSetMultimap(
+                      claim
+                      -> claim.name,
+                      claim
+                      -> claim.actions == null ? Stream.empty()
+                                               : claim.actions.stream()));
     } catch (IOException ex) {
       return null;
     }
@@ -243,7 +250,8 @@ public class RegistryClient {
 
   private final EventHandlers eventHandlers;
   @Nullable private final Authorization authorization;
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final String userAgent;
   private final FailoverHttpClient httpClient;
 
@@ -251,17 +259,17 @@ public class RegistryClient {
    * Instantiate with {@link #factory}.
    *
    * @param eventHandlers the event handlers used for dispatching log events
-   * @param authorization the {@link Authorization} to access the registry/repository
-   * @param registryEndpointRequestProperties properties of registry endpoint requests
+   * @param authorization the {@link Authorization} to access the
+   *     registry/repository
+   * @param registryEndpointRequestProperties properties of registry endpoint
+   *     requests
    * @param userAgent {@code User-Agent} header to send with the request
    * @param httpClient HTTP client
    */
   private RegistryClient(
-      EventHandlers eventHandlers,
-      @Nullable Authorization authorization,
+      EventHandlers eventHandlers, @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
-      FailoverHttpClient httpClient) {
+      String userAgent, FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
@@ -270,7 +278,8 @@ public class RegistryClient {
   }
 
   /**
-   * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
+   * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with
+   *     the registry, or
    *     {@link Optional#empty()} if no token authentication is necessary
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
@@ -279,9 +288,8 @@ public class RegistryClient {
       throws IOException, RegistryException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
-    return callRegistryEndpoint(
-        new AuthenticationMethodRetriever(
-            registryEndpointRequestProperties, getUserAgent(), httpClient));
+    return callRegistryEndpoint(new AuthenticationMethodRetriever(
+        registryEndpointRequestProperties, getUserAgent(), httpClient));
   }
 
   /**
@@ -289,21 +297,23 @@ public class RegistryClient {
    *
    * @param <T> child type of ManifestTemplate
    * @param imageTag the tag to pull on
-   * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
-   *     ManifestTemplate} to pull predefined subclasses; see: {@link
-   *     ManifestPuller#handleResponse(Response)}
+   * @param manifestTemplateClass the specific version of manifest template to
+   *     pull, or {@link ManifestTemplate} to pull predefined subclasses; see:
+   *     {@link ManifestPuller#handleResponse(Response)}
    * @return the {@link ManifestAndDigest}
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public <T extends ManifestTemplate> ManifestAndDigest<T> pullManifest(
-      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
-    ManifestPuller<T> manifestPuller =
-        new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
+  public <T extends ManifestTemplate> ManifestAndDigest<T>
+  pullManifest(String imageTag, Class<T> manifestTemplateClass)
+      throws IOException, RegistryException {
+    ManifestPuller<T> manifestPuller = new ManifestPuller<>(
+        registryEndpointRequestProperties, imageTag, manifestTemplateClass);
     return callRegistryEndpoint(manifestPuller);
   }
 
-  public ManifestAndDigest<?> pullManifest(String imageTag) throws IOException, RegistryException {
+  public ManifestAndDigest<?> pullManifest(String imageTag)
+      throws IOException, RegistryException {
     return pullManifest(imageTag, ManifestTemplate.class);
   }
 
@@ -316,95 +326,94 @@ public class RegistryClient {
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
+  public DescriptorDigest
+  pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
     return callRegistryEndpoint(
-        new ManifestPusher(
-            registryEndpointRequestProperties, manifestTemplate, imageTag, eventHandlers));
+        new ManifestPusher(registryEndpointRequestProperties, manifestTemplate,
+                           imageTag, eventHandlers));
   }
 
   /**
    * @param blobDigest the blob digest to check for
-   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@link
-   *     Optional#empty()} if it doesn't
+   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the
+   *     registry, or {@link Optional#empty()} if it doesn't
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
   public Optional<BlobDescriptor> checkBlob(DescriptorDigest blobDigest)
       throws IOException, RegistryException {
-    BlobChecker blobChecker = new BlobChecker(registryEndpointRequestProperties, blobDigest);
+    BlobChecker blobChecker =
+        new BlobChecker(registryEndpointRequestProperties, blobDigest);
     return callRegistryEndpoint(blobChecker);
   }
 
   /**
-   * Gets the BLOB referenced by {@code blobDigest}. Note that the BLOB is only pulled when it is
-   * written out.
+   * Gets the BLOB referenced by {@code blobDigest}. Note that the BLOB is only
+   * pulled when it is written out.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param blobSizeListener callback to receive the total size of the BLOb to pull
-   * @param writtenByteCountListener listens on byte count written to an output stream during the
+   * @param blobSizeListener callback to receive the total size of the BLOb to
    *     pull
+   * @param writtenByteCountListener listens on byte count written to an output
+   *     stream during the pull
    * @return a {@link Blob}
    */
-  public Blob pullBlob(
-      DescriptorDigest blobDigest,
-      Consumer<Long> blobSizeListener,
-      Consumer<Long> writtenByteCountListener) {
-    return Blobs.from(
-        outputStream -> {
-          try {
-            callRegistryEndpoint(
-                new BlobPuller(
-                    registryEndpointRequestProperties,
-                    blobDigest,
-                    outputStream,
-                    blobSizeListener,
-                    writtenByteCountListener));
+  public Blob pullBlob(DescriptorDigest blobDigest,
+                       Consumer<Long> blobSizeListener,
+                       Consumer<Long> writtenByteCountListener) {
+    return Blobs.from(outputStream -> {
+      try {
+        callRegistryEndpoint(new BlobPuller(
+            registryEndpointRequestProperties, blobDigest, outputStream,
+            blobSizeListener, writtenByteCountListener));
 
-          } catch (RegistryException ex) {
-            throw new IOException(ex);
-          }
-        });
+      } catch (RegistryException ex) {
+        throw new IOException(ex);
+      }
+    });
   }
 
   /**
-   * Pushes the BLOB. If the {@code sourceRepository} is provided then the remote registry may skip
-   * if the BLOB already exists on the registry.
+   * Pushes the BLOB. If the {@code sourceRepository} is provided then the
+   * remote registry may skip if the BLOB already exists on the registry.
    *
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
-   * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
-   *     otherwise; used to optimize the BLOB push
-   * @param writtenByteCountListener listens on byte count written to the registry during the push
-   * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
-   *     if the BLOB was pushed
+   * @param sourceRepository if pushing to the same registry then the source
+   *     image, or {@code null} otherwise; used to optimize the BLOB push
+   * @param writtenByteCountListener listens on byte count written to the
+   *     registry during the push
+   * @return {@code true} if the BLOB already exists on the registry and pushing
+   *     was skipped; false if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public boolean pushBlob(
-      DescriptorDigest blobDigest,
-      Blob blob,
-      @Nullable String sourceRepository,
-      Consumer<Long> writtenByteCountListener)
+  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob,
+                          @Nullable String sourceRepository,
+                          Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
 
-    if (sourceRepository != null
-        && !(JibSystemProperties.useCrossRepositoryBlobMounts()
-            && canAttemptBlobMount(authorization, sourceRepository))) {
-      // don't bother requesting a cross-repository blob-mount if we don't have access
+    if (sourceRepository != null &&
+        !(JibSystemProperties.useCrossRepositoryBlobMounts() &&
+          canAttemptBlobMount(authorization, sourceRepository))) {
+      // don't bother requesting a cross-repository blob-mount if we don't have
+      // access
       sourceRepository = null;
     }
-    BlobPusher blobPusher =
-        new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
+    BlobPusher blobPusher = new BlobPusher(registryEndpointRequestProperties,
+                                           blobDigest, blob, sourceRepository);
 
     try (TimerEventDispatcher timerEventDispatcher =
-        new TimerEventDispatcher(eventHandlers, "pushBlob")) {
+             new TimerEventDispatcher(eventHandlers, "pushBlob")) {
       try (TimerEventDispatcher timerEventDispatcher2 =
-          timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
+               timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
+        // POST
+        // /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
         // POST /v2/<name>/blobs/uploads/
-        Optional<URL> patchLocation = callRegistryEndpoint(blobPusher.initializer());
+        Optional<URL> patchLocation =
+            callRegistryEndpoint(blobPusher.initializer());
         if (!patchLocation.isPresent()) {
           // The BLOB exists already.
           return true;
@@ -413,8 +422,8 @@ public class RegistryClient {
         timerEventDispatcher2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
-        URL putLocation =
-            callRegistryEndpoint(blobPusher.writer(patchLocation.get(), writtenByteCountListener));
+        URL putLocation = callRegistryEndpoint(
+            blobPusher.writer(patchLocation.get(), writtenByteCountListener));
 
         timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);
 
@@ -427,26 +436,30 @@ public class RegistryClient {
   }
 
   /**
-   * Check if the authorization allows using the specified repository can be mounted by the remote
-   * registry as a source for blobs. More specifically, we can only check if the repository is not
-   * disallowed.
+   * Check if the authorization allows using the specified repository can be
+   * mounted by the remote registry as a source for blobs. More specifically, we
+   * can only check if the repository is not disallowed.
    *
    * @param repository repository in question
    * @return {@code true} if the repository appears to be mountable
    */
   @VisibleForTesting
-  static boolean canAttemptBlobMount(@Nullable Authorization authorization, String repository) {
-    if (authorization == null || !"bearer".equalsIgnoreCase(authorization.getScheme())) {
-      // Authorization methods other than the Docker Container Registry Token don't provide
-      // information as to which repositories are accessible.  The caller should attempt the mount
-      // and rely on the registry fallback as required by the spec.
+  static boolean canAttemptBlobMount(@Nullable Authorization authorization,
+                                     String repository) {
+    if (authorization == null ||
+        !"bearer".equalsIgnoreCase(authorization.getScheme())) {
+      // Authorization methods other than the Docker Container Registry Token
+      // don't provide information as to which repositories are accessible.  The
+      // caller should attempt the mount and rely on the registry fallback as
+      // required by the spec.
       // https://docs.docker.com/registry/spec/api/#pushing-an-image
       return true;
     }
     // if null then does not appear to be a DCRT
     Multimap<String, String> repositoryGrants =
         decodeTokenRepositoryGrants(authorization.getToken());
-    return repositoryGrants == null || repositoryGrants.containsEntry(repository, "pull");
+    return repositoryGrants == null ||
+        repositoryGrants.containsEntry(repository, "pull");
   }
 
   @VisibleForTesting
@@ -457,19 +470,17 @@ public class RegistryClient {
   /**
    * Calls the registry endpoint.
    *
-   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the
+   *     endpoint
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
+  private <T> T
+  callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            eventHandlers,
-            userAgent,
-            registryEndpointProvider,
-            authorization,
-            registryEndpointRequestProperties,
-            httpClient)
+               eventHandlers, userAgent, registryEndpointProvider,
+               authorization, registryEndpointRequestProperties, httpClient)
         .call();
   }
 }

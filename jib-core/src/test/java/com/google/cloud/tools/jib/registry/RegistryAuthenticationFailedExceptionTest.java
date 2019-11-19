@@ -26,7 +26,8 @@ public class RegistryAuthenticationFailedExceptionTest {
   @Test
   public void testRegistryAuthenticationFailedException_message() {
     RegistryAuthenticationFailedException exception =
-        new RegistryAuthenticationFailedException("serverUrl", "imageName", "message");
+        new RegistryAuthenticationFailedException("serverUrl", "imageName",
+                                                  "message");
     Assert.assertEquals("serverUrl", exception.getServerUrl());
     Assert.assertEquals("imageName", exception.getImageName());
     Assert.assertEquals(
@@ -38,7 +39,8 @@ public class RegistryAuthenticationFailedExceptionTest {
   public void testRegistryAuthenticationFailedException_exception() {
     Throwable cause = new Throwable("message");
     RegistryAuthenticationFailedException exception =
-        new RegistryAuthenticationFailedException("serverUrl", "imageName", cause);
+        new RegistryAuthenticationFailedException("serverUrl", "imageName",
+                                                  cause);
     Assert.assertEquals("serverUrl", exception.getServerUrl());
     Assert.assertEquals("imageName", exception.getImageName());
     Assert.assertSame(cause, exception.getCause());

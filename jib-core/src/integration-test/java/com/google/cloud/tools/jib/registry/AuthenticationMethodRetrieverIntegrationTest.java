@@ -28,22 +28,27 @@ import org.junit.Test;
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
-  private final FailoverHttpClient httpClient = new FailoverHttpClient(false, false, ignored -> {});
+  private final FailoverHttpClient httpClient =
+      new FailoverHttpClient(false, false, ignored -> {});
 
   @Test
-  public void testGetRegistryAuthenticator() throws IOException, RegistryException {
+  public void testGetRegistryAuthenticator()
+      throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "registry.hub.docker.com",
+                     "library/busybox", httpClient)
             .newRegistryClient();
     Optional<RegistryAuthenticator> registryAuthenticator =
         registryClient.getRegistryAuthenticator();
     Assert.assertTrue(registryAuthenticator.isPresent());
-    Authorization authorization = registryAuthenticator.get().authenticatePull(null);
+    Authorization authorization =
+        registryAuthenticator.get().authenticatePull(null);
 
     RegistryClient authorizedRegistryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "registry.hub.docker.com",
+                     "library/busybox", httpClient)
             .setAuthorization(authorization)
             .newRegistryClient();
     authorizedRegistryClient.pullManifest("latest");

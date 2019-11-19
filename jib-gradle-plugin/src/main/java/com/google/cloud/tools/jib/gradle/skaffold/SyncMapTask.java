@@ -48,43 +48,44 @@ public class SyncMapTask extends DefaultTask {
   public void listFilesAndTargets() {
     Preconditions.checkNotNull(jibExtension);
 
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+    try (TempDirectoryProvider tempDirectoryProvider =
+             new TempDirectoryProvider()) {
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+          GradleProjectProperties.getForProject(getProject(), getLogger(),
+                                                tempDirectoryProvider);
 
-      GradleRawConfiguration configuration = new GradleRawConfiguration(jibExtension);
+      GradleRawConfiguration configuration =
+          new GradleRawConfiguration(jibExtension);
 
       // TODO: move these shared checks with SyncMapMojo into plugins-common
       if (projectProperties.isWarProject()) {
         throw new GradleException(
-            "Skaffold sync is currently only available for 'jar' style Jib projects, but the project "
-                + getProject().getName()
-                + " is configured to generate a 'war'");
+            "Skaffold sync is currently only available for 'jar' style Jib projects, but the project " +
+            getProject().getName() + " is configured to generate a 'war'");
       }
       try {
-        if (!ContainerizingMode.EXPLODED.equals(
-            ContainerizingMode.from(jibExtension.getContainerizingMode()))) {
+        if (!ContainerizingMode.EXPLODED.equals(ContainerizingMode.from(
+                jibExtension.getContainerizingMode()))) {
           throw new GradleException(
-              "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of "
-                  + getProject().getName()
-                  + " is '"
-                  + jibExtension.getContainerizingMode()
-                  + "'");
+              "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of " +
+              getProject().getName() + " is '" +
+              jibExtension.getContainerizingMode() + "'");
         }
       } catch (InvalidContainerizingModeException ex) {
         throw new GradleException("Invalid containerizing mode", ex);
       }
 
       try {
-        String syncMapJson =
-            PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+        String syncMapJson = PluginConfigurationProcessor.getSkaffoldSyncMap(
+            configuration, projectProperties);
 
         System.out.println();
         System.out.println("BEGIN JIB JSON");
         System.out.println(syncMapJson);
 
       } catch (Exception ex) {
-        throw new GradleException("Failed to generate a Jib file map for sync with Skaffold", ex);
+        throw new GradleException(
+            "Failed to generate a Jib file map for sync with Skaffold", ex);
       }
     }
   }

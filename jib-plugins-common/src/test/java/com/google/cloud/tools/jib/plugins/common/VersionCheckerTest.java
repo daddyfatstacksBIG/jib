@@ -35,7 +35,8 @@ public class VersionCheckerTest {
 
     @Override
     public int compareTo(TestVersion other) {
-      for (int i = 0; i < Math.max(components.length, other.components.length); i++) {
+      for (int i = 0; i < Math.max(components.length, other.components.length);
+           i++) {
         int a = i < components.length ? components[i] : 0;
         int b = i < other.components.length ? other.components[i] : 0;
         if (a < b) {
@@ -52,9 +53,12 @@ public class VersionCheckerTest {
 
   @Before
   public void setUp() {
-    Assert.assertTrue(new TestVersion("1.0").compareTo(new TestVersion("1.1.1")) < 0);
-    Assert.assertTrue(new TestVersion("1.1.1").compareTo(new TestVersion("1.0")) > 0);
-    Assert.assertTrue(new TestVersion("1.1").compareTo(new TestVersion("1.1.0.0")) == 0);
+    Assert.assertTrue(
+        new TestVersion("1.0").compareTo(new TestVersion("1.1.1")) < 0);
+    Assert.assertTrue(
+        new TestVersion("1.1.1").compareTo(new TestVersion("1.0")) > 0);
+    Assert.assertTrue(
+        new TestVersion("1.1").compareTo(new TestVersion("1.1.0.0")) == 0);
     checker = new VersionChecker<>(TestVersion::new);
   }
 
@@ -179,7 +183,8 @@ public class VersionCheckerTest {
   @Test
   public void testRange_invalid() {
     for (String rangeSpec :
-        new String[] {"[]", "[,]", "(,]", "[,)", "(,)", "[1,2,3]", "[1]", "foo", "{,2.3)", ""}) {
+         new String[] {"[]", "[,]", "(,]", "[,)", "(,)", "[1,2,3]", "[1]",
+                       "foo", "{,2.3)", ""}) {
       try {
         checker.compatibleVersion(rangeSpec, "1.3");
         Assert.fail("should have thrown an exception for " + rangeSpec);

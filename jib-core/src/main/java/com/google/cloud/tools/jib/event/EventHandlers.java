@@ -29,38 +29,41 @@ public class EventHandlers {
   /** Builder for {@link EventHandlers}. */
   public static class Builder {
 
-    private final Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers =
+    private final Multimap<Class<? extends JibEvent>,
+                           Handler<? extends JibEvent>> handlers =
         ArrayListMultimap.create();
 
     /**
-     * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
-     * The order in which handlers are added is the order in which they are called when the event is
-     * dispatched.
+     * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class
+     * {@code eventClass}. The order in which handlers are added is the order in
+     * which they are called when the event is dispatched.
      *
-     * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
+     * <p><b>Note: Implementations of {@code eventConsumer} must be
+     * thread-safe.</b>
      *
      * @param eventType the event type that {@code eventConsumer} should handle
      * @param eventConsumer the event handler
      * @param <E> the type of {@code eventClass}
      * @return this
      */
-    public <E extends JibEvent> Builder add(Class<E> eventType, Consumer<? super E> eventConsumer) {
+    public <E extends JibEvent> Builder add(Class<E> eventType,
+                                            Consumer<? super E> eventConsumer) {
       handlers.put(eventType, new Handler<>(eventType, eventConsumer));
       return this;
     }
 
-    public EventHandlers build() {
-      return new EventHandlers(handlers);
-    }
+    public EventHandlers build() { return new EventHandlers(handlers); }
   }
 
   /** An empty {@link EventHandlers}. */
   public static final EventHandlers NONE = new Builder().build();
 
   /** Maps from {@link JibEvent} class to handlers for that event type. */
-  private final ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers;
+  private final ImmutableMultimap<Class<? extends JibEvent>,
+                                  Handler<? extends JibEvent>> handlers;
 
-  private EventHandlers(Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers) {
+  private EventHandlers(Multimap<Class<? extends JibEvent>,
+                                 Handler<? extends JibEvent>> handlers) {
     this.handlers = ImmutableMultimap.copyOf(handlers);
   }
 
@@ -69,9 +72,7 @@ public class EventHandlers {
    *
    * @return the builder
    */
-  public static Builder builder() {
-    return new Builder();
-  }
+  public static Builder builder() { return new Builder(); }
 
   /**
    * Dispatches {@code jibEvent} to all the handlers that can handle it.
@@ -83,7 +84,8 @@ public class EventHandlers {
       return;
     }
     handlers.get(JibEvent.class).forEach(handler -> handler.handle(jibEvent));
-    handlers.get(jibEvent.getClass()).forEach(handler -> handler.handle(jibEvent));
+    handlers.get(jibEvent.getClass())
+        .forEach(handler -> handler.handle(jibEvent));
   }
 
   /**
@@ -92,7 +94,8 @@ public class EventHandlers {
    * @return the map from {@link JibEvent} type to a list of {@link Handler}s
    */
   @VisibleForTesting
-  ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> getHandlers() {
+  ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>>
+  getHandlers() {
     return ImmutableMultimap.copyOf(handlers);
   }
 }

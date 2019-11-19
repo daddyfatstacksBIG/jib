@@ -34,15 +34,12 @@ public class BuildResultTest {
 
   @Before
   public void setUp() throws DigestException {
-    digest1 =
-        DescriptorDigest.fromDigest(
-            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
-    digest2 =
-        DescriptorDigest.fromDigest(
-            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
-    id =
-        DescriptorDigest.fromDigest(
-            "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+    digest1 = DescriptorDigest.fromDigest(
+        "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+    digest2 = DescriptorDigest.fromDigest(
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    id = DescriptorDigest.fromDigest(
+        "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
   }
 
   @Test
@@ -65,9 +62,12 @@ public class BuildResultTest {
 
   @Test
   public void testFromImage() throws IOException {
-    Image image1 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
-    Image image2 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
-    Image image3 = Image.builder(V22ManifestTemplate.class).setUser("anotherUser").build();
+    Image image1 =
+        Image.builder(V22ManifestTemplate.class).setUser("user").build();
+    Image image2 =
+        Image.builder(V22ManifestTemplate.class).setUser("user").build();
+    Image image3 =
+        Image.builder(V22ManifestTemplate.class).setUser("anotherUser").build();
     Assert.assertEquals(
         BuildResult.fromImage(image1, V22ManifestTemplate.class),
         BuildResult.fromImage(image2, V22ManifestTemplate.class));

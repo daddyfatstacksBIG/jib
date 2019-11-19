@@ -30,22 +30,23 @@ import org.junit.Test;
 /** Integration tests for {@link RegistryAuthenticator}. */
 public class RegistryAuthenticatorIntegrationTest {
 
-  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+  private final FailoverHttpClient httpClient =
+      new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
   public void testAuthenticate()
       throws IOException, RegistryException, InvalidImageReferenceException {
-    ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
+    ImageReference dockerHubImageReference =
+        ImageReference.parse("library/busybox");
     Optional<RegistryAuthenticator> registryAuthenticator =
-        RegistryClient.factory(
-                EventHandlers.NONE,
-                dockerHubImageReference.getRegistry(),
-                dockerHubImageReference.getRepository(),
-                httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, dockerHubImageReference.getRegistry(),
+                     dockerHubImageReference.getRepository(), httpClient)
             .newRegistryClient()
             .getRegistryAuthenticator();
     Assert.assertTrue(registryAuthenticator.isPresent());
-    Authorization authorization = registryAuthenticator.get().authenticatePull(null);
+    Authorization authorization =
+        registryAuthenticator.get().authenticatePull(null);
 
     // Checks that some token was received.
     Assert.assertTrue(0 < authorization.getToken().length());

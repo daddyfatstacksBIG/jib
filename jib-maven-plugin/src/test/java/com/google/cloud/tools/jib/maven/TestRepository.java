@@ -35,7 +35,9 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 
-/** A test helper to resolve artifacts from a local repository in test/resources */
+/**
+ * A test helper to resolve artifacts from a local repository in test/resources
+ */
 public class TestRepository extends ExternalResource {
 
   private static final String TEST_M2 = "maven/testM2";
@@ -45,31 +47,30 @@ public class TestRepository extends ExternalResource {
   private ArtifactHandler jarHandler;
 
   @Override
-  protected void before()
-      throws ComponentLookupException, URISyntaxException, MalformedURLException {
+  protected void before() throws ComponentLookupException, URISyntaxException,
+                                 MalformedURLException {
     MojoRule testHarness = new MojoRule();
     ArtifactRepositoryFactory artifactRepositoryFactory =
         testHarness.lookup(ArtifactRepositoryFactory.class);
     artifactResolver = testHarness.lookup(ArtifactResolver.class);
-    jarHandler = testHarness.lookup(ArtifactHandlerManager.class).getArtifactHandler("jar");
-    testLocalRepo =
-        artifactRepositoryFactory.createArtifactRepository(
-            "test",
-            Resources.getResource(TEST_M2).toURI().toURL().toString(),
-            new DefaultRepositoryLayout(),
-            null,
-            null);
+    jarHandler = testHarness.lookup(ArtifactHandlerManager.class)
+                     .getArtifactHandler("jar");
+    testLocalRepo = artifactRepositoryFactory.createArtifactRepository(
+        "test", Resources.getResource(TEST_M2).toURI().toURL().toString(),
+        new DefaultRepositoryLayout(), null, null);
   }
 
   Artifact findArtifact(String group, String artifact, String version) {
-    ArtifactResolutionRequest artifactResolutionRequest = new ArtifactResolutionRequest();
+    ArtifactResolutionRequest artifactResolutionRequest =
+        new ArtifactResolutionRequest();
     artifactResolutionRequest.setLocalRepository(testLocalRepo);
-    Artifact artifactToFind =
-        new DefaultArtifact(group, artifact, version, null, "jar", null, jarHandler);
+    Artifact artifactToFind = new DefaultArtifact(
+        group, artifact, version, null, "jar", null, jarHandler);
 
     artifactResolutionRequest.setArtifact(artifactToFind);
 
-    ArtifactResolutionResult ars = artifactResolver.resolve(artifactResolutionRequest);
+    ArtifactResolutionResult ars =
+        artifactResolver.resolve(artifactResolutionRequest);
 
     Assert.assertEquals(1, ars.getArtifacts().size());
     return ars.getArtifacts().iterator().next();

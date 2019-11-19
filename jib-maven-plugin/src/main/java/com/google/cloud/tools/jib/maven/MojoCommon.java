@@ -38,110 +38,121 @@ import org.apache.maven.project.MavenProject;
 public class MojoCommon {
   /** Describes a minimum required version or version range for Jib. */
   @VisibleForTesting
-  public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
+  public static final String REQUIRED_VERSION_PROPERTY_NAME =
+      "jib.requiredVersion";
 
   @Deprecated
-  static void checkUseCurrentTimestampDeprecation(JibPluginConfiguration jibPluginConfiguration) {
+  static void checkUseCurrentTimestampDeprecation(
+      JibPluginConfiguration jibPluginConfiguration) {
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       if (!jibPluginConfiguration.getCreationTime().equals("EPOCH")) {
         throw new IllegalArgumentException(
             "You cannot configure both <container><useCurrentTimestamp> and "
-                + "<container><creationTime>");
+            + "<container><creationTime>");
       }
-      jibPluginConfiguration
-          .getLog()
-          .warn(
-              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with "
-                  + "the value USE_CURRENT_TIMESTAMP instead");
+      jibPluginConfiguration.getLog().warn(
+          "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with "
+          + "the value USE_CURRENT_TIMESTAMP instead");
     }
   }
 
   /**
-   * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
-   * (project dir)/src/main/jib} by default if not configured.
+   * Gets the list of extra directory paths from a {@link
+   * JibPluginConfiguration}. Returns {@code (project dir)/src/main/jib} by
+   * default if not configured.
    *
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<Path> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
+  static List<Path>
+  getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
     List<Path> paths = jibPluginConfiguration.getExtraDirectories();
     if (!paths.isEmpty()) {
       return paths;
     }
 
-    MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
+    MavenProject project =
+        Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib"));
+        project.getBasedir().toPath().resolve("src").resolve("main").resolve(
+            "jib"));
   }
 
   /**
-   * Validates and converts a list of {@link PermissionConfiguration} to an equivalent {@code
-   * AbsoluteUnixPath->FilePermission} map.
+   * Validates and converts a list of {@link PermissionConfiguration} to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
    *
    * @param permissionList the list to convert
    * @return the resulting map
    */
   @VisibleForTesting
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsList(
-      List<PermissionConfiguration> permissionList) {
+  static Map<AbsoluteUnixPath, FilePermissions>
+  convertPermissionsList(List<PermissionConfiguration> permissionList) {
     Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (PermissionConfiguration permission : permissionList) {
-      if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
+      if (!permission.getFile().isPresent() ||
+          !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
             "Incomplete <permission> configuration; requires <file> and <mode> fields to be set");
       }
       AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile().get());
-      FilePermissions value = FilePermissions.fromOctalString(permission.getMode().get());
+      FilePermissions value =
+          FilePermissions.fromOctalString(permission.getMode().get());
       permissionsMap.put(key, value);
     }
     return permissionsMap;
   }
 
   /**
-   * Check that the actual version satisfies required Jib version range when specified. No check is
-   * performed if the provided Jib version is {@code null}, which should only occur during debug.
+   * Check that the actual version satisfies required Jib version range when
+   * specified. No check is performed if the provided Jib version is {@code
+   * null}, which should only occur during debug.
    *
    * @param descriptor the plugin version
    * @throws MojoExecutionException if the version is not acceptable
    */
-  public static void checkJibVersion(PluginDescriptor descriptor) throws MojoExecutionException {
-    String acceptableVersionSpec = System.getProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
+  public static void checkJibVersion(PluginDescriptor descriptor)
+      throws MojoExecutionException {
+    String acceptableVersionSpec =
+        System.getProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
     if (acceptableVersionSpec == null) {
       return;
     }
     String actualVersion = descriptor.getVersion();
     if (actualVersion == null) {
-      throw new MojoExecutionException("Could not determine Jib plugin version");
+      throw new MojoExecutionException(
+          "Could not determine Jib plugin version");
     }
     VersionChecker<DefaultArtifactVersion> checker =
         new VersionChecker<>(DefaultArtifactVersion::new);
     if (!checker.compatibleVersion(acceptableVersionSpec, actualVersion)) {
       String failure =
-          String.format(
-              "Jib plugin version is %s but is required to be %s",
-              actualVersion, acceptableVersionSpec);
+          String.format("Jib plugin version is %s but is required to be %s",
+                        actualVersion, acceptableVersionSpec);
       throw new MojoExecutionException(failure);
     }
   }
 
   /**
-   * Determines if Jib goal execution on this project/module should be skipped due to configuration.
+   * Determines if Jib goal execution on this project/module should be skipped
+   * due to configuration.
    *
-   * @param jibPluginConfiguration usually {@code this}, the Mojo this check is applied in.
-   * @return {@code true} if Jib should be skipped (should not execute goal), or {@code false} if it
-   *     should continue with execution.
+   * @param jibPluginConfiguration usually {@code this}, the Mojo this check is
+   *     applied in.
+   * @return {@code true} if Jib should be skipped (should not execute goal), or
+   *     {@code false} if it should continue with execution.
    */
-  public static boolean shouldSkipJibExecution(JibPluginConfiguration jibPluginConfiguration) {
+  public static boolean
+  shouldSkipJibExecution(JibPluginConfiguration jibPluginConfiguration) {
     Log log = jibPluginConfiguration.getLog();
     if (jibPluginConfiguration.isSkipped()) {
-      log.info("Skipping containerization because jib-maven-plugin: skip = true");
+      log.info(
+          "Skipping containerization because jib-maven-plugin: skip = true");
       return true;
     }
     if (!jibPluginConfiguration.isContainerizable()) {
-      log.info(
-          "Skipping containerization of this module (not specified in "
-              + PropertyNames.CONTAINERIZE
-              + ")");
+      log.info("Skipping containerization of this module (not specified in " +
+               PropertyNames.CONTAINERIZE + ")");
       return true;
     }
     if ("pom".equals(jibPluginConfiguration.getProject().getPackaging())) {

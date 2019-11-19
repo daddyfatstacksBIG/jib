@@ -36,13 +36,15 @@ import javax.annotation.Nullable;
 /** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Void> {
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
 
   /** The digest of the BLOB to pull. */
   private final DescriptorDigest blobDigest;
 
   /**
-   * The {@link OutputStream} to write the BLOB to. Closes the {@link OutputStream} after writing.
+   * The {@link OutputStream} to write the BLOB to. Closes the {@link
+   * OutputStream} after writing.
    */
   private final OutputStream destinationOutputStream;
 
@@ -51,8 +53,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
 
   BlobPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      DescriptorDigest blobDigest,
-      OutputStream destinationOutputStream,
+      DescriptorDigest blobDigest, OutputStream destinationOutputStream,
       Consumer<Long> blobSizeListener,
       Consumer<Long> writtenByteCountListener) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
@@ -63,21 +64,20 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
+  public Void handleResponse(Response response)
+      throws IOException, UnexpectedBlobDigestException {
     blobSizeListener.accept(response.getContentLength());
 
-    try (OutputStream outputStream =
-        new NotifyingOutputStream(destinationOutputStream, writtenByteCountListener)) {
+    try (OutputStream outputStream = new NotifyingOutputStream(
+             destinationOutputStream, writtenByteCountListener)) {
       BlobDescriptor receivedBlobDescriptor =
           Digests.computeDigest(response.getBody(), outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
         throw new UnexpectedBlobDigestException(
-            "The pulled BLOB has digest '"
-                + receivedBlobDescriptor.getDigest()
-                + "', but the request digest was '"
-                + blobDigest
-                + "'");
+            "The pulled BLOB has digest '" +
+            receivedBlobDescriptor.getDigest() +
+            "', but the request digest was '" + blobDigest + "'");
       }
     }
 
@@ -97,8 +97,9 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
 
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(
-        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/blobs/" + blobDigest);
+    return new URL(apiRouteBase +
+                   registryEndpointRequestProperties.getImageName() +
+                   "/blobs/" + blobDigest);
   }
 
   @Override
@@ -108,12 +109,9 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
 
   @Override
   public String getActionDescription() {
-    return "pull BLOB for "
-        + registryEndpointRequestProperties.getServerUrl()
-        + "/"
-        + registryEndpointRequestProperties.getImageName()
-        + " with digest "
-        + blobDigest;
+    return "pull BLOB for " + registryEndpointRequestProperties.getServerUrl() +
+        "/" + registryEndpointRequestProperties.getImageName() +
+        " with digest " + blobDigest;
   }
 
   @Override

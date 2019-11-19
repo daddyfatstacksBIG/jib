@@ -60,18 +60,20 @@ class TaskCommon {
   static void disableHttpLogging() {
     // Disables Apache HTTP client logging.
     OutputEventListenerBackedLoggerContext context =
-        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
-    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
-    context.setOutputEventListener(
-        event -> {
-          LogEvent logEvent = (LogEvent) event;
-          if (!logEvent.getCategory().contains("org.apache")) {
-            defaultOutputEventListener.onOutput(event);
-          }
-        });
+        (OutputEventListenerBackedLoggerContext)
+            LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener =
+        context.getOutputEventListener();
+    context.setOutputEventListener(event -> {
+      LogEvent logEvent = (LogEvent)event;
+      if (!logEvent.getCategory().contains("org.apache")) {
+        defaultOutputEventListener.onOutput(event);
+      }
+    });
 
     // Disables Google HTTP client logging.
-    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName())
+        .setLevel(Level.OFF);
   }
 
   @Deprecated
@@ -80,23 +82,25 @@ class TaskCommon {
       if (!jibExtension.getContainer().getCreationTime().equals("EPOCH")) {
         throw new IllegalArgumentException(
             "You cannot configure both 'jib.container.useCurrentTimestamp' and "
-                + "'jib.container.creationTime'");
+            + "'jib.container.creationTime'");
       }
       logger.warn(
           "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-              + "with the value 'USE_CURRENT_TIMESTAMP' instead");
+          + "with the value 'USE_CURRENT_TIMESTAMP' instead");
     }
   }
 
   /**
-   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
-   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   * Validates and converts a {@code String->String}
+   * file-path-to-file-permissions map to an equivalent {@code
+   * AbsoluteUnixPath->FilePermission} map.
    *
-   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @param stringMap the map to convert (example entry: {@code
+   *     "/path/on/container" -> "755"})
    * @return the converted map
    */
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> stringMap) {
+  static Map<AbsoluteUnixPath, FilePermissions>
+  convertPermissionsMap(Map<String, String> stringMap) {
     Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (Map.Entry<String, String> entry : stringMap.entrySet()) {
       AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());

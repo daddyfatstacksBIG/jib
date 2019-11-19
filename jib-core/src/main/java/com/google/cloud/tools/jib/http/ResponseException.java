@@ -26,27 +26,22 @@ public class ResponseException extends IOException {
   private final HttpResponseException httpResponseException;
   private final boolean requestAuthorizationCleared;
 
-  ResponseException(
-      HttpResponseException httpResponseException, boolean requestAuthorizationCleared) {
+  ResponseException(HttpResponseException httpResponseException,
+                    boolean requestAuthorizationCleared) {
     super(httpResponseException.getMessage(), httpResponseException);
     this.httpResponseException = httpResponseException;
     this.requestAuthorizationCleared = requestAuthorizationCleared;
   }
 
-  public int getStatusCode() {
-    return httpResponseException.getStatusCode();
-  }
+  public int getStatusCode() { return httpResponseException.getStatusCode(); }
 
-  public String getContent() {
-    return httpResponseException.getContent();
-  }
+  public String getContent() { return httpResponseException.getContent(); }
 
-  public HttpHeaders getHeaders() {
-    return httpResponseException.getHeaders();
-  }
+  public HttpHeaders getHeaders() { return httpResponseException.getHeaders(); }
 
   /**
-   * Returns whether the {@code Authorization} HTTP header was cleared (and thus not sent).
+   * Returns whether the {@code Authorization} HTTP header was cleared (and thus
+   * not sent).
    *
    * @return whether the {@code Authorization} HTTP header was cleared
    */

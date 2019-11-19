@@ -28,8 +28,9 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
 /**
- * A bean that configures properties of the container run from the image. This is configurable with
- * Groovy closures and can be validated when used as a task input.
+ * A bean that configures properties of the container run from the image. This
+ * is configurable with Groovy closures and can be validated when used as a task
+ * input.
  */
 public class ContainerParameters {
 
@@ -52,7 +53,8 @@ public class ContainerParameters {
 
   @Input
   public boolean getUseCurrentTimestamp() {
-    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) !=
+        null) {
       return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     }
     return useCurrentTimestamp;
@@ -91,9 +93,7 @@ public class ContainerParameters {
     return jvmFlags;
   }
 
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
-  }
+  public void setJvmFlags(List<String> jvmFlags) { this.jvmFlags = jvmFlags; }
 
   @Input
   @Optional
@@ -134,9 +134,7 @@ public class ContainerParameters {
     return mainClass;
   }
 
-  public void setMainClass(String mainClass) {
-    this.mainClass = mainClass;
-  }
+  public void setMainClass(String mainClass) { this.mainClass = mainClass; }
 
   @Input
   @Nullable
@@ -149,22 +147,19 @@ public class ContainerParameters {
     return args;
   }
 
-  public void setArgs(List<String> args) {
-    this.args = args;
-  }
+  public void setArgs(List<String> args) { this.args = args; }
 
   @Input
   @Optional
   public ImageFormat getFormat() {
     if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
-      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT));
+      return ImageFormat.valueOf(
+          System.getProperty(PropertyNames.CONTAINER_FORMAT));
     }
     return Preconditions.checkNotNull(format);
   }
 
-  public void setFormat(ImageFormat format) {
-    this.format = format;
-  }
+  public void setFormat(ImageFormat format) { this.format = format; }
 
   @Input
   @Optional
@@ -176,9 +171,7 @@ public class ContainerParameters {
     return ports;
   }
 
-  public void setPorts(List<String> ports) {
-    this.ports = ports;
-  }
+  public void setPorts(List<String> ports) { this.ports = ports; }
 
   @Input
   @Optional
@@ -190,9 +183,7 @@ public class ContainerParameters {
     return volumes;
   }
 
-  public void setVolumes(List<String> volumes) {
-    this.volumes = volumes;
-  }
+  public void setVolumes(List<String> volumes) { this.volumes = volumes; }
 
   @Input
   @Optional
@@ -204,9 +195,7 @@ public class ContainerParameters {
     return labels;
   }
 
-  public void setLabels(Map<String, String> labels) {
-    this.labels = labels;
-  }
+  public void setLabels(Map<String, String> labels) { this.labels = labels; }
 
   @Input
   @Optional
@@ -217,9 +206,7 @@ public class ContainerParameters {
     return appRoot;
   }
 
-  public void setAppRoot(String appRoot) {
-    this.appRoot = appRoot;
-  }
+  public void setAppRoot(String appRoot) { this.appRoot = appRoot; }
 
   @Input
   @Nullable
@@ -231,9 +218,7 @@ public class ContainerParameters {
     return user;
   }
 
-  public void setUser(String user) {
-    this.user = user;
-  }
+  public void setUser(String user) { this.user = user; }
 
   @Input
   @Nullable
@@ -252,8 +237,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public String getFilesModificationTime() {
-    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) !=
+        null) {
+      return System.getProperty(
+          PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
     }
     return filesModificationTime;
   }

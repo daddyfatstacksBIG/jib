@@ -53,18 +53,25 @@ public class TestWebServer implements Closeable {
   private final Semaphore serverStarted = new Semaphore(1);
   private final StringBuilder inputRead = new StringBuilder();
 
-  public TestWebServer(boolean https)
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), 1);
+  public TestWebServer(boolean https) throws IOException, InterruptedException,
+                                             GeneralSecurityException,
+                                             URISyntaxException {
+    this(https,
+         Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"),
+         1);
   }
 
   public TestWebServer(boolean https, int numThreads)
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), numThreads);
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
+    this(https,
+         Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"),
+         numThreads);
   }
 
   public TestWebServer(boolean https, List<String> responses, int numThreads)
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
     this.https = https;
     this.responses = responses;
     this.numThreads = numThreads;
@@ -74,13 +81,12 @@ public class TestWebServer implements Closeable {
     serverStarted.acquire();
   }
 
-  public int getLocalPort() {
-    return serverSocket.getLocalPort();
-  }
+  public int getLocalPort() { return serverSocket.getLocalPort(); }
 
   public String getEndpoint() {
     String host = serverSocket.getInetAddress().getHostAddress();
-    return (https ? "https" : "http") + "://" + host + ":" + serverSocket.getLocalPort();
+    return (https ? "https" : "http") + "://" + host + ":" +
+        serverSocket.getLocalPort();
   }
 
   @Override
@@ -92,8 +98,10 @@ public class TestWebServer implements Closeable {
   private ServerSocket createHttpsServerSocket()
       throws IOException, GeneralSecurityException, URISyntaxException {
     KeyStore keyStore = KeyStore.getInstance("JKS");
-    // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
-    Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
+    // generated with: keytool -genkey -keyalg RSA -keystore
+    // ./TestWebServer-keystore
+    Path keyStoreFile =
+        Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
     try (InputStream in = Files.newInputStream(keyStoreFile)) {
       keyStore.load(in, "password".toCharArray());
     }
@@ -123,18 +131,21 @@ public class TestWebServer implements Closeable {
 
       int firstByte = in.read();
       if (firstByte != 'G' && firstByte != 'P') { // GET, POST, ...
-        out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
+        out.write(
+            "HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
         return null;
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+      BufferedReader reader =
+          new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
       for (String response : responses) {
         for (String line = reader.readLine();
-            line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
-            line = reader.readLine()) {
+             line != null &&
+             !line.isEmpty(); // An empty line marks the end of an HTTP request.
+             line = reader.readLine()) {
           synchronized (inputRead) {
             if (firstByte != -1) {
-              inputRead.append((char) firstByte);
+              inputRead.append((char)firstByte);
               firstByte = -1;
             }
             inputRead.append(line).append('\n');
@@ -147,17 +158,17 @@ public class TestWebServer implements Closeable {
     return null;
   }
 
-  // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
-  // Without "consuming" the return value this way, Error Prone will complain to use it.
+  // For use to ignore (i.e., accept and do nothing) a return value from
+  // ExecutionService.submit(). Without "consuming" the return value this way,
+  // Error Prone will complain to use it.
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
   }
 
   /**
-   * Returns input read. Note if there were concurrent connections, input lines from different
-   * connections can be intermixed. However, no lines will ever be broken in the middle.
+   * Returns input read. Note if there were concurrent connections, input lines
+   * from different connections can be intermixed. However, no lines will ever
+   * be broken in the middle.
    */
-  public String getInputRead() {
-    return inputRead.toString();
-  }
+  public String getInputRead() { return inputRead.toString(); }
 }

@@ -40,8 +40,7 @@ public class WriteTarFileStep implements Callable<BuildResult> {
   WriteTarFileStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Path outputPath,
-      Image builtImage) {
+      Path outputPath, Image builtImage) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.outputPath = outputPath;
@@ -50,20 +49,20 @@ public class WriteTarFileStep implements Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws IOException {
-    buildContext.getEventHandlers().dispatch(LogEvent.progress("Building image to tar file..."));
+    buildContext.getEventHandlers().dispatch(
+        LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =
-        progressEventDispatcherFactory.create("writing to tar file", 1)) {
+             progressEventDispatcherFactory.create("writing to tar file", 1)) {
       // Builds the image to a tarball.
       if (outputPath.getParent() != null) {
         Files.createDirectories(outputPath.getParent());
       }
-      try (OutputStream outputStream =
-          new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageTarball(
-                builtImage,
-                buildContext.getTargetImageConfiguration().getImage(),
-                buildContext.getAllTargetImageTags())
+      try (OutputStream outputStream = new BufferedOutputStream(
+               FileOperations.newLockingOutputStream(outputPath))) {
+        new ImageTarball(builtImage,
+                         buildContext.getTargetImageConfiguration().getImage(),
+                         buildContext.getAllTargetImageTags())
             .writeTo(outputStream);
       }
 

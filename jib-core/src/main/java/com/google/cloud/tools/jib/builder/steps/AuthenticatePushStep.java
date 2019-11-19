@@ -53,26 +53,29 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
 
   @Override
   public Optional<Authorization> call() throws IOException, RegistryException {
-    String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
+    String registry =
+        buildContext.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
-        TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
+             progressEventDispatcherFactory.create(
+                 "authenticating push to " + registry, 1);
+         TimerEventDispatcher ignored2 =
+             new TimerEventDispatcher(buildContext.getEventHandlers(),
+                                      String.format(DESCRIPTION, registry))) {
       Optional<RegistryAuthenticator> registryAuthenticator =
-          buildContext
-              .newTargetImageRegistryClientFactory()
+          buildContext.newTargetImageRegistryClientFactory()
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator.isPresent()) {
-        return Optional.of(registryAuthenticator.get().authenticatePush(registryCredential));
+        return Optional.of(
+            registryAuthenticator.get().authenticatePush(registryCredential));
       }
     }
 
-    return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
+    return (registryCredential == null ||
+            registryCredential.isOAuth2RefreshToken())
         ? Optional.empty()
-        : Optional.of(
-            Authorization.fromBasicCredentials(
-                registryCredential.getUsername(), registryCredential.getPassword()));
+        : Optional.of(Authorization.fromBasicCredentials(
+              registryCredential.getUsername(),
+              registryCredential.getPassword()));
   }
 }

@@ -44,7 +44,10 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 
-/** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
+/**
+ * Defines the configuration parameters for Jib. Jib {@link Mojo}s should
+ * extend this class.
+ */
 public abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Base for {@link FromAuthConfiguration} and {@link ToAuthConfiguration}. */
@@ -54,9 +57,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String password;
     private final String source;
 
-    private AuthConfiguration(String source) {
-      this.source = source;
-    }
+    private AuthConfiguration(String source) { this.source = source; }
 
     @Override
     @Nullable
@@ -89,17 +90,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Used to configure {@code from.auth} parameters. */
   public static class FromAuthConfiguration extends AuthConfiguration {
 
-    public FromAuthConfiguration() {
-      super("from");
-    }
+    public FromAuthConfiguration() { super("from"); }
   }
 
   /** Used to configure {@code to.auth} parameters. */
   public static class ToAuthConfiguration extends AuthConfiguration {
 
-    public ToAuthConfiguration() {
-      super("to");
-    }
+    public ToAuthConfiguration() { super("to"); }
   }
 
   /** Used to configure {@code extraDirectories.permissions} parameter. */
@@ -117,13 +114,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       this.mode = mode;
     }
 
-    Optional<String> getFile() {
-      return Optional.ofNullable(file);
-    }
+    Optional<String> getFile() { return Optional.ofNullable(file); }
 
-    Optional<String> getMode() {
-      return Optional.ofNullable(mode);
-    }
+    Optional<String> getMode() { return Optional.ofNullable(mode); }
   }
 
   /** Configuration for {@code from} parameter, */
@@ -147,15 +140,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
 
-    public void set(String image) {
-      this.image = image;
-    }
+    public void set(String image) { this.image = image; }
   }
 
   /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
 
-    // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
+    // Note: `entrypoint` and `args` are @Nullable to handle inheriting values
+    // from the base image
 
     @Parameter private boolean useCurrentTimestamp = false;
 
@@ -195,11 +187,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<File> paths = Collections.emptyList();
 
-    @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
+    @Parameter
+    private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    public List<File> getPaths() {
-      return paths;
-    }
+    public List<File> getPaths() { return paths; }
   }
 
   /** Configuration for the {@code dockerClient} parameter. */
@@ -238,11 +229,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ContainerParameters container = new ContainerParameters();
 
   // this parameter is cloned in FilesMojo
-  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
+  @Parameter
+  private ExtraDirectoriesParameters extraDirectories =
+      new ExtraDirectoriesParameters();
 
-  @Parameter private DockerClientParameters dockerClient = new DockerClientParameters();
+  @Parameter
+  private DockerClientParameters dockerClient = new DockerClientParameters();
 
-  @Parameter private OutputPathsParameters outputPaths = new OutputPathsParameters();
+  @Parameter
+  private OutputPathsParameters outputPaths = new OutputPathsParameters();
 
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
@@ -250,8 +245,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = PropertyNames.CONTAINERIZING_MODE)
   private String containerizingMode = "exploded";
 
-  @Parameter(property = PropertyNames.SKIP)
-  private boolean skip;
+  @Parameter(property = PropertyNames.SKIP) private boolean skip;
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -297,7 +291,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getBaseImageAuth() {
-    // System/pom properties for auth are handled in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in
+    // ConfigurationPropertyValidator
     return from.auth;
   }
 
@@ -327,7 +322,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   Set<String> getTargetImageAdditionalTags() {
     String property = getProperty(PropertyNames.TO_TAGS);
     List<String> tags =
-        property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
+        property != null
+            ? ConfigurationPropertyValidator.parseListProperty(property)
+            : to.tags;
     if (tags.stream().anyMatch(Strings::isNullOrEmpty)) {
       String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
       throw new IllegalArgumentException(source + " has empty tag");
@@ -350,18 +347,21 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getTargetImageAuth() {
-    // System/pom properties for auth are handled in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in
+    // ConfigurationPropertyValidator
     return to.auth;
   }
 
   /**
    * Gets whether or not to use the current timestamp for the container build.
    *
-   * @return {@code true} if the build should use the current timestamp, {@code false} if not
+   * @return {@code true} if the build should use the current timestamp, {@code
+   *     false} if not
    */
   @Deprecated
   boolean getUseCurrentTimestamp() {
-    String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
+    String property =
+        getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     if (property != null) {
       return Boolean.parseBoolean(property);
     }
@@ -548,7 +548,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured files modification time value
    */
   String getFilesModificationTime() {
-    String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    String property =
+        getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
     if (property != null) {
       return property;
     }
@@ -574,13 +575,18 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the list of configured extra directory paths
    */
   List<Path> getExtraDirectories() {
-    // TODO: Should inform user about nonexistent directory if using custom directory.
+    // TODO: Should inform user about nonexistent directory if using custom
+    // directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
-      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      List<String> paths =
+          ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectories.getPaths().stream().map(File::toPath).collect(Collectors.toList());
+    return extraDirectories.getPaths()
+        .stream()
+        .map(File::toPath)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -594,7 +600,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseMapProperty(property)
           .entrySet()
           .stream()
-          .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
+          .map(entry
+               -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
     }
     return extraDirectories.permissions;
@@ -606,7 +613,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return Paths.get(property);
     }
-    return dockerClient.executable == null ? null : dockerClient.executable.toPath();
+    return dockerClient.executable == null ? null
+                                           : dockerClient.executable.toPath();
   }
 
   Map<String, String> getDockerClientEnvironment() {
@@ -620,49 +628,53 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   Path getTarOutputPath() {
     Path configuredPath =
         outputPaths.tar == null
-            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar")
+            ? Paths.get(getProject().getBuild().getDirectory())
+                  .resolve("jib-image.tar")
             : outputPaths.tar.toPath();
-    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_TAR);
+    return getRelativeToProjectRoot(configuredPath,
+                                    PropertyNames.OUTPUT_PATHS_TAR);
   }
 
   Path getDigestOutputPath() {
     Path configuredPath =
         outputPaths.digest == null
-            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
+            ? Paths.get(getProject().getBuild().getDirectory())
+                  .resolve("jib-image.digest")
             : outputPaths.digest.toPath();
-    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_DIGEST);
+    return getRelativeToProjectRoot(configuredPath,
+                                    PropertyNames.OUTPUT_PATHS_DIGEST);
   }
 
   Path getImageIdOutputPath() {
     Path configuredPath =
         outputPaths.imageId == null
-            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
+            ? Paths.get(getProject().getBuild().getDirectory())
+                  .resolve("jib-image.id")
             : outputPaths.imageId.toPath();
-    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
+    return getRelativeToProjectRoot(configuredPath,
+                                    PropertyNames.OUTPUT_PATHS_IMAGE_ID);
   }
 
-  private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
+  private Path getRelativeToProjectRoot(Path configuration,
+                                        String propertyName) {
     String property = getProperty(propertyName);
     Path path = property != null ? Paths.get(property) : configuration;
-    return path.isAbsolute() ? path : getProject().getBasedir().toPath().resolve(path);
+    return path.isAbsolute() ? path
+                             : getProject().getBasedir().toPath().resolve(path);
   }
 
-  boolean getAllowInsecureRegistries() {
-    return allowInsecureRegistries;
-  }
+  boolean getAllowInsecureRegistries() { return allowInsecureRegistries; }
 
   public String getContainerizingMode() {
     String property = getProperty(PropertyNames.CONTAINERIZING_MODE);
     return property != null ? property : containerizingMode;
   }
 
-  boolean isSkipped() {
-    return skip;
-  }
+  boolean isSkipped() { return skip; }
 
   /**
-   * Return false if the `jib.containerize` property is specified and does not match this
-   * module/project. Used by the Skaffold-Jib binding.
+   * Return false if the `jib.containerize` property is specified and does not
+   * match this module/project. Used by the Skaffold-Jib binding.
    *
    * @return true if this module should be containerized
    */
@@ -675,12 +687,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     // 1) a `groupId:artifactId`
     // 2) an `:artifactId`
     // 3) relative path within the repository
-    if (moduleSpecification.equals(project.getGroupId() + ":" + project.getArtifactId())
-        || moduleSpecification.equals(":" + project.getArtifactId())) {
+    if (moduleSpecification.equals(project.getGroupId() + ":" +
+                                   project.getArtifactId()) ||
+        moduleSpecification.equals(":" + project.getArtifactId())) {
       return true;
     }
-    // Relative paths never have a colon on *nix nor Windows.  This moduleSpecification could be an
-    // :artifactId or groupId:artifactId for a different artifact.
+    // Relative paths never have a colon on *nix nor Windows.  This
+    // moduleSpecification could be an :artifactId or groupId:artifactId for a
+    // different artifact.
     if (moduleSpecification.contains(":")) {
       return false;
     }
@@ -693,9 +707,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  SettingsDecrypter getSettingsDecrypter() {
-    return settingsDecrypter;
-  }
+  SettingsDecrypter getSettingsDecrypter() { return settingsDecrypter; }
 
   @VisibleForTesting
   void setProject(MavenProject project) {

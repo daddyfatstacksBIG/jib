@@ -31,32 +31,31 @@ public class ContainerizerTest {
 
   @Test
   public void testTo() throws CacheDirectoryCreationException {
-    RegistryImage registryImage = RegistryImage.named(ImageReference.of(null, "repository", null));
+    RegistryImage registryImage =
+        RegistryImage.named(ImageReference.of(null, "repository", null));
     DockerDaemonImage dockerDaemonImage =
         DockerDaemonImage.named(ImageReference.of(null, "repository", null));
-    TarImage tarImage =
-        TarImage.at(Paths.get("ignored")).named(ImageReference.of(null, "repository", null));
+    TarImage tarImage = TarImage.at(Paths.get("ignored"))
+                            .named(ImageReference.of(null, "repository", null));
 
     verifyTo(Containerizer.to(registryImage));
     verifyTo(Containerizer.to(dockerDaemonImage));
     verifyTo(Containerizer.to(tarImage));
   }
 
-  private void verifyTo(Containerizer containerizer) throws CacheDirectoryCreationException {
+  private void verifyTo(Containerizer containerizer)
+      throws CacheDirectoryCreationException {
     Assert.assertTrue(containerizer.getAdditionalTags().isEmpty());
     Assert.assertFalse(containerizer.getExecutorService().isPresent());
-    Assert.assertEquals(
-        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
-        containerizer.getBaseImageLayersCacheDirectory());
-    Assert.assertNotEquals(
-        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
-        containerizer.getApplicationLayersCacheDirectory());
+    Assert.assertEquals(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
+                        containerizer.getBaseImageLayersCacheDirectory());
+    Assert.assertNotEquals(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
+                           containerizer.getApplicationLayersCacheDirectory());
     Assert.assertFalse(containerizer.getAllowInsecureRegistries());
     Assert.assertEquals("jib-core", containerizer.getToolName());
 
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
-    containerizer
-        .withAdditionalTag("tag1")
+    containerizer.withAdditionalTag("tag1")
         .withAdditionalTag("tag2")
         .setExecutorService(executorService)
         .setBaseImageLayersCache(Paths.get("base/image/layers"))
@@ -64,13 +63,15 @@ public class ContainerizerTest {
         .setAllowInsecureRegistries(true)
         .setToolName("tool");
 
-    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), containerizer.getAdditionalTags());
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"),
+                        containerizer.getAdditionalTags());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
-    Assert.assertSame(executorService, containerizer.getExecutorService().get());
-    Assert.assertEquals(
-        Paths.get("base/image/layers"), containerizer.getBaseImageLayersCacheDirectory());
-    Assert.assertEquals(
-        Paths.get("application/layers"), containerizer.getApplicationLayersCacheDirectory());
+    Assert.assertSame(executorService,
+                      containerizer.getExecutorService().get());
+    Assert.assertEquals(Paths.get("base/image/layers"),
+                        containerizer.getBaseImageLayersCacheDirectory());
+    Assert.assertEquals(Paths.get("application/layers"),
+                        containerizer.getApplicationLayersCacheDirectory());
     Assert.assertTrue(containerizer.getAllowInsecureRegistries());
     Assert.assertEquals("tool", containerizer.getToolName());
   }
@@ -91,33 +92,43 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testGetImageConfiguration_registryImage() throws InvalidImageReferenceException {
-    CredentialRetriever credentialRetriever = Mockito.mock(CredentialRetriever.class);
+  public void testGetImageConfiguration_registryImage()
+      throws InvalidImageReferenceException {
+    CredentialRetriever credentialRetriever =
+        Mockito.mock(CredentialRetriever.class);
     Containerizer containerizer =
-        Containerizer.to(
-            RegistryImage.named("registry/image").addCredentialRetriever(credentialRetriever));
+        Containerizer.to(RegistryImage.named("registry/image")
+                             .addCredentialRetriever(credentialRetriever));
 
-    ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
-    Assert.assertEquals("registry/image", imageConfiguration.getImage().toString());
-    Assert.assertEquals(
-        Arrays.asList(credentialRetriever), imageConfiguration.getCredentialRetrievers());
+    ImageConfiguration imageConfiguration =
+        containerizer.getImageConfiguration();
+    Assert.assertEquals("registry/image",
+                        imageConfiguration.getImage().toString());
+    Assert.assertEquals(Arrays.asList(credentialRetriever),
+                        imageConfiguration.getCredentialRetrievers());
   }
 
   @Test
-  public void testGetImageConfiguration_dockerDaemonImage() throws InvalidImageReferenceException {
-    Containerizer containerizer = Containerizer.to(DockerDaemonImage.named("docker/deamon/image"));
+  public void testGetImageConfiguration_dockerDaemonImage()
+      throws InvalidImageReferenceException {
+    Containerizer containerizer =
+        Containerizer.to(DockerDaemonImage.named("docker/deamon/image"));
 
-    ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
-    Assert.assertEquals("docker/deamon/image", imageConfiguration.getImage().toString());
+    ImageConfiguration imageConfiguration =
+        containerizer.getImageConfiguration();
+    Assert.assertEquals("docker/deamon/image",
+                        imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
   }
 
   @Test
-  public void testGetImageConfiguration_tarImage() throws InvalidImageReferenceException {
-    Containerizer containerizer =
-        Containerizer.to(TarImage.at(Paths.get("output/file")).named("tar/image"));
+  public void testGetImageConfiguration_tarImage()
+      throws InvalidImageReferenceException {
+    Containerizer containerizer = Containerizer.to(
+        TarImage.at(Paths.get("output/file")).named("tar/image"));
 
-    ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
+    ImageConfiguration imageConfiguration =
+        containerizer.getImageConfiguration();
     Assert.assertEquals("tar/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
   }

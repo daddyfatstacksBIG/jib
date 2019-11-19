@@ -36,10 +36,12 @@ class CacheStorageFiles {
    * Returns whether or not {@code file} is a layer contents file.
    *
    * @param file the file to check
-   * @return {@code true} if {@code file} is a layer contents file; {@code false} otherwise
+   * @return {@code true} if {@code file} is a layer contents file; {@code
+   *     false} otherwise
    */
   static boolean isLayerFile(Path file) {
-    return file.getFileName().toString().length() == DescriptorDigest.HASH_LENGTH;
+    return file.getFileName().toString().length() ==
+        DescriptorDigest.HASH_LENGTH;
   }
 
   private final Path cacheDirectory;
@@ -55,14 +57,16 @@ class CacheStorageFiles {
    * @return the diff ID portion of the layer file filename
    * @throws CacheCorruptedException if no valid diff ID could be parsed
    */
-  DescriptorDigest getDigestFromFilename(Path layerFile) throws CacheCorruptedException {
+  DescriptorDigest getDigestFromFilename(Path layerFile)
+      throws CacheCorruptedException {
     try {
       String hash = layerFile.getFileName().toString();
       return DescriptorDigest.fromHash(hash);
 
     } catch (DigestException | IndexOutOfBoundsException ex) {
       throw new CacheCorruptedException(
-          cacheDirectory, "Layer file did not include valid hash: " + layerFile, ex);
+          cacheDirectory, "Layer file did not include valid hash: " + layerFile,
+          ex);
     }
   }
 
@@ -71,9 +75,7 @@ class CacheStorageFiles {
    *
    * @return the cache directory
    */
-  Path getCacheDirectory() {
-    return cacheDirectory;
-  }
+  Path getCacheDirectory() { return cacheDirectory; }
 
   /**
    * Resolves the layer contents file.
@@ -82,13 +84,15 @@ class CacheStorageFiles {
    * @param layerDiffId the layer diff Id
    * @return the layer contents file
    */
-  Path getLayerFile(DescriptorDigest layerDigest, DescriptorDigest layerDiffId) {
-    return getLayerDirectory(layerDigest).resolve(getLayerFilename(layerDiffId));
+  Path getLayerFile(DescriptorDigest layerDigest,
+                    DescriptorDigest layerDiffId) {
+    return getLayerDirectory(layerDigest)
+        .resolve(getLayerFilename(layerDiffId));
   }
 
   /**
-   * Gets the filename for the layer file. The filename is in the form {@code <layer diff
-   * ID>.layer}.
+   * Gets the filename for the layer file. The filename is in the form {@code
+   * <layer diff ID>.layer}.
    *
    * @param layerDiffId the layer's diff ID
    * @return the layer filename
@@ -104,7 +108,8 @@ class CacheStorageFiles {
    * @return the selector file
    */
   Path getSelectorFile(DescriptorDigest selector) {
-    return cacheDirectory.resolve(SELECTORS_DIRECTORY).resolve(selector.getHash());
+    return cacheDirectory.resolve(SELECTORS_DIRECTORY)
+        .resolve(selector.getHash());
   }
 
   /**
@@ -112,9 +117,7 @@ class CacheStorageFiles {
    *
    * @return the directory containing all the layer directories
    */
-  Path getLayersDirectory() {
-    return cacheDirectory.resolve(LAYERS_DIRECTORY);
-  }
+  Path getLayersDirectory() { return cacheDirectory.resolve(LAYERS_DIRECTORY); }
 
   /**
    * Gets the directory for the layer with digest {@code layerDigest}.
@@ -131,18 +134,14 @@ class CacheStorageFiles {
    *
    * @return the directory containing local base image layers
    */
-  Path getLocalDirectory() {
-    return cacheDirectory.resolve(LOCAL_DIRECTORY);
-  }
+  Path getLocalDirectory() { return cacheDirectory.resolve(LOCAL_DIRECTORY); }
 
   /**
    * Gets the directory to store the image manifest and configuration.
    *
    * @return the directory for the image manifest and configuration
    */
-  Path getImagesDirectory() {
-    return cacheDirectory.resolve(IMAGES_DIRECTORY);
-  }
+  Path getImagesDirectory() { return cacheDirectory.resolve(IMAGES_DIRECTORY); }
 
   /**
    * Gets the directory corresponding to the given image reference.
@@ -153,7 +152,8 @@ class CacheStorageFiles {
    */
   Path getImageDirectory(ImageReference imageReference) {
     // Replace ':' and '@' with '!' to avoid directory-naming restrictions
-    String replacedReference = imageReference.toStringWithTag().replace(':', '!').replace('@', '!');
+    String replacedReference =
+        imageReference.toStringWithTag().replace(':', '!').replace('@', '!');
 
     // Split image reference on '/' to build directory structure
     Iterable<String> directories = Splitter.on('/').split(replacedReference);
@@ -176,7 +176,8 @@ class CacheStorageFiles {
   /**
    * Resolves a file to use as a temporary file to write layer contents to.
    *
-   * @param layerDirectory the directory in which to resolve the temporary layer file
+   * @param layerDirectory the directory in which to resolve the temporary layer
+   *     file
    * @return the temporary layer file
    */
   Path getTemporaryLayerFile(Path layerDirectory) {

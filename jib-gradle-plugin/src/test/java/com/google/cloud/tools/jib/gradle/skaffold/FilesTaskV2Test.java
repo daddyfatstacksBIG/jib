@@ -36,20 +36,26 @@ import org.junit.Test;
 /** Tests for {@link FilesTaskV2}. */
 public class FilesTaskV2Test {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
+  @ClassRule
+  public static final TestProject multiTestProject =
+      new TestProject("multi-service");
 
   /**
-   * Verifies that the files task succeeded and returns the list of paths it prints out.
+   * Verifies that the files task succeeded and returns the list of paths it
+   * prints out.
    *
    * @param project the project to run the task on
-   * @param moduleName the name of the sub-project, or {@code null} if no sub-project
+   * @param moduleName the name of the sub-project, or {@code null} if no
+   *     sub-project
    * @return the JSON string printed by the task
    */
-  private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
-    String taskName =
-        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
+  private static String verifyTaskSuccess(TestProject project,
+                                          @Nullable String moduleName) {
+    String taskName = ":" + (moduleName == null ? "" : moduleName + ":") +
+                      JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
     BuildResult buildResult = project.build(taskName, "-q");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
@@ -62,19 +68,20 @@ public class FilesTaskV2Test {
   }
 
   /**
-   * Asserts that two lists contain the same paths. Required to avoid Mac's /var/ vs. /private/var/
-   * symlink issue.
+   * Asserts that two lists contain the same paths. Required to avoid Mac's
+   * /var/ vs. /private/var/ symlink issue.
    *
    * @param expected the expected list of paths
    * @param actual the actual list of paths
    * @throws IOException if checking if two files are the same fails
    */
-  private static void assertPathListsAreEqual(List<Path> expected, List<String> actual)
+  private static void assertPathListsAreEqual(List<Path> expected,
+                                              List<String> actual)
       throws IOException {
     Assert.assertEquals(expected.size(), actual.size());
     for (int index = 0; index < expected.size(); index++) {
-      Assert.assertEquals(
-          expected.get(index).toRealPath(), Paths.get(actual.get(index)).toRealPath());
+      Assert.assertEquals(expected.get(index).toRealPath(),
+                          Paths.get(actual.get(index)).toRealPath());
     }
   }
 
@@ -84,12 +91,12 @@ public class FilesTaskV2Test {
     SkaffoldFilesOutput result =
         new SkaffoldFilesOutput(verifyTaskSuccess(simpleTestProject, null));
     assertPathListsAreEqual(
-        ImmutableList.of(projectRoot.resolve("build.gradle")), result.getBuild());
+        ImmutableList.of(projectRoot.resolve("build.gradle")),
+        result.getBuild());
     assertPathListsAreEqual(
-        ImmutableList.of(
-            projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/custom-extra-dir")),
+        ImmutableList.of(projectRoot.resolve("src/main/resources"),
+                         projectRoot.resolve("src/main/java"),
+                         projectRoot.resolve("src/main/custom-extra-dir")),
         result.getInputs());
     Assert.assertEquals(result.getIgnore().size(), 0);
   }
@@ -98,17 +105,17 @@ public class FilesTaskV2Test {
   public void testFilesTask_multiProjectSimpleService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(multiTestProject, "simple-service"));
+    SkaffoldFilesOutput result = new SkaffoldFilesOutput(
+        verifyTaskSuccess(multiTestProject, "simple-service"));
     assertPathListsAreEqual(
-        ImmutableList.of(
-            projectRoot.resolve("build.gradle"),
-            projectRoot.resolve("settings.gradle"),
-            projectRoot.resolve("gradle.properties"),
-            simpleServiceRoot.resolve("build.gradle")),
+        ImmutableList.of(projectRoot.resolve("build.gradle"),
+                         projectRoot.resolve("settings.gradle"),
+                         projectRoot.resolve("gradle.properties"),
+                         simpleServiceRoot.resolve("build.gradle")),
         result.getBuild());
     assertPathListsAreEqual(
-        ImmutableList.of(simpleServiceRoot.resolve("src/main/java")), result.getInputs());
+        ImmutableList.of(simpleServiceRoot.resolve("src/main/java")),
+        result.getInputs());
     Assert.assertEquals(result.getIgnore().size(), 0);
   }
 
@@ -117,15 +124,14 @@ public class FilesTaskV2Test {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(multiTestProject, "complex-service"));
+    SkaffoldFilesOutput result = new SkaffoldFilesOutput(
+        verifyTaskSuccess(multiTestProject, "complex-service"));
     assertPathListsAreEqual(
-        ImmutableList.of(
-            projectRoot.resolve("build.gradle"),
-            projectRoot.resolve("settings.gradle"),
-            projectRoot.resolve("gradle.properties"),
-            complexServiceRoot.resolve("build.gradle"),
-            libRoot.resolve("build.gradle")),
+        ImmutableList.of(projectRoot.resolve("build.gradle"),
+                         projectRoot.resolve("settings.gradle"),
+                         projectRoot.resolve("gradle.properties"),
+                         complexServiceRoot.resolve("build.gradle"),
+                         libRoot.resolve("build.gradle")),
         result.getBuild());
     assertPathListsAreEqual(
         ImmutableList.of(

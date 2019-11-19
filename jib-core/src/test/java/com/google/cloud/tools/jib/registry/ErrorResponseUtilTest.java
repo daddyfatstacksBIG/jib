@@ -36,11 +36,14 @@ public class ErrorResponseUtilTest {
         .thenReturn(
             "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}");
 
-    Assert.assertSame(
-        ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(responseException));
+    Assert.assertSame(ErrorCodes.MANIFEST_INVALID,
+                      ErrorResponseUtil.getErrorCode(responseException));
   }
 
-  /** An unknown {@link ErrorCodes} should cause original exception to be rethrown. */
+  /**
+   * An unknown {@link ErrorCodes} should cause original exception to be
+   * rethrown.
+   */
   @Test
   public void testGetErrorCode_unknownErrorCode() {
     Mockito.when(responseException.getContent())
@@ -60,9 +63,11 @@ public class ErrorResponseUtilTest {
     Mockito.when(responseException.getContent())
         .thenReturn(
             "{\"errors\":["
-                + "{\"code\":\"MANIFEST_INVALID\",\"message\":\"message 1\",\"detail\":{}},"
-                + "{\"code\":\"TAG_INVALID\",\"message\":\"message 2\",\"detail\":{}}"
-                + "]}");
+            +
+            "{\"code\":\"MANIFEST_INVALID\",\"message\":\"message 1\",\"detail\":{}},"
+            +
+            "{\"code\":\"TAG_INVALID\",\"message\":\"message 2\",\"detail\":{}}"
+            + "]}");
     try {
       ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();

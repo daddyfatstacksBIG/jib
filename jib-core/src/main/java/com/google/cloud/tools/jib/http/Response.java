@@ -29,14 +29,10 @@ public class Response implements Closeable {
 
   private final HttpResponse httpResponse;
 
-  Response(HttpResponse httpResponse) {
-    this.httpResponse = httpResponse;
-  }
+  Response(HttpResponse httpResponse) { this.httpResponse = httpResponse; }
 
   /** @return the HTTP status code of the response */
-  public int getStatusCode() {
-    return httpResponse.getStatusCode();
-  }
+  public int getStatusCode() { return httpResponse.getStatusCode(); }
 
   /**
    * @param headerName the header name
@@ -52,7 +48,8 @@ public class Response implements Closeable {
    */
   public long getContentLength() throws NumberFormatException {
     String contentLengthHeader =
-        httpResponse.getHeaders().getFirstHeaderStringValue(HttpHeaders.CONTENT_LENGTH);
+        httpResponse.getHeaders().getFirstHeaderStringValue(
+            HttpHeaders.CONTENT_LENGTH);
     if (contentLengthHeader == null) {
       return -1;
     }

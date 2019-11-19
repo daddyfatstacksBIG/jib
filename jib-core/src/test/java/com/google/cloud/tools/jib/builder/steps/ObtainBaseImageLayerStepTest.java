@@ -57,8 +57,7 @@ public class ObtainBaseImageLayerStepTest {
   @Mock private Image image;
   @Mock private RegistryClient registryClient;
 
-  @Mock(answer = Answers.RETURNS_MOCKS)
-  private BuildContext buildContext;
+  @Mock(answer = Answers.RETURNS_MOCKS) private BuildContext buildContext;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
@@ -67,25 +66,28 @@ public class ObtainBaseImageLayerStepTest {
   public void setUp() throws IOException, RegistryException, DigestException {
     baseImageAndAuth = new ImageAndAuthorization(image, null);
 
-    existingLayerDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    freshLayerDigest =
-        DescriptorDigest.fromHash(
-            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    existingLayerDigest = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    freshLayerDigest = DescriptorDigest.fromHash(
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
     DescriptorDigest diffId = Mockito.mock(DescriptorDigest.class);
-    Layer existingLayer = new ReferenceLayer(new BlobDescriptor(existingLayerDigest), diffId);
-    Layer freshLayer = new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(existingLayer, freshLayer));
+    Layer existingLayer =
+        new ReferenceLayer(new BlobDescriptor(existingLayerDigest), diffId);
+    Layer freshLayer =
+        new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
+    Mockito.when(image.getLayers())
+        .thenReturn(ImmutableList.of(existingLayer, freshLayer));
 
     Mockito.when(registryClient.checkBlob(existingLayerDigest))
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));
-    Mockito.when(registryClient.checkBlob(freshLayerDigest)).thenReturn(Optional.empty());
+    Mockito.when(registryClient.checkBlob(freshLayerDigest))
+        .thenReturn(Optional.empty());
 
     RegistryClient.Factory registryClientFactory =
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
-    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
+    Mockito.when(registryClientFactory.newRegistryClient())
+        .thenReturn(registryClient);
 
     Mockito.lenient()
         .when(buildContext.newBaseImageRegistryClientFactory())
@@ -94,12 +96,14 @@ public class ObtainBaseImageLayerStepTest {
         .thenReturn(registryClientFactory);
 
     // necessary to prevent error from classes dealing with progress report
-    Answer3<Blob, DescriptorDigest, Consumer<Long>, Consumer<Long>> progressSizeSetter =
-        (ignored1, progressSizeConsumer, ignored2) -> {
-          progressSizeConsumer.accept(Long.valueOf(12345));
-          return null;
-        };
-    Mockito.when(registryClient.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
+    Answer3<Blob, DescriptorDigest, Consumer<Long>, Consumer<Long>>
+        progressSizeSetter = (ignored1, progressSizeConsumer, ignored2) -> {
+      progressSizeConsumer.accept(Long.valueOf(12345));
+      return null;
+    };
+    Mockito
+        .when(registryClient.pullBlob(Mockito.any(), Mockito.any(),
+                                      Mockito.any()))
         .thenAnswer(AdditionalAnswers.answer(progressSizeSetter));
   }
 
@@ -114,8 +118,10 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
-    Assert.assertEquals(StateInTarget.EXISTING, preparedExistingLayer.getStateInTarget());
-    Assert.assertEquals(StateInTarget.MISSING, preparedFreshLayer.getStateInTarget());
+    Assert.assertEquals(StateInTarget.EXISTING,
+                        preparedExistingLayer.getStateInTarget());
+    Assert.assertEquals(StateInTarget.MISSING,
+                        preparedFreshLayer.getStateInTarget());
 
     // Should have queried all blobs.
     Mockito.verify(registryClient).checkBlob(existingLayerDigest);
@@ -123,7 +129,8 @@ public class ObtainBaseImageLayerStepTest {
 
     // Only the missing layer should be pulled.
     Mockito.verify(registryClient, Mockito.never())
-        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
+        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(),
+                  Mockito.any());
     Mockito.verify(registryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
   }
@@ -140,16 +147,20 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
     // existence unknown
-    Assert.assertEquals(StateInTarget.UNKNOWN, preparedExistingLayer.getStateInTarget());
-    Assert.assertEquals(StateInTarget.UNKNOWN, preparedFreshLayer.getStateInTarget());
+    Assert.assertEquals(StateInTarget.UNKNOWN,
+                        preparedExistingLayer.getStateInTarget());
+    Assert.assertEquals(StateInTarget.UNKNOWN,
+                        preparedFreshLayer.getStateInTarget());
 
     // No blob checking should happen.
-    Mockito.verify(registryClient, Mockito.never()).checkBlob(existingLayerDigest);
+    Mockito.verify(registryClient, Mockito.never())
+        .checkBlob(existingLayerDigest);
     Mockito.verify(registryClient, Mockito.never()).checkBlob(freshLayerDigest);
 
     // All layers should be pulled.
     Mockito.verify(registryClient)
-        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
+        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(),
+                  Mockito.any());
     Mockito.verify(registryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
   }
@@ -168,8 +179,10 @@ public class ObtainBaseImageLayerStepTest {
     } catch (IOException ex) {
       Assert.assertEquals(
           "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
-              + "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb. Rerun "
-              + "Jib in online mode with \"-Djib.alwaysCacheBaseImage=true\" to re-download the "
+              +
+              "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb. Rerun "
+              +
+              "Jib in online mode with \"-Djib.alwaysCacheBaseImage=true\" to re-download the "
               + "base image layers.",
           ex.getMessage());
     }

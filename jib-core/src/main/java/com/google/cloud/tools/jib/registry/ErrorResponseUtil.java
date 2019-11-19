@@ -24,17 +24,21 @@ import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
 import java.util.List;
 
-/** Utility methods for parsing {@link ErrorResponseTemplate JSON-encoded error responses}. */
+/**
+ * Utility methods for parsing {@link ErrorResponseTemplate JSON-encoded error
+ * responses}.
+ */
 public class ErrorResponseUtil {
 
   /**
-   * Extract an {@link ErrorCodes} response from the error object encoded in an {@link
-   * HttpResponseException}.
+   * Extract an {@link ErrorCodes} response from the error object encoded in an
+   * {@link HttpResponseException}.
    *
    * @param responseException the response exception
    * @return the parsed {@link ErrorCodes} if found
-   * @throws ResponseException rethrows the original exception if an error object could not be
-   *     parsed, if there were multiple error objects, or if the error code is unknown.
+   * @throws ResponseException rethrows the original exception if an error
+   *     object could not be parsed, if there were multiple error objects, or if
+   *     the error code is unknown.
    */
   public static ErrorCodes getErrorCode(ResponseException responseException)
       throws ResponseException {
@@ -45,8 +49,8 @@ public class ErrorResponseUtil {
     }
 
     try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
+      ErrorResponseTemplate errorResponse = JsonTemplateMapper.readJson(
+          errorContent, ErrorResponseTemplate.class);
       List<ErrorEntryTemplate> errors = errorResponse.getErrors();
       // There may be multiple error objects
       if (errors.size() == 1) {

@@ -28,7 +28,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Provides implementations for a registry endpoint. Implementations should be immutable.
+ * Provides implementations for a registry endpoint. Implementations should be
+ * immutable.
  *
  * @param <T> the type returned from handling the endpoint response
  */
@@ -38,14 +39,14 @@ interface RegistryEndpointProvider<T> {
   String getHttpMethod();
 
   /**
-   * @param apiRouteBase the registry's base URL (for example, {@code https://gcr.io/v2/})
+   * @param apiRouteBase the registry's base URL (for example, {@code
+   *     https://gcr.io/v2/})
    * @return the registry endpoint URL
    */
   URL getApiRoute(String apiRouteBase) throws MalformedURLException;
 
   /** @return the {@link BlobHttpContent} to send as the request body */
-  @Nullable
-  BlobHttpContent getContent();
+  @Nullable BlobHttpContent getContent();
 
   /** @return a list of MIME types to pass as an HTTP {@code Accept} header */
   List<String> getAccept();
@@ -54,20 +55,21 @@ interface RegistryEndpointProvider<T> {
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
-   * Handles an {@link ResponseException} that occurs. Implementation must re-throw the given
-   * exception if it did not conclusively handled the response exception.
+   * Handles an {@link ResponseException} that occurs. Implementation must
+   * re-throw the given exception if it did not conclusively handled the
+   * response exception.
    *
    * @param responseException the {@link ResponseException} to handle
-   * @throws HttpResponseException {@code responseException} if {@code responseException} could not
-   *     be handled
+   * @throws HttpResponseException {@code responseException} if {@code
+   *     responseException} could not be handled
    * @throws RegistryErrorException if there is an error with a remote registry
    */
   T handleHttpResponseException(ResponseException responseException)
       throws ResponseException, RegistryErrorException;
 
   /**
-   * @return a description of the registry action performed, used in error messages to describe the
-   *     action that failed
+   * @return a description of the registry action performed, used in error
+   *     messages to describe the action that failed
    */
   String getActionDescription();
 }

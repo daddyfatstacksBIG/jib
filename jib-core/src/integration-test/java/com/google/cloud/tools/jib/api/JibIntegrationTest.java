@@ -41,7 +41,8 @@ import org.junit.rules.TemporaryFolder;
 public class JibIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry = new LocalRegistry(5000, "username", "password");
+  public static final LocalRegistry localRegistry =
+      new LocalRegistry(5000, "username", "password");
 
   @Rule public final TemporaryFolder cacheFolder = new TemporaryFolder();
 
@@ -71,203 +72,239 @@ public class JibIntegrationTest {
 
   @Test
   public void testBasic_helloWorld()
-      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
-          IOException, RegistryException, ExecutionException {
+      throws InvalidImageReferenceException, InterruptedException,
+             CacheDirectoryCreationException, IOException, RegistryException,
+             ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     JibContainer jibContainer =
         Jib.from("busybox")
             .setEntrypoint("echo", "Hello World")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testBasic_dockerDaemonBaseImage()
-      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException {
     localRegistry.pull("busybox");
-    ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
+    ImageReference targetImageReference = ImageReference.of(
+        "localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
     JibContainer jibContainer =
         Jib.from("docker://busybox")
             .setEntrypoint("echo", "Hello World")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testBasic_dockerDaemonBaseImageToDockerDaemon()
-      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException {
     localRegistry.pull("busybox");
-    ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
+    ImageReference targetImageReference = ImageReference.of(
+        "localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
     Jib.from(DockerDaemonImage.named("busybox"))
         .setEntrypoint("echo", "Hello World")
-        .containerize(Containerizer.to(DockerDaemonImage.named(targetImageReference)));
+        .containerize(
+            Containerizer.to(DockerDaemonImage.named(targetImageReference)));
 
-    String output = new Command("docker", "run", "--rm", targetImageReference.toString()).run();
+    String output =
+        new Command("docker", "run", "--rm", targetImageReference.toString())
+            .run();
     Assert.assertEquals("Hello World\n", output);
   }
 
   @Test
   public void testBasic_tarBaseImage_dockerSavedCommand()
-      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException {
     localRegistry.pull("busybox");
     Path path = cacheFolder.getRoot().toPath().resolve("docker-save");
     new Command("docker", "save", "busybox", "-o", path.toString()).run();
 
-    ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
+    ImageReference targetImageReference = ImageReference.of(
+        "localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
     JibContainer jibContainer =
         Jib.from("tar://" + path)
             .setEntrypoint("echo", "Hello World")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testBasic_tarBaseImage_dockerSavedFile()
-      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException, URISyntaxException {
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException, URISyntaxException {
     // tar saved with 'docker save busybox -o busybox.tar'
-    Path path = Paths.get(Resources.getResource("core/busybox-docker.tar").toURI());
+    Path path =
+        Paths.get(Resources.getResource("core/busybox-docker.tar").toURI());
 
-    ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
+    ImageReference targetImageReference = ImageReference.of(
+        "localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
     JibContainer jibContainer =
         Jib.from(TarImage.at(path).named("ignored"))
             .setEntrypoint("echo", "Hello World")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testBasic_tarBaseImage_jibImage()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
+      throws InvalidImageReferenceException, InterruptedException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException, IOException, URISyntaxException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "jib-base-image");
     Path outputPath = cacheFolder.getRoot().toPath().resolve("jib-image.tar");
     Jib.from("busybox")
-        .addLayer(
-            Collections.singletonList(Paths.get(Resources.getResource("core/hello").toURI())), "/")
+        .addLayer(Collections.singletonList(
+                      Paths.get(Resources.getResource("core/hello").toURI())),
+                  "/")
         .containerize(
-            Containerizer.to(TarImage.at(outputPath).named(targetImageReference))
+            Containerizer
+                .to(TarImage.at(outputPath).named(targetImageReference))
                 .setAllowInsecureRegistries(true));
 
-    targetImageReference = ImageReference.of("localhost:5000", "jib-core", "jib-helloworld-jibtar");
+    targetImageReference = ImageReference.of("localhost:5000", "jib-core",
+                                             "jib-helloworld-jibtar");
     JibContainer jibContainer =
         Jib.from(TarImage.at(outputPath).named("ignored"))
             .setEntrypoint("cat", "/hello")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testBasic_tarBaseImage_jibImageToDockerDaemon()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
-    // tar saved with Jib.from("busybox").addLayer(...("core/hello")).containerize(TarImage.at...)
-    Path path = Paths.get(Resources.getResource("core/busybox-jib.tar").toURI());
+      throws InvalidImageReferenceException, InterruptedException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException, IOException, URISyntaxException {
+    // tar saved with
+    // Jib.from("busybox").addLayer(...("core/hello")).containerize(TarImage.at...)
+    Path path =
+        Paths.get(Resources.getResource("core/busybox-jib.tar").toURI());
 
-    ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-jibtar");
+    ImageReference targetImageReference = ImageReference.of(
+        "localhost:5000", "jib-core", "basic-helloworld-jibtar");
     JibContainer jibContainer =
         Jib.from(TarImage.at(path).named("ignored"))
             .setEntrypoint("cat", "/hello")
-            .containerize(
-                Containerizer.to(
-                        RegistryImage.named(targetImageReference)
-                            .addCredentialRetriever(
-                                () -> Optional.of(Credential.from("username", "password"))))
-                    .setAllowInsecureRegistries(true));
+            .containerize(Containerizer
+                              .to(RegistryImage.named(targetImageReference)
+                                      .addCredentialRetriever(
+                                          ()
+                                              -> Optional.of(Credential.from(
+                                                  "username", "password"))))
+                              .setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals("Hello World\n",
+                        pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withTag(jibContainer.getDigest().toString())
+                .toString()));
   }
 
   @Test
   public void testScratch()
-      throws IOException, InterruptedException, ExecutionException, RegistryException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException,
+             RegistryException, CacheDirectoryCreationException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
-    Jib.fromScratch()
-        .containerize(
-            Containerizer.to(
-                    RegistryImage.named(targetImageReference)
-                        .addCredentialRetriever(
-                            () -> Optional.of(Credential.from("username", "password"))))
-                .setAllowInsecureRegistries(true));
+    Jib.fromScratch().containerize(
+        Containerizer
+            .to(RegistryImage.named(targetImageReference)
+                    .addCredentialRetriever(()
+                                                -> Optional.of(Credential.from(
+                                                    "username", "password"))))
+            .setAllowInsecureRegistries(true));
 
     // Check that resulting image has no layers
     localRegistry.pull(targetImageReference.toString());
-    String inspectOutput = new Command("docker", "inspect", targetImageReference.toString()).run();
-    Assert.assertFalse(
-        "docker inspect output contained layers: " + inspectOutput,
-        inspectOutput.contains("\"Layers\": ["));
+    String inspectOutput =
+        new Command("docker", "inspect", targetImageReference.toString()).run();
+    Assert.assertFalse("docker inspect output contained layers: " +
+                           inspectOutput,
+                       inspectOutput.contains("\"Layers\": ["));
   }
 
   @Test
   public void testOffline()
-      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException {
     LocalRegistry tempRegistry = new LocalRegistry(5001);
     tempRegistry.start();
     tempRegistry.pullAndPushToLocal("busybox", "busybox");
@@ -284,10 +321,13 @@ public class JibIntegrationTest {
     // Should fail since Jib can't build to registry offline
     try {
       jibContainerBuilder.containerize(
-          Containerizer.to(RegistryImage.named(targetImageReferenceOffline)).setOfflineMode(true));
+          Containerizer.to(RegistryImage.named(targetImageReferenceOffline))
+              .setOfflineMode(true));
       Assert.fail();
     } catch (IllegalStateException ex) {
-      Assert.assertEquals("Cannot build to a container registry in offline mode", ex.getMessage());
+      Assert.assertEquals(
+          "Cannot build to a container registry in offline mode",
+          ex.getMessage());
     }
 
     // Should fail since Jib hasn't cached the base image yet
@@ -317,29 +357,34 @@ public class JibIntegrationTest {
             .setOfflineMode(true));
 
     // Verify output
-    Assert.assertEquals(
-        "Hello World\n",
-        new Command("docker", "run", "--rm", targetImageReferenceOffline.toString()).run());
+    Assert.assertEquals("Hello World\n",
+                        new Command("docker", "run", "--rm",
+                                    targetImageReferenceOffline.toString())
+                            .run());
   }
 
   /** Ensure that a provided executor is not disposed. */
   @Test
   public void testProvidedExecutorNotDisposed()
-      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
-          IOException, RegistryException, ExecutionException {
+      throws InvalidImageReferenceException, InterruptedException,
+             CacheDirectoryCreationException, IOException, RegistryException,
+             ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     Containerizer containerizer =
-        Containerizer.to(
-                RegistryImage.named(targetImageReference)
-                    .addCredentialRetriever(
-                        () -> Optional.of(Credential.from("username", "password"))))
+        Containerizer
+            .to(RegistryImage.named(targetImageReference)
+                    .addCredentialRetriever(()
+                                                -> Optional.of(Credential.from(
+                                                    "username", "password"))))
             .setAllowInsecureRegistries(true);
 
     ExecutorService executorService = Executors.newCachedThreadPool();
     try {
       containerizer.setExecutorService(executorService);
-      Jib.from("busybox").setEntrypoint("echo", "Hello World").containerize(containerizer);
+      Jib.from("busybox")
+          .setEntrypoint("echo", "Hello World")
+          .containerize(containerizer);
       Assert.assertFalse(executorService.isShutdown());
     } finally {
       executorService.shutdown();
@@ -348,17 +393,15 @@ public class JibIntegrationTest {
 
   @Test
   public void testManifestListReferenceByShaDoesNotFail()
-      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
-          RegistryException, CacheDirectoryCreationException {
-    ImageReference sourceImageReferenceAsManifestList =
-        ImageReference.of(
-            "registry-1.docker.io",
-            "library/openjdk",
-            ManifestPullerIntegrationTest.KNOWN_MANIFEST_LIST_SHA);
-    Containerizer containerizer =
-        Containerizer.to(
-            TarImage.at(cacheFolder.newFolder("goose").toPath().resolve("moose"))
-                .named("whatever"));
+      throws InvalidImageReferenceException, IOException, InterruptedException,
+             ExecutionException, RegistryException,
+             CacheDirectoryCreationException {
+    ImageReference sourceImageReferenceAsManifestList = ImageReference.of(
+        "registry-1.docker.io", "library/openjdk",
+        ManifestPullerIntegrationTest.KNOWN_MANIFEST_LIST_SHA);
+    Containerizer containerizer = Containerizer.to(
+        TarImage.at(cacheFolder.newFolder("goose").toPath().resolve("moose"))
+            .named("whatever"));
 
     Jib.from(sourceImageReferenceAsManifestList).containerize(containerizer);
     // pass, no exceptions thrown

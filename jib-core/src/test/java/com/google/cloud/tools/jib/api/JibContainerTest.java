@@ -34,15 +34,12 @@ public class JibContainerTest {
 
   @Before
   public void setUp() throws DigestException {
-    digest1 =
-        DescriptorDigest.fromDigest(
-            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
-    digest2 =
-        DescriptorDigest.fromDigest(
-            "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
-    digest3 =
-        DescriptorDigest.fromDigest(
-            "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210");
+    digest1 = DescriptorDigest.fromDigest(
+        "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+    digest2 = DescriptorDigest.fromDigest(
+        "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+    digest3 = DescriptorDigest.fromDigest(
+        "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210");
   }
 
   @Test

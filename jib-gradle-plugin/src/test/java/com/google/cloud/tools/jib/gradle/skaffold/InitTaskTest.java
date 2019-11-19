@@ -35,21 +35,25 @@ import org.junit.Test;
 /** Tests for {@link InitTask}. */
 public class InitTaskTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
+  @ClassRule
+  public static final TestProject multiTestProject =
+      new TestProject("multi-service");
 
   /**
-   * Verifies that the files task succeeded and returns the list of JSON strings printed by the
-   * task.
+   * Verifies that the files task succeeded and returns the list of JSON strings
+   * printed by the task.
    *
    * @param project the project to run the task on
    * @return the JSON strings printed by the task
    */
   private static List<String> getJsons(TestProject project) {
-    BuildResult buildResult =
-        project.build(JibPlugin.SKAFFOLD_INIT_TASK_NAME, "-q", "-D_TARGET_IMAGE=testimage");
-    BuildTask jibTask = buildResult.task(":" + JibPlugin.SKAFFOLD_INIT_TASK_NAME);
+    BuildResult buildResult = project.build(JibPlugin.SKAFFOLD_INIT_TASK_NAME,
+                                            "-q", "-D_TARGET_IMAGE=testimage");
+    BuildTask jibTask =
+        buildResult.task(":" + JibPlugin.SKAFFOLD_INIT_TASK_NAME);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     String output = buildResult.getOutput().trim();
@@ -71,7 +75,8 @@ public class InitTaskTest {
     List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
+    SkaffoldInitOutput skaffoldInitOutput =
+        new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertNull(skaffoldInitOutput.getProject());
   }
@@ -81,7 +86,8 @@ public class InitTaskTest {
     List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(2, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
+    SkaffoldInitOutput skaffoldInitOutput =
+        new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
 

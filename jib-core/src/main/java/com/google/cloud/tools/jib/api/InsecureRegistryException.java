@@ -19,15 +19,14 @@ package com.google.cloud.tools.jib.api;
 import java.net.URL;
 
 /**
- * Throw when attempting to access an insecure registry when only secure connections are allowed.
+ * Throw when attempting to access an insecure registry when only secure
+ * connections are allowed.
  */
 public class InsecureRegistryException extends RegistryException {
 
   public InsecureRegistryException(URL insecureUrl, Throwable cause) {
-    super(
-        "Failed to verify the server at "
-            + insecureUrl
-            + " because only secure connections are allowed.",
-        cause);
+    super("Failed to verify the server at " + insecureUrl +
+              " because only secure connections are allowed.",
+          cause);
   }
 }

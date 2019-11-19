@@ -34,14 +34,14 @@ import javax.annotation.Nullable;
 class AuthenticationMethodRetriever
     implements RegistryEndpointProvider<Optional<RegistryAuthenticator>> {
 
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final String userAgent;
   private final FailoverHttpClient httpClient;
 
   AuthenticationMethodRetriever(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
-      FailoverHttpClient httpClient) {
+      String userAgent, FailoverHttpClient httpClient) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
     this.httpClient = httpClient;
@@ -59,7 +59,8 @@ class AuthenticationMethodRetriever
   }
 
   /**
-   * The request did not error, meaning that the registry does not require authentication.
+   * The request did not error, meaning that the registry does not require
+   * authentication.
    *
    * @param response ignored
    * @return {@link Optional#empty()}
@@ -81,21 +82,26 @@ class AuthenticationMethodRetriever
 
   @Override
   public String getActionDescription() {
-    return "retrieve authentication method for " + registryEndpointRequestProperties.getServerUrl();
+    return "retrieve authentication method for " +
+        registryEndpointRequestProperties.getServerUrl();
   }
 
   @Override
-  public Optional<RegistryAuthenticator> handleHttpResponseException(
-      ResponseException responseException) throws ResponseException, RegistryErrorException {
+  public Optional<RegistryAuthenticator>
+  handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
     // Only valid for status code of '401 Unauthorized'.
-    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+    if (responseException.getStatusCode() !=
+        HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
       throw responseException;
     }
 
     // Checks if the 'WWW-Authenticate' header is present.
-    String authenticationMethod = responseException.getHeaders().getAuthenticate();
+    String authenticationMethod =
+        responseException.getHeaders().getAuthenticate();
     if (authenticationMethod == null) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
+      throw new RegistryErrorExceptionBuilder(getActionDescription(),
+                                              responseException)
           .addReason("'WWW-Authenticate' header not found")
           .build();
     }
@@ -103,11 +109,13 @@ class AuthenticationMethodRetriever
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties, userAgent, httpClient);
+          authenticationMethod, registryEndpointRequestProperties, userAgent,
+          httpClient);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
-          .addReason("Failed get authentication method from 'WWW-Authenticate' header")
+          .addReason(
+              "Failed get authentication method from 'WWW-Authenticate' header")
           .build();
     }
   }

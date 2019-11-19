@@ -52,16 +52,15 @@ public class JibPluginConfigurationTest {
   public void setup() {
     Mockito.when(session.getSystemProperties()).thenReturn(sessionProperties);
     Mockito.when(build.getDirectory()).thenReturn("/test/directory");
-    testPluginConfiguration =
-        new JibPluginConfiguration() {
-          @Override
-          public void execute() {}
+    testPluginConfiguration = new JibPluginConfiguration() {
+      @Override
+      public void execute() {}
 
-          @Override
-          public Log getLog() {
-            return log;
-          }
-        };
+      @Override
+      public Log getLog() {
+        return log;
+      }
+    };
     project.setBuild(build);
     project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
     testPluginConfiguration.setProject(project);
@@ -73,8 +72,10 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
-    Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
-    Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getFilesModificationTime());
+    Assert.assertEquals("exploded",
+                        testPluginConfiguration.getContainerizingMode());
+    Assert.assertEquals("EPOCH_PLUS_SECOND",
+                        testPluginConfiguration.getFilesModificationTime());
     Assert.assertEquals("EPOCH", testPluginConfiguration.getCreationTime());
   }
 
@@ -83,7 +84,9 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testPluginConfiguration.getBaseImage());
     sessionProperties.put("jib.from.credHelper", "credHelper");
-    Assert.assertEquals("credHelper", testPluginConfiguration.getBaseImageCredentialHelperName());
+    Assert.assertEquals(
+        "credHelper",
+        testPluginConfiguration.getBaseImageCredentialHelperName());
 
     sessionProperties.put("image", "toImage");
     Assert.assertEquals("toImage", testPluginConfiguration.getTargetImage());
@@ -91,56 +94,64 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.to.image", "toImage2");
     Assert.assertEquals("toImage2", testPluginConfiguration.getTargetImage());
     sessionProperties.put("jib.to.tags", "tag1,tag2,tag3");
-    Assert.assertEquals(
-        ImmutableSet.of("tag1", "tag2", "tag3"),
-        testPluginConfiguration.getTargetImageAdditionalTags());
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2", "tag3"),
+                        testPluginConfiguration.getTargetImageAdditionalTags());
     sessionProperties.put("jib.to.credHelper", "credHelper");
-    Assert.assertEquals("credHelper", testPluginConfiguration.getTargetImageCredentialHelperName());
+    Assert.assertEquals(
+        "credHelper",
+        testPluginConfiguration.getTargetImageCredentialHelperName());
 
     sessionProperties.put("jib.container.appRoot", "appRoot");
     Assert.assertEquals("appRoot", testPluginConfiguration.getAppRoot());
     sessionProperties.put("jib.container.args", "arg1,arg2,arg3");
-    Assert.assertEquals(
-        ImmutableList.of("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
+    Assert.assertEquals(ImmutableList.of("arg1", "arg2", "arg3"),
+                        testPluginConfiguration.getArgs());
     sessionProperties.put("jib.container.entrypoint", "entry1,entry2,entry3");
-    Assert.assertEquals(
-        ImmutableList.of("entry1", "entry2", "entry3"), testPluginConfiguration.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of("entry1", "entry2", "entry3"),
+                        testPluginConfiguration.getEntrypoint());
     sessionProperties.put("jib.container.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"), testPluginConfiguration.getEnvironment());
+    Assert.assertEquals(ImmutableMap.of("env1", "val1", "env2", "val2"),
+                        testPluginConfiguration.getEnvironment());
     sessionProperties.put("jib.container.format", "format");
     Assert.assertEquals("format", testPluginConfiguration.getFormat());
     sessionProperties.put("jib.container.jvmFlags", "flag1,flag2,flag3");
-    Assert.assertEquals(
-        ImmutableList.of("flag1", "flag2", "flag3"), testPluginConfiguration.getJvmFlags());
+    Assert.assertEquals(ImmutableList.of("flag1", "flag2", "flag3"),
+                        testPluginConfiguration.getJvmFlags());
     sessionProperties.put("jib.container.labels", "label1=val1,label2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("label1", "val1", "label2", "val2"), testPluginConfiguration.getLabels());
+    Assert.assertEquals(ImmutableMap.of("label1", "val1", "label2", "val2"),
+                        testPluginConfiguration.getLabels());
     sessionProperties.put("jib.container.mainClass", "main");
     Assert.assertEquals("main", testPluginConfiguration.getMainClass());
     sessionProperties.put("jib.container.ports", "port1,port2,port3");
-    Assert.assertEquals(
-        ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
+    Assert.assertEquals(ImmutableList.of("port1", "port2", "port3"),
+                        testPluginConfiguration.getExposedPorts());
     sessionProperties.put("jib.container.useCurrentTimestamp", "true");
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     sessionProperties.put("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
-    sessionProperties.put("jib.container.workingDirectory", "/working/directory");
-    Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
-    sessionProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
-    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
+    sessionProperties.put("jib.container.workingDirectory",
+                          "/working/directory");
+    Assert.assertEquals("/working/directory",
+                        testPluginConfiguration.getWorkingDirectory());
+    sessionProperties.put("jib.container.filesModificationTime",
+                          "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z",
+                        testPluginConfiguration.getFilesModificationTime());
     sessionProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
-    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
+    Assert.assertEquals("2011-12-03T22:42:05Z",
+                        testPluginConfiguration.getCreationTime());
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
-    Assert.assertEquals(
-        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    Assert.assertEquals(ImmutableList.of("/foo", "/bar"),
+                        testPluginConfiguration.getExtraClasspath());
     sessionProperties.put("jib.containerizingMode", "packaged");
-    Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
+    Assert.assertEquals("packaged",
+                        testPluginConfiguration.getContainerizingMode());
 
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
-    sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    Assert.assertEquals(Arrays.asList(Paths.get("custom-jib")),
+                        testPluginConfiguration.getExtraDirectories());
+    sessionProperties.put("jib.extraDirectories.permissions",
+                          "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
@@ -149,31 +160,33 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("456", permissions.get(1).getMode().get());
 
     sessionProperties.put("jib.dockerClient.executable", "test-exec");
-    Assert.assertEquals(
-        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
-    sessionProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"),
-        testPluginConfiguration.getDockerClientEnvironment());
+    Assert.assertEquals(Paths.get("test-exec"),
+                        testPluginConfiguration.getDockerClientExecutable());
+    sessionProperties.put("jib.dockerClient.environment",
+                          "env1=val1,env2=val2");
+    Assert.assertEquals(ImmutableMap.of("env1", "val1", "env2", "val2"),
+                        testPluginConfiguration.getDockerClientEnvironment());
 
     // Absolute paths
     sessionProperties.put("jib.outputPaths.digest", "/digest/path");
-    Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("/digest/path"),
+                        testPluginConfiguration.getDigestOutputPath());
     sessionProperties.put("jib.outputPaths.imageId", "/id/path");
-    Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("/id/path"),
+                        testPluginConfiguration.getImageIdOutputPath());
     sessionProperties.put("jib.outputPaths.tar", "/tar/path");
-    Assert.assertEquals(Paths.get("/tar/path"), testPluginConfiguration.getTarOutputPath());
+    Assert.assertEquals(Paths.get("/tar/path"),
+                        testPluginConfiguration.getTarOutputPath());
     // Relative paths
     sessionProperties.put("jib.outputPaths.digest", "digest/path");
-    Assert.assertEquals(
-        Paths.get("/repository/project/digest/path"),
-        testPluginConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("/repository/project/digest/path"),
+                        testPluginConfiguration.getDigestOutputPath());
     sessionProperties.put("jib.outputPaths.imageId", "id/path");
-    Assert.assertEquals(
-        Paths.get("/repository/project/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("/repository/project/id/path"),
+                        testPluginConfiguration.getImageIdOutputPath());
     sessionProperties.put("jib.outputPaths.tar", "tar/path");
-    Assert.assertEquals(
-        Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
+    Assert.assertEquals(Paths.get("/repository/project/tar/path"),
+                        testPluginConfiguration.getTarOutputPath());
   }
 
   @Test
@@ -181,7 +194,9 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testPluginConfiguration.getBaseImage());
     project.getProperties().setProperty("jib.from.credHelper", "credHelper");
-    Assert.assertEquals("credHelper", testPluginConfiguration.getBaseImageCredentialHelperName());
+    Assert.assertEquals(
+        "credHelper",
+        testPluginConfiguration.getBaseImageCredentialHelperName());
 
     project.getProperties().setProperty("image", "toImage");
     Assert.assertEquals("toImage", testPluginConfiguration.getTargetImage());
@@ -189,60 +204,73 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.to.image", "toImage2");
     Assert.assertEquals("toImage2", testPluginConfiguration.getTargetImage());
     project.getProperties().setProperty("jib.to.tags", "tag1,tag2,tag3");
-    Assert.assertEquals(
-        ImmutableSet.of("tag1", "tag2", "tag3"),
-        testPluginConfiguration.getTargetImageAdditionalTags());
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2", "tag3"),
+                        testPluginConfiguration.getTargetImageAdditionalTags());
     project.getProperties().setProperty("jib.to.credHelper", "credHelper");
-    Assert.assertEquals("credHelper", testPluginConfiguration.getTargetImageCredentialHelperName());
+    Assert.assertEquals(
+        "credHelper",
+        testPluginConfiguration.getTargetImageCredentialHelperName());
 
     project.getProperties().setProperty("jib.container.appRoot", "appRoot");
     Assert.assertEquals("appRoot", testPluginConfiguration.getAppRoot());
     project.getProperties().setProperty("jib.container.args", "arg1,arg2,arg3");
-    Assert.assertEquals(
-        ImmutableList.of("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
-    project.getProperties().setProperty("jib.container.entrypoint", "entry1,entry2,entry3");
-    Assert.assertEquals(
-        ImmutableList.of("entry1", "entry2", "entry3"), testPluginConfiguration.getEntrypoint());
-    project.getProperties().setProperty("jib.container.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"), testPluginConfiguration.getEnvironment());
+    Assert.assertEquals(ImmutableList.of("arg1", "arg2", "arg3"),
+                        testPluginConfiguration.getArgs());
+    project.getProperties().setProperty("jib.container.entrypoint",
+                                        "entry1,entry2,entry3");
+    Assert.assertEquals(ImmutableList.of("entry1", "entry2", "entry3"),
+                        testPluginConfiguration.getEntrypoint());
+    project.getProperties().setProperty("jib.container.environment",
+                                        "env1=val1,env2=val2");
+    Assert.assertEquals(ImmutableMap.of("env1", "val1", "env2", "val2"),
+                        testPluginConfiguration.getEnvironment());
     project.getProperties().setProperty("jib.container.format", "format");
     Assert.assertEquals("format", testPluginConfiguration.getFormat());
-    project.getProperties().setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
-    Assert.assertEquals(
-        ImmutableList.of("flag1", "flag2", "flag3"), testPluginConfiguration.getJvmFlags());
-    project.getProperties().setProperty("jib.container.labels", "label1=val1,label2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("label1", "val1", "label2", "val2"), testPluginConfiguration.getLabels());
+    project.getProperties().setProperty("jib.container.jvmFlags",
+                                        "flag1,flag2,flag3");
+    Assert.assertEquals(ImmutableList.of("flag1", "flag2", "flag3"),
+                        testPluginConfiguration.getJvmFlags());
+    project.getProperties().setProperty("jib.container.labels",
+                                        "label1=val1,label2=val2");
+    Assert.assertEquals(ImmutableMap.of("label1", "val1", "label2", "val2"),
+                        testPluginConfiguration.getLabels());
     project.getProperties().setProperty("jib.container.mainClass", "main");
     Assert.assertEquals("main", testPluginConfiguration.getMainClass());
-    project.getProperties().setProperty("jib.container.ports", "port1,port2,port3");
-    Assert.assertEquals(
-        ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
-    project.getProperties().setProperty("jib.container.useCurrentTimestamp", "true");
+    project.getProperties().setProperty("jib.container.ports",
+                                        "port1,port2,port3");
+    Assert.assertEquals(ImmutableList.of("port1", "port2", "port3"),
+                        testPluginConfiguration.getExposedPorts());
+    project.getProperties().setProperty("jib.container.useCurrentTimestamp",
+                                        "true");
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     project.getProperties().setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
-    project.getProperties().setProperty("jib.container.workingDirectory", "/working/directory");
-    Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
-    project
-        .getProperties()
-        .setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
-    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
-    project.getProperties().setProperty("jib.container.creationTime", "2011-12-03T22:42:05Z");
-    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
-    project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
-    Assert.assertEquals(
-        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    project.getProperties().setProperty("jib.container.workingDirectory",
+                                        "/working/directory");
+    Assert.assertEquals("/working/directory",
+                        testPluginConfiguration.getWorkingDirectory());
+    project.getProperties().setProperty("jib.container.filesModificationTime",
+                                        "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z",
+                        testPluginConfiguration.getFilesModificationTime());
+    project.getProperties().setProperty("jib.container.creationTime",
+                                        "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z",
+                        testPluginConfiguration.getCreationTime());
+    project.getProperties().setProperty("jib.container.extraClasspath",
+                                        "/foo,/bar");
+    Assert.assertEquals(ImmutableList.of("/foo", "/bar"),
+                        testPluginConfiguration.getExtraClasspath());
     project.getProperties().setProperty("jib.containerizingMode", "packaged");
-    Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
+    Assert.assertEquals("packaged",
+                        testPluginConfiguration.getContainerizingMode());
 
-    project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
-    project
-        .getProperties()
-        .setProperty("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    project.getProperties().setProperty("jib.extraDirectories.paths",
+                                        "custom-jib");
+    Assert.assertEquals(Arrays.asList(Paths.get("custom-jib")),
+                        testPluginConfiguration.getExtraDirectories());
+    project.getProperties().setProperty("jib.extraDirectories.permissions",
+                                        "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
@@ -250,27 +278,32 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
 
-    project.getProperties().setProperty("jib.dockerClient.executable", "test-exec");
-    Assert.assertEquals(
-        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
-    project.getProperties().setProperty("jib.dockerClient.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"),
-        testPluginConfiguration.getDockerClientEnvironment());
+    project.getProperties().setProperty("jib.dockerClient.executable",
+                                        "test-exec");
+    Assert.assertEquals(Paths.get("test-exec"),
+                        testPluginConfiguration.getDockerClientExecutable());
+    project.getProperties().setProperty("jib.dockerClient.environment",
+                                        "env1=val1,env2=val2");
+    Assert.assertEquals(ImmutableMap.of("env1", "val1", "env2", "val2"),
+                        testPluginConfiguration.getDockerClientEnvironment());
 
-    project.getProperties().setProperty("jib.outputPaths.digest", "/digest/path");
-    Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
+    project.getProperties().setProperty("jib.outputPaths.digest",
+                                        "/digest/path");
+    Assert.assertEquals(Paths.get("/digest/path"),
+                        testPluginConfiguration.getDigestOutputPath());
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
-    Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("/id/path"),
+                        testPluginConfiguration.getImageIdOutputPath());
     project.getProperties().setProperty("jib.outputPaths.tar", "tar/path");
-    Assert.assertEquals(
-        Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
+    Assert.assertEquals(Paths.get("/repository/project/tar/path"),
+                        testPluginConfiguration.getTarOutputPath());
   }
 
   @Test
   public void testEmptyOrNullTags() {
     // https://github.com/GoogleContainerTools/jib/issues/1534
-    // Maven turns empty tags into null entries, and its possible to have empty tags in jib.to.tags
+    // Maven turns empty tags into null entries, and its possible to have empty
+    // tags in jib.to.tags
     sessionProperties.put("jib.to.tags", "a,,b");
     try {
       testPluginConfiguration.getTargetImageAdditionalTags();

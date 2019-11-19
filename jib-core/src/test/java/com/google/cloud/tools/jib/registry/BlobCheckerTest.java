@@ -43,18 +43,20 @@ public class BlobCheckerTest {
 
   @Mock private Response mockResponse;
 
-  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
-      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties
+      fakeRegistryEndpointRequestProperties =
+          new RegistryEndpointRequestProperties("someServerUrl",
+                                                "someImageName");
 
   private BlobChecker testBlobChecker;
   private DescriptorDigest fakeDigest;
 
   @Before
   public void setUpFakes() throws DigestException {
-    fakeDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    testBlobChecker = new BlobChecker(fakeRegistryEndpointRequestProperties, fakeDigest);
+    fakeDigest = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    testBlobChecker =
+        new BlobChecker(fakeRegistryEndpointRequestProperties, fakeDigest);
   }
 
   @Test
@@ -62,7 +64,8 @@ public class BlobCheckerTest {
     Mockito.when(mockResponse.getContentLength()).thenReturn(0L);
     BlobDescriptor expectedBlobDescriptor = new BlobDescriptor(0, fakeDigest);
 
-    BlobDescriptor blobDescriptor = testBlobChecker.handleResponse(mockResponse).get();
+    BlobDescriptor blobDescriptor =
+        testBlobChecker.handleResponse(mockResponse).get();
 
     Assert.assertEquals(expectedBlobDescriptor, blobDescriptor);
   }
@@ -73,42 +76,52 @@ public class BlobCheckerTest {
 
     try {
       testBlobChecker.handleResponse(mockResponse);
-      Assert.fail("Should throw exception if Content-Length header is not present");
+      Assert.fail(
+          "Should throw exception if Content-Length header is not present");
 
     } catch (RegistryErrorException ex) {
       Assert.assertThat(
-          ex.getMessage(), CoreMatchers.containsString("Did not receive Content-Length header"));
+          ex.getMessage(),
+          CoreMatchers.containsString("Did not receive Content-Length header"));
     }
   }
 
   @Test
   public void testHandleHttpResponseException() throws IOException {
-    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
+    ResponseException mockResponseException =
+        Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     ErrorResponseTemplate emptyErrorResponseTemplate =
-        new ErrorResponseTemplate()
-            .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"));
+        new ErrorResponseTemplate().addError(new ErrorEntryTemplate(
+            ErrorCodes.BLOB_UNKNOWN.name(), "some message"));
     Mockito.when(mockResponseException.getContent())
-        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
+        .thenReturn(
+            JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     Assert.assertFalse(
-        testBlobChecker.handleHttpResponseException(mockResponseException).isPresent());
+        testBlobChecker.handleHttpResponseException(mockResponseException)
+            .isPresent());
   }
 
   @Test
-  public void testHandleHttpResponseException_hasOtherErrors() throws IOException {
-    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
+  public void testHandleHttpResponseException_hasOtherErrors()
+      throws IOException {
+    ResponseException mockResponseException =
+        Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     ErrorResponseTemplate emptyErrorResponseTemplate =
         new ErrorResponseTemplate()
-            .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"))
-            .addError(new ErrorEntryTemplate(ErrorCodes.MANIFEST_UNKNOWN.name(), "some message"));
+            .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(),
+                                             "some message"))
+            .addError(new ErrorEntryTemplate(ErrorCodes.MANIFEST_UNKNOWN.name(),
+                                             "some message"));
     Mockito.when(mockResponseException.getContent())
-        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
+        .thenReturn(
+            JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
       testBlobChecker.handleHttpResponseException(mockResponseException);
@@ -120,14 +133,18 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_notBlobUnknown() throws IOException {
-    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
+  public void testHandleHttpResponseException_notBlobUnknown()
+      throws IOException {
+    ResponseException mockResponseException =
+        Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
-    ErrorResponseTemplate emptyErrorResponseTemplate = new ErrorResponseTemplate();
+    ErrorResponseTemplate emptyErrorResponseTemplate =
+        new ErrorResponseTemplate();
     Mockito.when(mockResponseException.getContent())
-        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
+        .thenReturn(
+            JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
       testBlobChecker.handleHttpResponseException(mockResponseException);
@@ -140,7 +157,8 @@ public class BlobCheckerTest {
 
   @Test
   public void testHandleHttpResponseException_invalidStatusCode() {
-    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
+    ResponseException mockResponseException =
+        Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 
     try {
@@ -172,7 +190,8 @@ public class BlobCheckerTest {
   @Test
   public void testGetActionDescription() {
     Assert.assertEquals(
-        "check BLOB exists for someServerUrl/someImageName with digest " + fakeDigest,
+        "check BLOB exists for someServerUrl/someImageName with digest " +
+            fakeDigest,
         testBlobChecker.getActionDescription());
   }
 

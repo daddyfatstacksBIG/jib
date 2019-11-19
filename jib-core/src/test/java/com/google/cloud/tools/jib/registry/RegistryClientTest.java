@@ -29,7 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * Tests for {@link RegistryClient}. More comprehensive tests can be found in the integration tests.
+ * Tests for {@link RegistryClient}. More comprehensive tests can be found in
+ * the integration tests.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
@@ -41,24 +42,24 @@ public class RegistryClientTest {
 
   @Before
   public void setUp() {
-    testRegistryClientFactory =
-        RegistryClient.factory(eventHandlers, "some.server.url", "some image name", null);
+    testRegistryClientFactory = RegistryClient.factory(
+        eventHandlers, "some.server.url", "some image name", null);
   }
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
 
   @Test
   public void testGetUserAgent_null() {
     Assert.assertTrue(
-        testRegistryClientFactory
-            .setAuthorization(mockAuthorization)
+        testRegistryClientFactory.setAuthorization(mockAuthorization)
             .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
 
     Assert.assertTrue(
-        testRegistryClientFactory
-            .setAuthorization(mockAuthorization)
+        testRegistryClientFactory.setAuthorization(mockAuthorization)
             .setUserAgentSuffix(null)
             .newRegistryClient()
             .getUserAgent()
@@ -68,10 +69,12 @@ public class RegistryClientTest {
   @Test
   public void testGetUserAgent() {
     RegistryClient registryClient =
-        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix").newRegistryClient();
+        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix")
+            .newRegistryClient();
 
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
+    Assert.assertTrue(
+        registryClient.getUserAgent().endsWith(" some user agent suffix"));
   }
 
   @Test
@@ -81,6 +84,7 @@ public class RegistryClientTest {
     RegistryClient registryClient =
         testRegistryClientFactory.setUserAgentSuffix("foo").newRegistryClient();
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
+    Assert.assertTrue(
+        registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
 }

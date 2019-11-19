@@ -31,23 +31,27 @@ import org.junit.Test;
 /** Integration tests for {@link BlobPusher}. */
 public class BlobPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule
+  public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+  private final FailoverHttpClient httpClient =
+      new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
-  public void testPush()
-      throws DigestException, IOException, RegistryException, InterruptedException {
+  public void testPush() throws DigestException, IOException, RegistryException,
+                                InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     Blob testBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
-    DescriptorDigest testBlobDigest =
-        DescriptorDigest.fromHash(
-            "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
+    DescriptorDigest testBlobDigest = DescriptorDigest.fromHash(
+        "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "localhost:5000", "testimage",
+                     httpClient)
             .newRegistryClient();
-    Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob, null, ignored -> {}));
+    Assert.assertFalse(
+        registryClient.pushBlob(testBlobDigest, testBlob, null, ignored -> {}));
   }
 }

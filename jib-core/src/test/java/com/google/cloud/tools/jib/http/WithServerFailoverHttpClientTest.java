@@ -41,34 +41,39 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class WithServerFailoverHttpClientTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
 
   @Mock private Consumer<LogEvent> logger;
 
   private final Request request = new Request.Builder().build();
 
   @Test
-  public void testGet()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+  public void testGet() throws IOException, InterruptedException,
+                               GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false);
-        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
+         Response response =
+             insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertArrayEquals(
-          "Hello World!".getBytes(StandardCharsets.UTF_8),
-          ByteStreams.toByteArray(response.getBody()));
+      Assert.assertArrayEquals("Hello World!".getBytes(StandardCharsets.UTF_8),
+                               ByteStreams.toByteArray(response.getBody()));
       Mockito.verifyNoInteractions(logger);
     }
   }
 
   @Test
   public void testSecureConnectionOnInsecureHttpsServer()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    FailoverHttpClient secureHttpClient = new FailoverHttpClient(false /*secure*/, false, logger);
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
+    FailoverHttpClient secureHttpClient =
+        new FailoverHttpClient(false /*secure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true);
-        Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
+         Response ignored =
+             secureHttpClient.get(new URL(server.getEndpoint()), request)) {
       Assert.fail("Should fail if cannot verify peer");
 
     } catch (SSLException ex) {
@@ -78,42 +83,45 @@ public class WithServerFailoverHttpClientTest {
 
   @Test
   public void testInsecureConnection_insecureHttpsFailover()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true, 2);
-        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
+         Response response =
+             insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertArrayEquals(
-          "Hello World!".getBytes(StandardCharsets.UTF_8),
-          ByteStreams.toByteArray(response.getBody()));
+      Assert.assertArrayEquals("Hello World!".getBytes(StandardCharsets.UTF_8),
+                               ByteStreams.toByteArray(response.getBody()));
 
       String endpoint = server.getEndpoint();
-      String expectedLog =
-          "Cannot verify server at " + endpoint + ". Attempting again with no TLS verification.";
+      String expectedLog = "Cannot verify server at " + endpoint +
+                           ". Attempting again with no TLS verification.";
       Mockito.verify(logger).accept(LogEvent.warn(expectedLog));
     }
   }
 
   @Test
   public void testInsecureConnection_plainHttpFailover()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false, 3)) {
       String httpsUrl = server.getEndpoint().replace("http://", "https://");
-      try (Response response = insecureHttpClient.get(new URL(httpsUrl), request)) {
+      try (Response response =
+               insecureHttpClient.get(new URL(httpsUrl), request)) {
 
         Assert.assertEquals(200, response.getStatusCode());
         Assert.assertArrayEquals(
             "Hello World!".getBytes(StandardCharsets.UTF_8),
             ByteStreams.toByteArray(response.getBody()));
 
-        String expectedLog1 =
-            "Cannot verify server at " + httpsUrl + ". Attempting again with no TLS verification.";
-        String expectedLog2 =
-            "Failed to connect to " + httpsUrl + " over HTTPS. Attempting again with HTTP.";
+        String expectedLog1 = "Cannot verify server at " + httpsUrl +
+                              ". Attempting again with no TLS verification.";
+        String expectedLog2 = "Failed to connect to " + httpsUrl +
+                              " over HTTPS. Attempting again with HTTP.";
         Mockito.verify(logger).accept(LogEvent.warn(expectedLog1));
         Mockito.verify(logger).accept(LogEvent.warn(expectedLog2));
       }
@@ -122,24 +130,28 @@ public class WithServerFailoverHttpClientTest {
 
   @Test
   public void testProxyCredentialProperties()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    String proxyResponse =
-        "HTTP/1.1 407 Proxy Authentication Required\n"
-            + "Proxy-Authenticate: BASIC realm=\"some-realm\"\n"
-            + "Cache-Control: no-cache\n"
-            + "Pragma: no-cache\n"
-            + "Content-Length: 0\n\n";
-    String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
+    String proxyResponse = "HTTP/1.1 407 Proxy Authentication Required\n"
+                           + "Proxy-Authenticate: BASIC realm=\"some-realm\"\n"
+                           + "Cache-Control: no-cache\n"
+                           + "Pragma: no-cache\n"
+                           + "Content-Length: 0\n\n";
+    String targetServerResponse =
+        "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
-    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
-    try (TestWebServer server =
-        new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
+    FailoverHttpClient httpClient =
+        new FailoverHttpClient(true /*insecure*/, false, logger);
+    try (TestWebServer server = new TestWebServer(
+             false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");
-      System.setProperty("http.proxyPort", String.valueOf(server.getLocalPort()));
+      System.setProperty("http.proxyPort",
+                         String.valueOf(server.getLocalPort()));
       System.setProperty("http.proxyUser", "user_sys_prop");
       System.setProperty("http.proxyPassword", "pass_sys_prop");
 
-      try (Response response = httpClient.get(new URL("http://does.not.matter"), request)) {
+      try (Response response =
+               httpClient.get(new URL("http://does.not.matter"), request)) {
         Assert.assertThat(
             server.getInputRead(),
             CoreMatchers.containsString(
@@ -153,11 +165,15 @@ public class WithServerFailoverHttpClientTest {
 
   @Test
   public void testClosingResourcesMultipleTimes_noErrors()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
+    FailoverHttpClient httpClient =
+        new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false, 2);
-        Response ignored1 = httpClient.get(new URL(server.getEndpoint()), request);
-        Response ignored2 = httpClient.get(new URL(server.getEndpoint()), request)) {
+         Response ignored1 =
+             httpClient.get(new URL(server.getEndpoint()), request);
+         Response ignored2 =
+             httpClient.get(new URL(server.getEndpoint()), request)) {
       ignored1.close();
       ignored2.close();
     } finally {
@@ -168,38 +184,46 @@ public class WithServerFailoverHttpClientTest {
 
   @Test
   public void testRedirectionUrls()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
     // Sample query strings from
     // https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104
     String url1 = "?id=301&_auth_=exp=1572285389~hmac=f0a387f0";
-    String url2 = "?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
+    String url2 =
+        "?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
     String url3 = "?id=303&_auth_=exp=1572285389~hmac=f0a387f0";
-    String url4 = "?id=307&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
+    String url4 =
+        "?id=307&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
 
-    String redirect301 =
-        "HTTP/1.1 301 Moved Permanently\nLocation: " + url1 + "\nContent-Length: 0\n\n";
-    String redirect302 = "HTTP/1.1 302 Found\nLocation: " + url2 + "\nContent-Length: 0\n\n";
-    String redirect303 = "HTTP/1.1 303 See Other\nLocation: " + url3 + "\nContent-Length: 0\n\n";
-    String redirect307 =
-        "HTTP/1.1 307 Temporary Redirect\nLocation: " + url4 + "\nContent-Length: 0\n\n";
+    String redirect301 = "HTTP/1.1 301 Moved Permanently\nLocation: " + url1 +
+                         "\nContent-Length: 0\n\n";
+    String redirect302 =
+        "HTTP/1.1 302 Found\nLocation: " + url2 + "\nContent-Length: 0\n\n";
+    String redirect303 =
+        "HTTP/1.1 303 See Other\nLocation: " + url3 + "\nContent-Length: 0\n\n";
+    String redirect307 = "HTTP/1.1 307 Temporary Redirect\nLocation: " + url4 +
+                         "\nContent-Length: 0\n\n";
     String ok200 = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
-    List<String> responses =
-        Arrays.asList(redirect301, redirect302, redirect303, redirect307, ok200);
+    List<String> responses = Arrays.asList(redirect301, redirect302,
+                                           redirect303, redirect307, ok200);
 
-    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
+    FailoverHttpClient httpClient =
+        new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false, responses, 1)) {
       httpClient.get(new URL(server.getEndpoint()), request);
 
       Assert.assertThat(
           server.getInputRead(),
-          CoreMatchers.containsString("GET /?id=301&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
+          CoreMatchers.containsString(
+              "GET /?id=301&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
               "GET /?id=302&Signature=2wYOD0a%2BDAkK/9lQJUOuIpYti8o%3D&Expires=1569997614 "));
       Assert.assertThat(
           server.getInputRead(),
-          CoreMatchers.containsString("GET /?id=303&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
+          CoreMatchers.containsString(
+              "GET /?id=303&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(

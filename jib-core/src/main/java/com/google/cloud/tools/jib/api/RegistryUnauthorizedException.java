@@ -19,7 +19,10 @@ package com.google.cloud.tools.jib.api;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.http.ResponseException;
 
-/** Thrown when a registry request was unauthorized and therefore authentication is needed. */
+/**
+ * Thrown when a registry request was unauthorized and therefore authentication
+ * is needed.
+ */
 public class RegistryUnauthorizedException extends RegistryException {
 
   private final String registry;
@@ -32,18 +35,16 @@ public class RegistryUnauthorizedException extends RegistryException {
    * @param repository the image repository
    * @param cause the cause
    */
-  public RegistryUnauthorizedException(
-      String registry, String repository, ResponseException cause) {
+  public RegistryUnauthorizedException(String registry, String repository,
+                                       ResponseException cause) {
     super("Unauthorized for " + registry + "/" + repository, cause);
     this.registry = registry;
     this.repository = repository;
   }
 
-  public String getImageReference() {
-    return registry + "/" + repository;
-  }
+  public String getImageReference() { return registry + "/" + repository; }
 
   public HttpResponseException getHttpResponseException() {
-    return (HttpResponseException) getCause().getCause();
+    return (HttpResponseException)getCause().getCause();
   }
 }
