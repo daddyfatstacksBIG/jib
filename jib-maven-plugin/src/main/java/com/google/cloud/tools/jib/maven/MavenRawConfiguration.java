@@ -53,7 +53,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getFromCredHelper() {
-    return Optional.ofNullable(jibPluginConfiguration.getBaseImageCredentialHelperName());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getBaseImageCredentialHelperName());
   }
 
   @Override
@@ -68,7 +69,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getToCredHelper() {
-    return Optional.ofNullable(jibPluginConfiguration.getTargetImageCredentialHelperName());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getTargetImageCredentialHelperName());
   }
 
   @Override
@@ -148,7 +150,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getProperty(String propertyName) {
-    return Optional.ofNullable(jibPluginConfiguration.getProperty(propertyName));
+    return Optional.ofNullable(
+        jibPluginConfiguration.getProperty(propertyName));
   }
 
   @Override
@@ -168,12 +171,14 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
-    return MojoCommon.convertPermissionsList(jibPluginConfiguration.getExtraDirectoryPermissions());
+    return MojoCommon.convertPermissionsList(
+        jibPluginConfiguration.getExtraDirectoryPermissions());
   }
 
   @Override
   public Optional<Path> getDockerExecutable() {
-    return Optional.ofNullable(jibPluginConfiguration.getDockerClientExecutable());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getDockerClientExecutable());
   }
 
   @Override

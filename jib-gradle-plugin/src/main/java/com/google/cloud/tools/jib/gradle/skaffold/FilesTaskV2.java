@@ -49,7 +49,8 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class FilesTaskV2 extends DefaultTask {
 
-  private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
+  private final SkaffoldFilesOutput skaffoldFilesOutput =
+      new SkaffoldFilesOutput();
 
   @Nullable private JibExtension jibExtension;
 
@@ -63,7 +64,8 @@ public class FilesTaskV2 extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
     Project project = getProject();
 
-    // If this is not the root project, add the root project's build.gradle and settings.gradle
+    // If this is not the root project, add the root project's build.gradle and
+    // settings.gradle
     if (project != project.getRootProject()) {
       addGradleFiles(project.getRootProject());
     }
@@ -72,10 +74,13 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add extra layer
     List<Path> extraDirectories = jibExtension.getExtraDirectories().getPaths();
-    extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);
+    extraDirectories.stream()
+        .filter(Files::exists)
+        .forEach(skaffoldFilesOutput::addInput);
 
     // Find project dependencies
-    Set<ProjectDependency> projectDependencies = findProjectDependencies(project);
+    Set<ProjectDependency> projectDependencies =
+        findProjectDependencies(project);
 
     Set<File> projectDependencyJars = new HashSet<>();
     for (ProjectDependency projectDependency : projectDependencies) {
@@ -88,7 +93,9 @@ public class FilesTaskV2 extends DefaultTask {
       }
       Project dependencyProject = projectDependency.getDependencyProject();
       for (Configuration targetConfiguration :
-          dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+           dependencyProject.getConfigurations()
+               .getByName(configurationName)
+               .getHierarchy()) {
         for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
           projectDependencyJars.add(artifact.getFile());
         }
@@ -96,11 +103,13 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Add SNAPSHOT, non-project dependency jars
-    for (File file :
-        project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)) {
-      if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
+    for (File file : project.getConfigurations().getByName(
+             JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)) {
+      if (!projectDependencyJars.contains(file) &&
+          file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
-        projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
+        projectDependencyJars.add(
+            file); // Add to set to avoid printing the same files twice
       }
     }
 
@@ -111,7 +120,8 @@ public class FilesTaskV2 extends DefaultTask {
   }
 
   /**
-   * Adds the locations of a project's build.gradle, settings.gradle, and gradle.properties.
+   * Adds the locations of a project's build.gradle, settings.gradle, and
+   * gradle.properties.
    *
    * @param project the project
    */
@@ -125,8 +135,10 @@ public class FilesTaskV2 extends DefaultTask {
     if (project.getGradle().getStartParameter().getSettingsFile() != null) {
       skaffoldFilesOutput.addBuild(
           project.getGradle().getStartParameter().getSettingsFile().toPath());
-    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+    } else if (Files.exists(
+                   projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+      skaffoldFilesOutput.addBuild(
+          projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
 
     // Add gradle.properties
@@ -147,23 +159,21 @@ public class FilesTaskV2 extends DefaultTask {
     // Add sources + resources
     JavaPluginConvention javaConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet =
-        javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+    SourceSet mainSourceSet = javaConvention.getSourceSets().findByName(
+        SourceSet.MAIN_SOURCE_SET_NAME);
     if (mainSourceSet != null) {
-      mainSourceSet
-          .getAllSource()
-          .getSourceDirectories()
-          .forEach(
-              sourceDirectory -> {
-                if (sourceDirectory.exists()) {
-                  skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-                }
-              });
+      mainSourceSet.getAllSource().getSourceDirectories().forEach(
+          sourceDirectory -> {
+            if (sourceDirectory.exists()) {
+              skaffoldFilesOutput.addInput(sourceDirectory.toPath());
+            }
+          });
     }
   }
 
   /**
-   * Collects a project's project dependencies, including all transitive project dependencies.
+   * Collects a project's project dependencies, including all transitive project
+   * dependencies.
    *
    * @param project the project to find the project dependencies for
    * @return the set of project dependencies
@@ -178,14 +188,13 @@ public class FilesTaskV2 extends DefaultTask {
 
       // Search through all dependencies
       for (Configuration configuration :
-          currentProject
-              .getConfigurations()
-              .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-              .getHierarchy()) {
+           currentProject.getConfigurations()
+               .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+               .getHierarchy()) {
         for (Dependency dependency : configuration.getDependencies()) {
           if (dependency instanceof ProjectDependency) {
             // If this is a project dependency, save it
-            ProjectDependency projectDependency = (ProjectDependency) dependency;
+            ProjectDependency projectDependency = (ProjectDependency)dependency;
             if (!projectDependencies.contains(projectDependency)) {
               projects.push(projectDependency.getDependencyProject());
               projectDependencies.add(projectDependency);

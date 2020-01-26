@@ -53,7 +53,8 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext_containerConfigurationSet()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException,
+             IOException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -67,26 +68,31 @@ public class JibContainerBuilderTest {
             .setUser("user")
             .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"));
 
-    BuildContext buildContext =
-        jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
-    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
-    Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
-    Assert.assertEquals(
-        ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
-    Assert.assertEquals(
-        ImmutableSet.of(Port.tcp(1234), Port.udp(5678)), containerConfiguration.getExposedPorts());
-    Assert.assertEquals(ImmutableMap.of("key", "value"), containerConfiguration.getLabels());
-    Assert.assertEquals(
-        Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
-    Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
+    BuildContext buildContext = jibContainerBuilder.toBuildContext(
+        Containerizer.to(RegistryImage.named("target/image")));
+    ContainerConfiguration containerConfiguration =
+        buildContext.getContainerConfiguration();
+    Assert.assertEquals(Arrays.asList("entry", "point"),
+                        containerConfiguration.getEntrypoint());
+    Assert.assertEquals(ImmutableMap.of("name", "value"),
+                        containerConfiguration.getEnvironmentMap());
+    Assert.assertEquals(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)),
+                        containerConfiguration.getExposedPorts());
+    Assert.assertEquals(ImmutableMap.of("key", "value"),
+                        containerConfiguration.getLabels());
+    Assert.assertEquals(Arrays.asList("program", "arguments"),
+                        containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.ofEpochMilli(1000),
+                        containerConfiguration.getCreationTime());
     Assert.assertEquals("user", containerConfiguration.getUser());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/working/directory"), containerConfiguration.getWorkingDirectory());
+    Assert.assertEquals(AbsoluteUnixPath.get("/working/directory"),
+                        containerConfiguration.getWorkingDirectory());
   }
 
   @Test
   public void testToBuildContext_containerConfigurationAdd()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException,
+             IOException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -100,30 +106,34 @@ public class JibContainerBuilderTest {
             .addLabel("added", "label")
             .setProgramArguments("program", "arguments");
 
-    BuildContext buildContext =
-        jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
-    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
-    Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
+    BuildContext buildContext = jibContainerBuilder.toBuildContext(
+        Containerizer.to(RegistryImage.named("target/image")));
+    ContainerConfiguration containerConfiguration =
+        buildContext.getContainerConfiguration();
+    Assert.assertEquals(Arrays.asList("entry", "point"),
+                        containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value", "environment", "variable"),
         containerConfiguration.getEnvironmentMap());
     Assert.assertEquals(
         ImmutableSet.of(Port.tcp(1234), Port.udp(5678), Port.tcp(1337)),
         containerConfiguration.getExposedPorts());
-    Assert.assertEquals(
-        ImmutableMap.of("key", "value", "added", "label"), containerConfiguration.getLabels());
-    Assert.assertEquals(
-        Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
-    Assert.assertEquals(Instant.EPOCH, containerConfiguration.getCreationTime());
+    Assert.assertEquals(ImmutableMap.of("key", "value", "added", "label"),
+                        containerConfiguration.getLabels());
+    Assert.assertEquals(Arrays.asList("program", "arguments"),
+                        containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.EPOCH,
+                        containerConfiguration.getCreationTime());
   }
 
   @Test
   public void testToBuildContext()
-      throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
-          CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CredentialRetrievalException,
+             IOException, CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     RegistryImage targetImage =
-        RegistryImage.named(ImageReference.of("gcr.io", "my-project/my-app", null))
+        RegistryImage
+            .named(ImageReference.of("gcr.io", "my-project/my-app", null))
             .addCredential("username", "password");
     Containerizer containerizer =
         Containerizer.to(targetImage)
@@ -135,19 +145,23 @@ public class JibContainerBuilderTest {
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image"))
-            .setCredentialRetrievers(Collections.singletonList(mockCredentialRetriever))
+            .setCredentialRetrievers(
+                Collections.singletonList(mockCredentialRetriever))
             .build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(baseImageConfiguration, spyBuildContextBuilder)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
-    BuildContext buildContext = jibContainerBuilder.toBuildContext(containerizer);
+            .setLayers(Arrays.asList(mockLayerConfiguration1,
+                                     mockLayerConfiguration2));
+    BuildContext buildContext =
+        jibContainerBuilder.toBuildContext(containerizer);
 
     Assert.assertEquals(
         spyBuildContextBuilder.build().getContainerConfiguration(),
         buildContext.getContainerConfiguration());
 
     Assert.assertEquals(
-        "base/image", buildContext.getBaseImageConfiguration().getImage().toString());
+        "base/image",
+        buildContext.getBaseImageConfiguration().getImage().toString());
     Assert.assertEquals(
         Arrays.asList(mockCredentialRetriever),
         buildContext.getBaseImageConfiguration().getCredentialRetrievers());
@@ -155,18 +169,18 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         "gcr.io/my-project/my-app",
         buildContext.getTargetImageConfiguration().getImage().toString());
-    Assert.assertEquals(
-        1, buildContext.getTargetImageConfiguration().getCredentialRetrievers().size());
-    Assert.assertEquals(
-        Credential.from("username", "password"),
-        buildContext
-            .getTargetImageConfiguration()
-            .getCredentialRetrievers()
-            .get(0)
-            .retrieve()
-            .orElseThrow(AssertionError::new));
+    Assert.assertEquals(1, buildContext.getTargetImageConfiguration()
+                               .getCredentialRetrievers()
+                               .size());
+    Assert.assertEquals(Credential.from("username", "password"),
+                        buildContext.getTargetImageConfiguration()
+                            .getCredentialRetrievers()
+                            .get(0)
+                            .retrieve()
+                            .orElseThrow(AssertionError::new));
 
-    Assert.assertEquals(ImmutableSet.of("latest"), buildContext.getAllTargetImageTags());
+    Assert.assertEquals(ImmutableSet.of("latest"),
+                        buildContext.getAllTargetImageTags());
 
     Mockito.verify(spyBuildContextBuilder)
         .setBaseImageLayersCacheDirectory(Paths.get("base/image/layers"));
@@ -184,22 +198,20 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals("jib-core", buildContext.getToolName());
 
-    Assert.assertSame(V22ManifestTemplate.class, buildContext.getTargetFormat());
+    Assert.assertSame(V22ManifestTemplate.class,
+                      buildContext.getTargetFormat());
 
     Assert.assertEquals("jib-core", buildContext.getToolName());
 
     // Changes jibContainerBuilder.
-    buildContext =
-        jibContainerBuilder
-            .setFormat(ImageFormat.OCI)
-            .toBuildContext(
-                containerizer
-                    .withAdditionalTag("tag1")
-                    .withAdditionalTag("tag2")
-                    .setToolName("toolName"));
-    Assert.assertSame(OciManifestTemplate.class, buildContext.getTargetFormat());
-    Assert.assertEquals(
-        ImmutableSet.of("latest", "tag1", "tag2"), buildContext.getAllTargetImageTags());
+    buildContext = jibContainerBuilder.setFormat(ImageFormat.OCI)
+                       .toBuildContext(containerizer.withAdditionalTag("tag1")
+                                           .withAdditionalTag("tag2")
+                                           .setToolName("toolName"));
+    Assert.assertSame(OciManifestTemplate.class,
+                      buildContext.getTargetFormat());
+    Assert.assertEquals(ImmutableSet.of("latest", "tag1", "tag2"),
+                        buildContext.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildContext.getToolName());
     Assert.assertFalse(buildContext.getAlwaysCacheBaseImage());
   }

@@ -40,18 +40,19 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Builds a container image and exports to disk at the configured location ({@code
+ * Builds a container image and exports to disk at the configured location
+ * ({@code
  * ${project.build.directory}/jib-image.tar} by default).
  */
-@Mojo(
-    name = BuildTarMojo.GOAL_NAME,
-    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM,
-    threadSafe = true)
+@Mojo(name = BuildTarMojo.GOAL_NAME,
+      requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM,
+      threadSafe = true)
 public class BuildTarMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "buildTar";
 
-  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
+  private static final String HELPFUL_SUGGESTIONS_PREFIX =
+      "Building image tarball failed";
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -65,64 +66,74 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(
-            getProject(), getSession(), getLog(), tempDirectoryProvider);
+        MavenProjectProperties.getForProject(getProject(), getSession(),
+                                             getLog(), tempDirectoryProvider);
     Future<Optional<String>> updateCheckFuture =
         MojoCommon.newUpdateChecker(projectProperties, getLog());
     try {
-      PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
+      PluginConfigurationProcessor
+          .createJibBuildRunnerForTarImage(
               new MavenRawConfiguration(this),
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter()),
+              new MavenSettingsServerCredentials(getSession().getSettings(),
+                                                 getSettingsDecrypter()),
               projectProperties,
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidPathValue(),
+          "<container><appRoot> is not an absolute Unix-style path: " +
+              ex.getInvalidPathValue(),
           ex);
 
     } catch (InvalidContainerizingModeException ex) {
       throw new MojoExecutionException(
-          "invalid value for <containerizingMode>: " + ex.getInvalidContainerizingMode(), ex);
+          "invalid value for <containerizingMode>: " +
+              ex.getInvalidContainerizingMode(),
+          ex);
 
     } catch (InvalidWorkingDirectoryException ex) {
       throw new MojoExecutionException(
-          "<container><workingDirectory> is not an absolute Unix-style path: "
-              + ex.getInvalidPathValue(),
+          "<container><workingDirectory> is not an absolute Unix-style path: " +
+              ex.getInvalidPathValue(),
           ex);
 
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
-          "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+          "<container><volumes> is not an absolute Unix-style path: " +
+              ex.getInvalidVolume(),
+          ex);
 
     } catch (InvalidFilesModificationTimeException ex) {
       throw new MojoExecutionException(
           "<container><filesModificationTime> should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
-              + ex.getInvalidFilesModificationTime(),
+              +
+              "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": " +
+              ex.getInvalidFilesModificationTime(),
           ex);
 
     } catch (InvalidCreationTimeException ex) {
       throw new MojoExecutionException(
           "<container><creationTime> should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
-              + "\"USE_CURRENT_TIMESTAMP\"): "
-              + ex.getInvalidCreationTime(),
+              +
+              "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): " + ex.getInvalidCreationTime(),
           ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(
-              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+              ex.getBaseImageMajorJavaVersion(),
+              ex.getProjectMajorJavaVersion()),
           ex);
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoExecutionException(
-          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()),
+          ex);
 
-    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
+    } catch (IOException | CacheDirectoryCreationException |
+             MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

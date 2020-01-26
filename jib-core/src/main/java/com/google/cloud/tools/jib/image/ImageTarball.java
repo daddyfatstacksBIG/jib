@@ -37,7 +37,8 @@ import java.util.Collections;
 public class ImageTarball {
 
   /** File name for the container configuration in the tarball. */
-  private static final String CONTAINER_CONFIGURATION_JSON_FILE_NAME = "config.json";
+  private static final String CONTAINER_CONFIGURATION_JSON_FILE_NAME =
+      "config.json";
 
   /** File name for the manifest in the tarball. */
   private static final String MANIFEST_JSON_FILE_NAME = "manifest.json";
@@ -53,12 +54,12 @@ public class ImageTarball {
    * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
-   * @param imageReference image reference to set in the manifest (note that the tag portion of the
-   *     image reference is ignored)
+   * @param imageReference image reference to set in the manifest (note that the
+   *     tag portion of the image reference is ignored)
    * @param allTargetImageTags the tags to tag the image with
    */
-  public ImageTarball(
-      Image image, ImageReference imageReference, ImmutableSet<String> allTargetImageTags) {
+  public ImageTarball(Image image, ImageReference imageReference,
+                      ImmutableSet<String> allTargetImageTags) {
     this.image = image;
     this.imageReference = imageReference;
     this.allTargetImageTags = allTargetImageTags;
@@ -81,43 +82,50 @@ public class ImageTarball {
       DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
       long size = layer.getBlobDescriptor().getSize();
 
-      tarStreamBuilder.addBlobEntry(layer.getBlob(), size, "blobs/sha256/" + digest.getHash());
+      tarStreamBuilder.addBlobEntry(layer.getBlob(), size,
+                                    "blobs/sha256/" + digest.getHash());
       manifest.addLayer(size, digest);
     }
 
     // Adds the container configuration to the tarball and manifest
     JsonTemplate containerConfiguration =
         new ImageToJsonTranslator(image).getContainerConfiguration();
-    BlobDescriptor configDescriptor = Digests.computeDigest(containerConfiguration);
-    manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
+    BlobDescriptor configDescriptor =
+        Digests.computeDigest(containerConfiguration);
+    manifest.setContainerConfiguration(configDescriptor.getSize(),
+                                       configDescriptor.getDigest());
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(containerConfiguration),
         "blobs/sha256/" + configDescriptor.getDigest().getHash());
 
     // Adds the manifest to the tarball
     BlobDescriptor manifestDescriptor = Digests.computeDigest(manifest);
-    tarStreamBuilder.addByteEntry(
-        JsonTemplateMapper.toByteArray(manifest),
-        "blobs/sha256/" + manifestDescriptor.getDigest().getHash());
+    tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(manifest),
+                                  "blobs/sha256/" +
+                                      manifestDescriptor.getDigest().getHash());
 
     // Adds the oci-layout and index.json
     tarStreamBuilder.addByteEntry(
-        "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
+        "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8),
+        "oci-layout");
     OciIndexTemplate index = new OciIndexTemplate();
     // TODO: figure out how to tag with allTargetImageTags
     index.addManifest(manifestDescriptor, imageReference.toStringWithTag());
-    tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index), "index.json");
+    tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index),
+                                  "index.json");
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }
 
   private void dockerWriteTo(OutputStream out) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    DockerManifestEntryTemplate manifestTemplate = new DockerManifestEntryTemplate();
+    DockerManifestEntryTemplate manifestTemplate =
+        new DockerManifestEntryTemplate();
 
     // Adds all the layers to the tarball and manifest.
     for (Layer layer : image.getLayers()) {
-      String layerName = layer.getBlobDescriptor().getDigest().getHash() + LAYER_FILE_EXTENSION;
+      String layerName = layer.getBlobDescriptor().getDigest().getHash() +
+                         LAYER_FILE_EXTENSION;
 
       tarStreamBuilder.addBlobEntry(
           layer.getBlob(), layer.getBlobDescriptor().getSize(), layerName);
@@ -133,10 +141,12 @@ public class ImageTarball {
 
     // Adds the manifest to tarball.
     for (String tag : allTargetImageTags) {
-      manifestTemplate.addRepoTag(imageReference.withTag(tag).toStringWithTag());
+      manifestTemplate.addRepoTag(
+          imageReference.withTag(tag).toStringWithTag());
     }
     tarStreamBuilder.addByteEntry(
-        JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),
+        JsonTemplateMapper.toByteArray(
+            Collections.singletonList(manifestTemplate)),
         MANIFEST_JSON_FILE_NAME);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);

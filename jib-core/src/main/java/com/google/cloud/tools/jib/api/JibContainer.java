@@ -31,11 +31,8 @@ public class JibContainer {
   private final Set<String> tags;
 
   @VisibleForTesting
-  JibContainer(
-      ImageReference targetImage,
-      DescriptorDigest imageDigest,
-      DescriptorDigest imageId,
-      Set<String> tags) {
+  JibContainer(ImageReference targetImage, DescriptorDigest imageDigest,
+               DescriptorDigest imageId, Set<String> tags) {
     this.targetImage = targetImage;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
@@ -43,7 +40,8 @@ public class JibContainer {
   }
 
   static JibContainer from(BuildContext buildContext, BuildResult buildResult) {
-    ImageReference targetImage = buildContext.getTargetImageConfiguration().getImage();
+    ImageReference targetImage =
+        buildContext.getTargetImageConfiguration().getImage();
     DescriptorDigest imageDigest = buildResult.getImageDigest();
     DescriptorDigest imageId = buildResult.getImageId();
     Set<String> tags = buildContext.getAllTargetImageTags();
@@ -55,37 +53,30 @@ public class JibContainer {
    *
    * @return the target image reference.
    */
-  public ImageReference getTargetImage() {
-    return targetImage;
-  }
+  public ImageReference getTargetImage() { return targetImage; }
 
   /**
-   * Gets the digest of the registry image manifest built by Jib. This digest can be used to fetch a
-   * specific image from the registry in the form {@code myregistry/myimage@digest}.
+   * Gets the digest of the registry image manifest built by Jib. This digest
+   * can be used to fetch a specific image from the registry in the form {@code
+   * myregistry/myimage@digest}.
    *
    * @return the image digest
    */
-  public DescriptorDigest getDigest() {
-    return imageDigest;
-  }
+  public DescriptorDigest getDigest() { return imageDigest; }
 
   /**
    * Gets the digest of the container configuration built by Jib.
    *
    * @return the image ID
    */
-  public DescriptorDigest getImageId() {
-    return imageId;
-  }
+  public DescriptorDigest getImageId() { return imageId; }
 
   /**
    * Get the tags applied to the container.
    *
    * @return the set of all tags
    */
-  public Set<String> getTags() {
-    return tags;
-  }
+  public Set<String> getTags() { return tags; }
 
   @Override
   public int hashCode() {
@@ -100,10 +91,10 @@ public class JibContainer {
     if (!(other instanceof JibContainer)) {
       return false;
     }
-    JibContainer otherContainer = (JibContainer) other;
-    return targetImage.equals(otherContainer.targetImage)
-        && imageDigest.equals(otherContainer.imageDigest)
-        && imageId.equals(otherContainer.imageId)
-        && tags.equals(otherContainer.tags);
+    JibContainer otherContainer = (JibContainer)other;
+    return targetImage.equals(otherContainer.targetImage) &&
+        imageDigest.equals(otherContainer.imageDigest) &&
+        imageId.equals(otherContainer.imageId) &&
+        tags.equals(otherContainer.tags);
   }
 }

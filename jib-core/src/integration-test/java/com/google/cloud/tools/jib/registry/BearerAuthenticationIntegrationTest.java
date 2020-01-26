@@ -25,15 +25,19 @@ import org.junit.Test;
 /** Integration tests for bearer authentication. */
 public class BearerAuthenticationIntegrationTest {
 
-  private final FailoverHttpClient httpClient = new FailoverHttpClient(false, false, ignored -> {});
+  private final FailoverHttpClient httpClient =
+      new FailoverHttpClient(false, false, ignored -> {});
 
   @Test
-  public void testGetRegistryAuthenticator() throws IOException, RegistryException {
+  public void testGetRegistryAuthenticator()
+      throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
+        RegistryClient
+            .factory(EventHandlers.NONE, "registry.hub.docker.com",
+                     "library/busybox", httpClient)
             .newRegistryClient();
-    // For public images, Docker Hub still requires bearer authentication (without credentials)
+    // For public images, Docker Hub still requires bearer authentication
+    // (without credentials)
     registryClient.doPullBearerAuth();
     registryClient.pullManifest("latest");
   }

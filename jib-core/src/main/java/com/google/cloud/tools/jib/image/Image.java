@@ -39,11 +39,13 @@ public class Image {
   public static class Builder {
 
     private final Class<? extends ManifestTemplate> imageFormat;
-    private final ImmutableList.Builder<Layer> imageLayersBuilder = ImmutableList.builder();
-    private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
+    private final ImmutableList.Builder<Layer> imageLayersBuilder =
+        ImmutableList.builder();
+    private final ImmutableList.Builder<HistoryEntry> historyBuilder =
+        ImmutableList.builder();
 
-    // Don't use ImmutableMap.Builder because it does not allow for replacing existing keys with new
-    // values.
+    // Don't use ImmutableMap.Builder because it does not allow for replacing
+    // existing keys with new values.
     private final Map<String, String> environmentBuilder = new HashMap<>();
     private final Map<String, String> labelsBuilder = new HashMap<>();
     private final Set<Port> exposedPortsBuilder = new HashSet<>();
@@ -127,7 +129,8 @@ public class Image {
      * @return this
      */
     public Builder setEntrypoint(@Nullable List<String> entrypoint) {
-      this.entrypoint = (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
+      this.entrypoint =
+          (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
       return this;
     }
 
@@ -145,12 +148,15 @@ public class Image {
     /**
      * Sets the items in the "Cmd" field in the container configuration.
      *
-     * @param programArguments the list of arguments to append to the image entrypoint
+     * @param programArguments the list of arguments to append to the image
+     *     entrypoint
      * @return this
      */
-    public Builder setProgramArguments(@Nullable List<String> programArguments) {
-      this.programArguments =
-          (programArguments == null) ? null : ImmutableList.copyOf(programArguments);
+    public Builder
+    setProgramArguments(@Nullable List<String> programArguments) {
+      this.programArguments = (programArguments == null)
+                                  ? null
+                                  : ImmutableList.copyOf(programArguments);
       return this;
     }
 
@@ -252,21 +258,12 @@ public class Image {
 
     public Image build() {
       return new Image(
-          imageFormat,
-          created,
-          architecture,
-          os,
-          imageLayersBuilder.build(),
-          historyBuilder.build(),
-          ImmutableMap.copyOf(environmentBuilder),
-          entrypoint,
-          programArguments,
-          healthCheck,
+          imageFormat, created, architecture, os, imageLayersBuilder.build(),
+          historyBuilder.build(), ImmutableMap.copyOf(environmentBuilder),
+          entrypoint, programArguments, healthCheck,
           ImmutableSet.copyOf(exposedPortsBuilder),
           ImmutableSet.copyOf(volumesBuilder),
-          ImmutableMap.copyOf(labelsBuilder),
-          workingDirectory,
-          user);
+          ImmutableMap.copyOf(labelsBuilder), workingDirectory, user);
     }
   }
 
@@ -292,7 +289,10 @@ public class Image {
   /** The commands used to build each layer of the image */
   private final ImmutableList<HistoryEntry> history;
 
-  /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
+  /**
+   * Environment variable definitions for running the image, in the format
+   * {@code NAME=VALUE}.
+   */
   @Nullable private final ImmutableMap<String, String> environment;
 
   /** Initial command to run when running the image. */
@@ -319,22 +319,18 @@ public class Image {
   /** User on the container configuration */
   @Nullable private final String user;
 
-  private Image(
-      Class<? extends ManifestTemplate> imageFormat,
-      @Nullable Instant created,
-      String architecture,
-      String os,
-      ImmutableList<Layer> layers,
-      ImmutableList<HistoryEntry> history,
-      @Nullable ImmutableMap<String, String> environment,
-      @Nullable ImmutableList<String> entrypoint,
-      @Nullable ImmutableList<String> programArguments,
-      @Nullable DockerHealthCheck healthCheck,
-      @Nullable ImmutableSet<Port> exposedPorts,
-      @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
-      @Nullable ImmutableMap<String, String> labels,
-      @Nullable String workingDirectory,
-      @Nullable String user) {
+  private Image(Class<? extends ManifestTemplate> imageFormat,
+                @Nullable Instant created, String architecture, String os,
+                ImmutableList<Layer> layers,
+                ImmutableList<HistoryEntry> history,
+                @Nullable ImmutableMap<String, String> environment,
+                @Nullable ImmutableList<String> entrypoint,
+                @Nullable ImmutableList<String> programArguments,
+                @Nullable DockerHealthCheck healthCheck,
+                @Nullable ImmutableSet<Port> exposedPorts,
+                @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
+                @Nullable ImmutableMap<String, String> labels,
+                @Nullable String workingDirectory, @Nullable String user) {
     this.imageFormat = imageFormat;
     this.created = created;
     this.architecture = architecture;
@@ -361,13 +357,9 @@ public class Image {
     return created;
   }
 
-  public String getArchitecture() {
-    return architecture;
-  }
+  public String getArchitecture() { return architecture; }
 
-  public String getOs() {
-    return os;
-  }
+  public String getOs() { return os; }
 
   @Nullable
   public ImmutableMap<String, String> getEnvironment() {
@@ -414,11 +406,7 @@ public class Image {
     return user;
   }
 
-  public ImmutableList<Layer> getLayers() {
-    return layers;
-  }
+  public ImmutableList<Layer> getLayers() { return layers; }
 
-  public ImmutableList<HistoryEntry> getHistory() {
-    return history;
-  }
+  public ImmutableList<HistoryEntry> getHistory() { return history; }
 }

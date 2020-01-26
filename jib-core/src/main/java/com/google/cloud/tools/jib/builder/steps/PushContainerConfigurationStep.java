@@ -44,8 +44,7 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   PushContainerConfigurationStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      RegistryClient registryClient,
-      Image builtImage) {
+      RegistryClient registryClient, Image builtImage) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
@@ -55,19 +54,17 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("pushing container configuration", 1);
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildContext.getEventHandlers(), DESCRIPTION)) {
+             progressEventDispatcherFactory.create(
+                 "pushing container configuration", 1);
+         TimerEventDispatcher ignored = new TimerEventDispatcher(
+             buildContext.getEventHandlers(), DESCRIPTION)) {
       JsonTemplate containerConfiguration =
           new ImageToJsonTranslator(builtImage).getContainerConfiguration();
 
       return new PushBlobStep(
-              buildContext,
-              progressEventDispatcher.newChildProducer(),
-              registryClient,
-              Digests.computeDigest(containerConfiguration),
-              Blobs.from(containerConfiguration),
-              false)
+                 buildContext, progressEventDispatcher.newChildProducer(),
+                 registryClient, Digests.computeDigest(containerConfiguration),
+                 Blobs.from(containerConfiguration), false)
           .call();
     }
   }

@@ -45,34 +45,32 @@ import org.slf4j.LoggerFactory;
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
 
-  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
+  public static final String VERSION_URL =
+      "https://storage.googleapis.com/jib-versions/jib-gradle";
 
-  static Future<Optional<String>> newUpdateChecker(
-      ProjectProperties projectProperties, Logger logger) {
+  static Future<Optional<String>>
+  newUpdateChecker(ProjectProperties projectProperties, Logger logger) {
     if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
-      return UpdateChecker.checkForUpdate(
-          executorService, projectProperties::log, VERSION_URL, projectProperties.getToolName());
+      return UpdateChecker.checkForUpdate(executorService,
+                                          projectProperties::log, VERSION_URL,
+                                          projectProperties.getToolName());
     } finally {
       executorService.shutdown();
     }
   }
 
-  static void finishUpdateChecker(
-      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+  static void finishUpdateChecker(ProjectProperties projectProperties,
+                                  Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
-            updateMessage ->
-                projectProperties.log(
-                    LogEvent.lifecycle(
-                        "\n\u001B[33m"
-                            + updateMessage
-                            + "\n"
-                            + ProjectInfo.GITHUB_URL
-                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n")));
+            updateMessage
+            -> projectProperties.log(LogEvent.lifecycle(
+                "\n\u001B[33m" + updateMessage + "\n" + ProjectInfo.GITHUB_URL +
+                "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n")));
   }
 
   @Nullable
@@ -98,30 +96,34 @@ class TaskCommon {
   static void disableHttpLogging() {
     // Disables Apache HTTP client logging.
     OutputEventListenerBackedLoggerContext context =
-        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
-    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
-    context.setOutputEventListener(
-        event -> {
-          org.gradle.internal.logging.events.LogEvent logEvent =
-              (org.gradle.internal.logging.events.LogEvent) event;
-          if (!logEvent.getCategory().contains("org.apache")) {
-            defaultOutputEventListener.onOutput(event);
-          }
-        });
+        (OutputEventListenerBackedLoggerContext)
+            LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener =
+        context.getOutputEventListener();
+    context.setOutputEventListener(event -> {
+      org.gradle.internal.logging.events.LogEvent logEvent =
+          (org.gradle.internal.logging.events.LogEvent)event;
+      if (!logEvent.getCategory().contains("org.apache")) {
+        defaultOutputEventListener.onOutput(event);
+      }
+    });
 
     // Disables Google HTTP client logging.
-    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName())
+        .setLevel(Level.OFF);
   }
 
   /**
-   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
-   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   * Validates and converts a {@code String->String}
+   * file-path-to-file-permissions map to an equivalent {@code
+   * AbsoluteUnixPath->FilePermission} map.
    *
-   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @param stringMap the map to convert (example entry: {@code
+   *     "/path/on/container" -> "755"})
    * @return the converted map
    */
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> stringMap) {
+  static Map<AbsoluteUnixPath, FilePermissions>
+  convertPermissionsMap(Map<String, String> stringMap) {
     Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (Map.Entry<String, String> entry : stringMap.entrySet()) {
       AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());

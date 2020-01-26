@@ -40,30 +40,35 @@ class AuthenticatePushStep implements Callable<RegistryClient> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   AuthenticatePushStep(
-      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      BuildContext buildContext,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
   @Override
-  public RegistryClient call() throws CredentialRetrievalException, IOException, RegistryException {
-    String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
+  public RegistryClient call()
+      throws CredentialRetrievalException, IOException, RegistryException {
+    String registry =
+        buildContext.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher progressDispatcher =
-            progressEventDispatcherFactory.create("authenticating push to " + registry, 2);
-        TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
+             progressEventDispatcherFactory.create(
+                 "authenticating push to " + registry, 2);
+         TimerEventDispatcher ignored2 =
+             new TimerEventDispatcher(buildContext.getEventHandlers(),
+                                      String.format(DESCRIPTION, registry))) {
       Credential credential =
-          RegistryCredentialRetriever.getTargetImageCredential(buildContext).orElse(null);
+          RegistryCredentialRetriever.getTargetImageCredential(buildContext)
+              .orElse(null);
       progressDispatcher.dispatchProgress(1);
 
       RegistryClient registryClient =
-          buildContext
-              .newTargetImageRegistryClientFactory()
+          buildContext.newTargetImageRegistryClientFactory()
               .setCredential(credential)
               .newRegistryClient();
       if (!registryClient.doPushBearerAuth()) {
-        // server returned "WWW-Authenticate: Basic ..." (e.g., local Docker registry)
+        // server returned "WWW-Authenticate: Basic ..." (e.g., local Docker
+        // registry)
         if (credential != null && !credential.isOAuth2RefreshToken()) {
           registryClient.configureBasicAuth();
         }

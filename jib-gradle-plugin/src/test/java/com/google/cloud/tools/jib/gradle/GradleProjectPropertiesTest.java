@@ -94,9 +94,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesTest {
 
-  private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
+  private static final Instant SAMPLE_FILE_MODIFICATION_TIME =
+      Instant.ofEpochSecond(32);
 
-  /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
+  /**
+   * Implementation of {@link FileCollection} that just holds a set of {@link
+   * File}s.
+   */
   private static class TestFileCollection extends AbstractFileCollection {
 
     private final Set<File> files;
@@ -130,47 +134,56 @@ public class GradleProjectPropertiesTest {
     private final List<LayerConfiguration> snapshotsLayerEntries;
 
     private ContainerBuilderLayers(BuildContext buildContext) {
-      resourcesLayerEntries =
-          getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
-      classesLayerEntries = getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
-      dependenciesLayerEntries =
-          getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
-      snapshotsLayerEntries =
-          getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+      resourcesLayerEntries = getLayerConfigurationsByName(
+          buildContext, LayerType.RESOURCES.getName());
+      classesLayerEntries = getLayerConfigurationsByName(
+          buildContext, LayerType.CLASSES.getName());
+      dependenciesLayerEntries = getLayerConfigurationsByName(
+          buildContext, LayerType.DEPENDENCIES.getName());
+      snapshotsLayerEntries = getLayerConfigurationsByName(
+          buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationsByName(
-      BuildContext buildContext, String name) {
-    return buildContext
-        .getLayerConfigurations()
+  private static List<LayerConfiguration>
+  getLayerConfigurationsByName(BuildContext buildContext, String name) {
+    return buildContext.getLayerConfigurations()
         .stream()
         .filter(layer -> layer.getName().equals(name))
         .collect(Collectors.toList());
   }
 
-  private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
-    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
-    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+  private static <T> void
+  assertLayerEntriesUnordered(List<T> expectedPaths, List<LayerEntry> entries,
+                              Function<LayerEntry, T> fieldSelector) {
+    List<T> expected =
+        expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream()
+                         .map(fieldSelector)
+                         .sorted()
+                         .collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
-  private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  private static void assertSourcePathsUnordered(List<Path> expectedPaths,
+                                                 List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries,
+                                LayerEntry::getSourceFile);
   }
 
-  private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+  private static void assertExtractionPathsUnordered(List<String> expectedPaths,
+                                                     List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
-        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
+        expectedPaths, entries,
+        layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
+  private static void assertModificationTime(Instant instant,
+                                             List<LayerConfiguration> layers) {
     for (LayerConfiguration layer : layers) {
       for (LayerEntry entry : layer.getLayerEntries()) {
-        String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
+        String message = "wrong time: " + entry.getSourceFile() + "-->" +
+                         entry.getExtractionPath();
         Assert.assertEquals(message, instant, entry.getModificationTime());
       }
     }
@@ -192,8 +205,7 @@ public class GradleProjectPropertiesTest {
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private Project mockProject;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS) private Project mockProject;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskProvider<Task> mockWarTaskProvider;
@@ -215,50 +227,64 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
-    Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
+    Mockito.when(mockJavaPluginConvention.getSourceSets())
+        .thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Auto);
 
     // mocking to complete ignore project dependency resolution
-    Mockito.when(
-            mockProject
-                .getConfigurations()
-                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-                .getResolvedConfiguration()
-                .getResolvedArtifacts())
+    Mockito
+        .when(mockProject.getConfigurations()
+                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getResolvedConfiguration()
+                  .getResolvedArtifacts())
         .thenReturn(ImmutableSet.of());
-    ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
+    ConfigurableFileCollection emptyFileCollection =
+        Mockito.mock(ConfigurableFileCollection.class);
     Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
-    Mockito.when(mockProject.files(ImmutableList.of())).thenReturn(emptyFileCollection);
+    Mockito.when(mockProject.files(ImmutableList.of()))
+        .thenReturn(emptyFileCollection);
     // done mocking project dependency resolution
 
-    Set<Path> classesFiles = ImmutableSet.of(getResource("gradle/application/classes"));
+    Set<Path> classesFiles =
+        ImmutableSet.of(getResource("gradle/application/classes"));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
     Path resourcesOutputDir = getResource("gradle/application/resources");
 
     Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
-    allFiles.add(getResource("gradle/application/dependencies/library.jarC.jar"));
+    allFiles.add(
+        getResource("gradle/application/dependencies/library.jarC.jar"));
     allFiles.add(getResource("gradle/application/dependencies/libraryB.jar"));
     allFiles.add(getResource("gradle/application/dependencies/libraryA.jar"));
-    allFiles.add(getResource("gradle/application/dependencies/dependency-1.0.0.jar"));
-    allFiles.add(getResource("gradle/application/dependencies/more/dependency-1.0.0.jar"));
-    allFiles.add(getResource("gradle/application/dependencies/another/one/dependency-1.0.0.jar"));
-    allFiles.add(getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
+    allFiles.add(
+        getResource("gradle/application/dependencies/dependency-1.0.0.jar"));
+    allFiles.add(getResource(
+        "gradle/application/dependencies/more/dependency-1.0.0.jar"));
+    allFiles.add(getResource(
+        "gradle/application/dependencies/another/one/dependency-1.0.0.jar"));
+    allFiles.add(getResource(
+        "gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
-    Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
-    Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
-    Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
-    Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
-    Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
+    Mockito.when(mockSourceSetContainer.getByName("main"))
+        .thenReturn(mockMainSourceSet);
+    Mockito.when(mockMainSourceSet.getOutput())
+        .thenReturn(mockMainSourceSetOutput);
+    Mockito.when(mockMainSourceSetOutput.getClassesDirs())
+        .thenReturn(classesFileCollection);
+    Mockito.when(mockMainSourceSetOutput.getResourcesDir())
+        .thenReturn(resourcesOutputDir.toFile());
+    Mockito.when(mockMainSourceSet.getRuntimeClasspath())
+        .thenReturn(runtimeFileCollection);
     // We can't commit an empty directory in Git, so create (if not exist).
-    Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
+    Path emptyDirectory =
+        getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider);
+    gradleProjectProperties = new GradleProjectProperties(
+        mockProject, mockLogger, mockTempDirectoryProvider);
   }
 
   @Test
@@ -267,7 +293,8 @@ public class GradleProjectPropertiesTest {
     Jar mockJar = Mockito.mock(Jar.class);
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
-    Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
+    Assert.assertEquals("some.main.class",
+                        gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -278,23 +305,24 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() {
-    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class))
+        .thenReturn(true);
     Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test
   public void testConvertPermissionsMap() {
     Assert.assertEquals(
-        ImmutableMap.of(
-            AbsoluteUnixPath.get("/test/folder/file1"),
-            FilePermissions.fromOctalString("123"),
-            AbsoluteUnixPath.get("/test/file2"),
-            FilePermissions.fromOctalString("456")),
-        TaskCommon.convertPermissionsMap(
-            ImmutableMap.of("/test/folder/file1", "123", "/test/file2", "456")));
+        ImmutableMap.of(AbsoluteUnixPath.get("/test/folder/file1"),
+                        FilePermissions.fromOctalString("123"),
+                        AbsoluteUnixPath.get("/test/file2"),
+                        FilePermissions.fromOctalString("456")),
+        TaskCommon.convertPermissionsMap(ImmutableMap.of(
+            "/test/folder/file1", "123", "/test/file2", "456")));
 
     try {
-      TaskCommon.convertPermissionsMap(ImmutableMap.of("a path", "not valid permission"));
+      TaskCommon.convertPermissionsMap(
+          ImmutableMap.of("a path", "not valid permission"));
       Assert.fail();
     } catch (IllegalArgumentException ignored) {
       // pass
@@ -321,14 +349,16 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetMajorJavaVersion_jvm8() {
-    Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_1_8));
+    Assume.assumeThat(JavaVersion.current(),
+                      CoreMatchers.is(JavaVersion.VERSION_1_8));
 
     Assert.assertEquals(8, gradleProjectProperties.getMajorJavaVersion());
   }
 
   @Test
   public void testGetMajorJavaVersion_jvm11() {
-    Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_11));
+    Assume.assumeThat(JavaVersion.current(),
+                      CoreMatchers.is(JavaVersion.VERSION_11));
 
     Assert.assertEquals(11, gradleProjectProperties.getMajorJavaVersion());
   }
@@ -336,29 +366,30 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+             CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     Path applicationDirectory = getResource("gradle/application");
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
+        ImmutableList.of(applicationDirectory.resolve(
+            "dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
-            applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
-            applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
+            applicationDirectory.resolve(
+                "dependencies/more/dependency-1.0.0.jar"),
+            applicationDirectory.resolve(
+                "dependencies/another/one/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/libraryA.jar"),
             applicationDirectory.resolve("dependencies/libraryB.jar"),
             applicationDirectory.resolve("dependencies/library.jarC.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            applicationDirectory.resolve("resources/resourceA"),
-            applicationDirectory.resolve("resources/resourceB"),
-            applicationDirectory.resolve("resources/world")),
+        ImmutableList.of(applicationDirectory.resolve("resources/resourceA"),
+                         applicationDirectory.resolve("resources/resourceB"),
+                         applicationDirectory.resolve("resources/world")),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
@@ -366,99 +397,107 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("classes/some.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
 
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayerEntries);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayerEntries);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.resourcesLayerEntries);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.classesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME,
+                           layers.snapshotsLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME,
+                           layers.dependenciesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME,
+                           layers.resourcesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME,
+                           layers.classesLayerEntries);
   }
 
   @Test
-  public void testCreateContainerBuilder_noClassesFiles() throws InvalidImageReferenceException {
+  public void testCreateContainerBuilder_noClassesFiles()
+      throws InvalidImageReferenceException {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createJibContainerBuilder(
-        JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);
+        JavaContainerBuilder.from(RegistryImage.named("base")),
+        ContainerizingMode.EXPLODED);
     gradleProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
+    Mockito.verify(mockLogger)
+        .warn("No classes files were found - did you compile your project?");
   }
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/libs/dependency-1.0.0-770.jar",
-            "/my/app/libs/dependency-1.0.0-200.jar",
-            "/my/app/libs/dependency-1.0.0-480.jar",
-            "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar",
-            "/my/app/libs/library.jarC.jar"),
+        Arrays.asList("/my/app/libs/dependency-1.0.0-770.jar",
+                      "/my/app/libs/dependency-1.0.0-200.jar",
+                      "/my/app/libs/dependency-1.0.0-480.jar",
+                      "/my/app/libs/libraryA.jar", "/my/app/libs/libraryB.jar",
+                      "/my/app/libs/library.jarC.jar"),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList(
+            "/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/resources/resourceA",
-            "/my/app/resources/resourceB",
-            "/my/app/resources/world"),
+        Arrays.asList("/my/app/resources/resourceA",
+                      "/my/app/resources/resourceB", "/my/app/resources/world"),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
+        Arrays.asList("/my/app/classes/HelloWorld.class",
+                      "/my/app/classes/some.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException {
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/app/libs/dependency-1.0.0-770.jar",
-            "/app/libs/dependency-1.0.0-200.jar",
-            "/app/libs/dependency-1.0.0-480.jar",
-            "/app/libs/libraryA.jar",
-            "/app/libs/libraryB.jar",
-            "/app/libs/library.jarC.jar"),
+        Arrays.asList("/app/libs/dependency-1.0.0-770.jar",
+                      "/app/libs/dependency-1.0.0-200.jar",
+                      "/app/libs/dependency-1.0.0-480.jar",
+                      "/app/libs/libraryA.jar", "/app/libs/libraryB.jar",
+                      "/app/libs/library.jarC.jar"),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world"),
+        Arrays.asList("/app/resources/resourceA", "/app/resources/resourceB",
+                      "/app/resources/world"),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
+        Arrays.asList("/app/classes/HelloWorld.class",
+                      "/app/classes/some.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+             CacheDirectoryCreationException {
     Path webAppDirectory = getResource("gradle/webapp");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
     BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
+        ImmutableList.of(
+            unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+        ImmutableList.of(
+            unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("META-INF"),
             unzipTarget.resolve("META-INF/context.xml"),
-            unzipTarget.resolve("Test.jsp"),
-            unzipTarget.resolve("WEB-INF"),
+            unzipTarget.resolve("Test.jsp"), unzipTarget.resolve("WEB-INF"),
             unzipTarget.resolve("WEB-INF/classes"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
@@ -478,50 +517,48 @@ public class GradleProjectPropertiesTest {
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList(
+            "/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/META-INF",
-            "/my/app/META-INF/context.xml",
-            "/my/app/Test.jsp",
-            "/my/app/WEB-INF",
-            "/my/app/WEB-INF/classes",
-            "/my/app/WEB-INF/classes/empty_dir",
-            "/my/app/WEB-INF/classes/package",
-            "/my/app/WEB-INF/classes/package/test.properties",
-            "/my/app/WEB-INF/lib",
-            "/my/app/WEB-INF/web.xml"),
+        Arrays.asList("/my/app/META-INF", "/my/app/META-INF/context.xml",
+                      "/my/app/Test.jsp", "/my/app/WEB-INF",
+                      "/my/app/WEB-INF/classes",
+                      "/my/app/WEB-INF/classes/empty_dir",
+                      "/my/app/WEB-INF/classes/package",
+                      "/my/app/WEB-INF/classes/package/test.properties",
+                      "/my/app/WEB-INF/lib", "/my/app/WEB-INF/web.xml"),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/WEB-INF/classes/HelloWorld.class",
-            "/my/app/WEB-INF/classes/empty_dir",
-            "/my/app/WEB-INF/classes/package",
-            "/my/app/WEB-INF/classes/package/Other.class"),
+        Arrays.asList("/my/app/WEB-INF/classes/HelloWorld.class",
+                      "/my/app/WEB-INF/classes/empty_dir",
+                      "/my/app/WEB-INF/classes/package",
+                      "/my/app/WEB-INF/classes/package/Other.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+             CacheDirectoryCreationException {
     Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
-    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
+        ImmutableList.of(
+            unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+        ImmutableList.of(
+            unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("META-INF"),
             unzipTarget.resolve("META-INF/context.xml"),
-            unzipTarget.resolve("Test.jsp"),
-            unzipTarget.resolve("WEB-INF"),
+            unzipTarget.resolve("Test.jsp"), unzipTarget.resolve("WEB-INF"),
             unzipTarget.resolve("WEB-INF/classes"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
@@ -540,7 +577,8 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildContext("/anything"); // should pass
@@ -548,7 +586,8 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildContext("/anything"); // should pass
@@ -556,41 +595,54 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException,
+             CacheDirectoryCreationException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildContext("/anything"); // should pass
   }
 
   @Test
   public void testGetWarFilePath() {
-    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class))
+        .thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war"))
+        .thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("/war/file/here.war");
 
-    Assert.assertEquals("/war/file/here.war", gradleProjectProperties.getWarFilePath());
+    Assert.assertEquals("/war/file/here.war",
+                        gradleProjectProperties.getWarFilePath());
   }
 
   @Test
   public void testGetWarFilePath_bootWar() {
-    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot"))
+        .thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar"))
+        .thenReturn(mockBootWarTaskProvider);
     Mockito.when(mockBootWarTaskProvider.get().getEnabled()).thenReturn(true);
-    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+    Mockito
+        .when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("/boot/war/file.war");
 
-    Assert.assertEquals("/boot/war/file.war", gradleProjectProperties.getWarFilePath());
+    Assert.assertEquals("/boot/war/file.war",
+                        gradleProjectProperties.getWarFilePath());
   }
 
   @Test
   public void testGetWarFilePath_bootWarDisabled() {
-    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
-    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot"))
+        .thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar"))
+        .thenReturn(mockBootWarTaskProvider);
+    Mockito
+        .when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("boot.war");
 
-    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class))
+        .thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war"))
+        .thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("war.war");
 
@@ -598,41 +650,53 @@ public class GradleProjectPropertiesTest {
   }
 
   private BuildContext setupBuildContext(String appRoot)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, IOException,
+             CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
-            .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
+            .setModificationTimeProvider(
+                (ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
-            .createJibContainerBuilder(javaContainerBuilder, ContainerizingMode.EXPLODED);
+        new GradleProjectProperties(mockProject, mockLogger,
+                                    mockTempDirectoryProvider)
+            .createJibContainerBuilder(javaContainerBuilder,
+                                       ContainerizingMode.EXPLODED);
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }
 
   private Path setUpWarProject(Path webAppDirectory) throws IOException {
-    Path targetZip =
-        zipUpDirectory(webAppDirectory, temporaryFolder.getRoot().toPath().resolve("my-app.war"));
+    Path targetZip = zipUpDirectory(
+        webAppDirectory,
+        temporaryFolder.getRoot().toPath().resolve("my-app.war"));
 
-    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class))
+        .thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war"))
+        .thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
 
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
-    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+    Mockito.when(mockTempDirectoryProvider.newDirectory())
+        .thenReturn(unzipTarget);
     return unzipTarget;
   }
 
-  private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
-    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip))) {
+  private static Path zipUpDirectory(Path sourceRoot, Path targetZip)
+      throws IOException {
+    try (ZipOutputStream zipOut =
+             new ZipOutputStream(Files.newOutputStream(targetZip))) {
       for (Path source : new DirectoryWalker(sourceRoot).filterRoot().walk()) {
 
         StringJoiner pathJoiner = new StringJoiner("/", "", "");
-        sourceRoot.relativize(source).forEach(element -> pathJoiner.add(element.toString()));
-        String zipEntryPath =
-            Files.isDirectory(source) ? pathJoiner.toString() + '/' : pathJoiner.toString();
+        sourceRoot.relativize(source).forEach(
+            element -> pathJoiner.add(element.toString()));
+        String zipEntryPath = Files.isDirectory(source)
+                                  ? pathJoiner.toString() + '/'
+                                  : pathJoiner.toString();
 
         ZipEntry entry = new ZipEntry(zipEntryPath);
         zipOut.putNextEntry(entry);

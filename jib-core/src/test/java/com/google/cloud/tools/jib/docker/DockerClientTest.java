@@ -59,118 +59,120 @@ public class DockerClientTest {
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
-    Mockito.doAnswer(
-            AdditionalAnswers.answerVoid(
-                (VoidAnswer1<OutputStream>)
-                    out -> out.write("jib".getBytes(StandardCharsets.UTF_8))))
+    Mockito
+        .doAnswer(AdditionalAnswers.answerVoid(
+            (VoidAnswer1<OutputStream>)
+                out -> out.write("jib".getBytes(StandardCharsets.UTF_8))))
         .when(imageTarball)
         .writeTo(Mockito.any(OutputStream.class));
   }
 
   @Test
   public void testIsDockerInstalled_fail() {
-    Assert.assertFalse(DockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
+    Assert.assertFalse(
+        DockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
   }
 
   @Test
   public void testLoad() throws IOException, InterruptedException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Collections.singletonList("load"), subcommand);
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = new DockerClient(subcommand -> {
+      Assert.assertEquals(Collections.singletonList("load"), subcommand);
+      return mockProcessBuilder;
+    });
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     // Captures stdin.
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    Mockito.when(mockProcess.getOutputStream()).thenReturn(byteArrayOutputStream);
+    Mockito.when(mockProcess.getOutputStream())
+        .thenReturn(byteArrayOutputStream);
 
     // Simulates stdout.
     Mockito.when(mockProcess.getInputStream())
-        .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new ByteArrayInputStream(
+            "output".getBytes(StandardCharsets.UTF_8)));
 
     String output = testDockerClient.load(imageTarball, ignored -> {});
 
-    Assert.assertEquals(
-        "jib", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals("jib", new String(byteArrayOutputStream.toByteArray(),
+                                          StandardCharsets.UTF_8));
     Assert.assertEquals("output", output);
   }
 
   @Test
   public void testLoad_stdinFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient =
+        new DockerClient(ignored -> mockProcessBuilder);
 
-    Mockito.when(mockProcess.getOutputStream())
-        .thenReturn(
-            new OutputStream() {
-
-              @Override
-              public void write(int b) throws IOException {
-                throw new IOException();
-              }
-            });
+    Mockito.when(mockProcess.getOutputStream()).thenReturn(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        throw new IOException();
+      }
+    });
     Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(
+            new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
       testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with error: error", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with error: error",
+                          ex.getMessage());
     }
   }
 
   @Test
   public void testLoad_stdinFail_stderrFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient =
+        new DockerClient(ignored -> mockProcessBuilder);
 
-    Mockito.when(mockProcess.getOutputStream())
-        .thenReturn(
-            new OutputStream() {
-
-              @Override
-              public void write(int b) throws IOException {
-                throw new IOException("I/O failed");
-              }
-            });
-    Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(
-            new InputStream() {
-
-              @Override
-              public int read() throws IOException {
-                throw new IOException();
-              }
-            });
+    Mockito.when(mockProcess.getOutputStream()).thenReturn(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        throw new IOException("I/O failed");
+      }
+    });
+    Mockito.when(mockProcess.getErrorStream()).thenReturn(new InputStream() {
+      @Override
+      public int read() throws IOException {
+        throw new IOException();
+      }
+    });
 
     try {
       testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with error: I/O failed", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with error: I/O failed",
+                          ex.getMessage());
     }
   }
 
   @Test
   public void testLoad_stdoutFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient =
+        new DockerClient(ignored -> mockProcessBuilder);
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
-    Mockito.when(mockProcess.getOutputStream()).thenReturn(ByteStreams.nullOutputStream());
+    Mockito.when(mockProcess.getOutputStream())
+        .thenReturn(ByteStreams.nullOutputStream());
     Mockito.when(mockProcess.getInputStream())
-        .thenReturn(new ByteArrayInputStream("ignored".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new ByteArrayInputStream(
+            "ignored".getBytes(StandardCharsets.UTF_8)));
     Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(
+            new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
       testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with error: error", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with error: error",
+                          ex.getMessage());
     }
   }
 
@@ -180,12 +182,12 @@ public class DockerClientTest {
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     long[] counter = new long[1];
-    testDockerClient.save(
-        ImageReference.of(null, "testimage", null),
-        temporaryFolder.getRoot().toPath().resolve("out.tar"),
-        bytes -> counter[0] += bytes);
+    testDockerClient.save(ImageReference.of(null, "testimage", null),
+                          temporaryFolder.getRoot().toPath().resolve("out.tar"),
+                          bytes -> counter[0] += bytes);
 
-    // InputStream writes "jib", so 3 bytes of progress should have been counted.
+    // InputStream writes "jib", so 3 bytes of progress should have been
+    // counted.
     Assert.assertEquals(3, counter[0]);
   }
 
@@ -195,34 +197,38 @@ public class DockerClientTest {
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(
+            new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
       testDockerClient.save(
           ImageReference.of(null, "testimage", null),
-          temporaryFolder.getRoot().toPath().resolve("out.tar"),
-          ignored -> {});
+          temporaryFolder.getRoot().toPath().resolve("out.tar"), ignored -> {});
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker save' command failed with error: error", ex.getMessage());
+      Assert.assertEquals("'docker save' command failed with error: error",
+                          ex.getMessage());
     }
   }
 
   @Test
   public void testDefaultProcessorBuilderFactory_customExecutable() {
     ProcessBuilder processBuilder =
-        DockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
+        DockerClient
+            .defaultProcessBuilderFactory("docker-executable",
+                                          ImmutableMap.of())
             .apply(Arrays.asList("sub", "command"));
 
-    Assert.assertEquals(
-        Arrays.asList("docker-executable", "sub", "command"), processBuilder.command());
+    Assert.assertEquals(Arrays.asList("docker-executable", "sub", "command"),
+                        processBuilder.command());
     Assert.assertEquals(System.getenv(), processBuilder.environment());
   }
 
   @Test
   public void testDefaultProcessorBuilderFactory_customEnvironment() {
-    ImmutableMap<String, String> environment = ImmutableMap.of("Key1", "Value1");
+    ImmutableMap<String, String> environment =
+        ImmutableMap.of("Key1", "Value1");
 
     Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
     expectedEnvironment.putAll(environment);
@@ -236,23 +242,23 @@ public class DockerClientTest {
 
   @Test
   public void testSize_fail() throws InterruptedException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals("inspect", subcommand.get(0));
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = new DockerClient(subcommand -> {
+      Assert.assertEquals("inspect", subcommand.get(0));
+      return mockProcessBuilder;
+    });
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(
+            new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
       testDockerClient.inspect(ImageReference.of(null, "image", null));
       Assert.fail("docker inspect should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
+      Assert.assertEquals("'docker inspect' command failed with error: error",
+                          ex.getMessage());
     }
   }
 
@@ -260,10 +266,14 @@ public class DockerClientTest {
   public void testParseInspectResults() throws DigestException, IOException {
     String output =
         "{\"size\":488118507,"
-            + "\"imageId\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
-            + "\"diffIds\":[\"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
-            + "\"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
-            + "\"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}\n";
+        +
+        "\"imageId\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
+        +
+        "\"diffIds\":[\"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
+        +
+        "\"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
+        +
+        "\"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}\n";
     DockerImageDetails results = DockerClient.parseInspectResults(output);
     Assert.assertEquals(488118507, results.getSize());
     Assert.assertEquals(
@@ -282,25 +292,26 @@ public class DockerClientTest {
   }
 
   private DockerClient makeDockerSaveClient() {
-    return new DockerClient(
-        subcommand -> {
-          try {
-            if (subcommand.contains("{{.Size}}")) {
-              // It doesn't matter what size is actually returned by 'docker inspect' here, so just
-              // use 150000 as a placeholder.
-              Process mockSizeProcess = Mockito.mock(Process.class);
-              Mockito.when(mockSizeProcess.getInputStream())
-                  .thenReturn(new ByteArrayInputStream("150000".getBytes(StandardCharsets.UTF_8)));
-              Mockito.when(mockProcessBuilder.start()).thenReturn(mockSizeProcess);
-            } else {
-              Assert.assertEquals(Arrays.asList("save", "testimage"), subcommand);
-              Mockito.when(mockProcess.getInputStream())
-                  .thenReturn(new ByteArrayInputStream("jib".getBytes(StandardCharsets.UTF_8)));
-              Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
-            }
-          } catch (IOException ignored) {
-          }
-          return mockProcessBuilder;
-        });
+    return new DockerClient(subcommand -> {
+      try {
+        if (subcommand.contains("{{.Size}}")) {
+          // It doesn't matter what size is actually returned by 'docker
+          // inspect' here, so just use 150000 as a placeholder.
+          Process mockSizeProcess = Mockito.mock(Process.class);
+          Mockito.when(mockSizeProcess.getInputStream())
+              .thenReturn(new ByteArrayInputStream(
+                  "150000".getBytes(StandardCharsets.UTF_8)));
+          Mockito.when(mockProcessBuilder.start()).thenReturn(mockSizeProcess);
+        } else {
+          Assert.assertEquals(Arrays.asList("save", "testimage"), subcommand);
+          Mockito.when(mockProcess.getInputStream())
+              .thenReturn(new ByteArrayInputStream(
+                  "jib".getBytes(StandardCharsets.UTF_8)));
+          Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+        }
+      } catch (IOException ignored) {
+      }
+      return mockProcessBuilder;
+    });
   }
 }

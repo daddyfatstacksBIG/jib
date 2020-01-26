@@ -62,114 +62,109 @@ public class JibBuildRunner {
       "Built image tarball at \u001B[36m%s\u001B[0m";
 
   private static CharSequence colorCyan(CharSequence innerText) {
-    return new StringBuilder().append("\u001B[36m").append(innerText).append("\u001B[0m");
+    return new StringBuilder()
+        .append("\u001B[36m")
+        .append(innerText)
+        .append("\u001B[0m");
   }
 
-  private static String buildMessageWithTargetImageReferences(
-      ImageReference targetImageReference,
-      Set<String> additionalTags,
-      String prefix,
-      String suffix) {
+  private static String
+  buildMessageWithTargetImageReferences(ImageReference targetImageReference,
+                                        Set<String> additionalTags,
+                                        String prefix, String suffix) {
     StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
     successMessageBuilder.add(colorCyan(targetImageReference.toString()));
     for (String tag : additionalTags) {
-      successMessageBuilder.add(colorCyan(targetImageReference.withTag(tag).toString()));
+      successMessageBuilder.add(
+          colorCyan(targetImageReference.withTag(tag).toString()));
     }
     return successMessageBuilder.toString();
   }
 
   /**
-   * Creates a runner to build an image. Creates a directory for the cache, if needed.
+   * Creates a runner to build an image. Creates a directory for the cache, if
+   * needed.
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
    * @param logger consumer for handling log events
-   * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @param helpfulSuggestions suggestions to use in help messages for
+   *     exceptions
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
    * @return a {@link JibBuildRunner} for building to a registry
    */
   public static JibBuildRunner forBuildImage(
-      JibContainerBuilder jibContainerBuilder,
-      Containerizer containerizer,
-      Consumer<LogEvent> logger,
-      HelpfulSuggestions helpfulSuggestions,
-      ImageReference targetImageReference,
-      Set<String> additionalTags) {
+      JibContainerBuilder jibContainerBuilder, Containerizer containerizer,
+      Consumer<LogEvent> logger, HelpfulSuggestions helpfulSuggestions,
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new JibBuildRunner(
-        jibContainerBuilder,
-        containerizer,
-        logger,
-        helpfulSuggestions,
+        jibContainerBuilder, containerizer, logger, helpfulSuggestions,
         buildMessageWithTargetImageReferences(
-            targetImageReference,
-            additionalTags,
-            STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY,
-            "..."),
+            targetImageReference, additionalTags,
+            STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
         buildMessageWithTargetImageReferences(
-            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
+            targetImageReference, additionalTags,
+            SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
 
   /**
-   * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
+   * Creates a runner to build to the Docker daemon. Creates a directory for the
+   * cache, if needed.
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
    * @param logger consumer for handling log events
-   * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @param helpfulSuggestions suggestions to use in help messages for
+   *     exceptions
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
    * @return a {@link JibBuildRunner} for building to a Docker daemon
    */
   public static JibBuildRunner forBuildToDockerDaemon(
-      JibContainerBuilder jibContainerBuilder,
-      Containerizer containerizer,
-      Consumer<LogEvent> logger,
-      HelpfulSuggestions helpfulSuggestions,
-      ImageReference targetImageReference,
-      Set<String> additionalTags) {
+      JibContainerBuilder jibContainerBuilder, Containerizer containerizer,
+      Consumer<LogEvent> logger, HelpfulSuggestions helpfulSuggestions,
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new JibBuildRunner(
-        jibContainerBuilder,
-        containerizer,
-        logger,
-        helpfulSuggestions,
+        jibContainerBuilder, containerizer, logger, helpfulSuggestions,
         buildMessageWithTargetImageReferences(
-            targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
+            targetImageReference, additionalTags,
+            STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
-            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
+            targetImageReference, additionalTags,
+            SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
   }
 
   /**
-   * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
+   * Creates a runner to build an image tarball. Creates a directory for the
+   * cache, if needed.
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
    * @param logger consumer for handling log events
-   * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @param helpfulSuggestions suggestions to use in help messages for
+   *     exceptions
    * @param outputPath the path to output the tarball to
    * @return a {@link JibBuildRunner} for building a tarball
    */
-  public static JibBuildRunner forBuildTar(
-      JibContainerBuilder jibContainerBuilder,
-      Containerizer containerizer,
-      Consumer<LogEvent> logger,
-      HelpfulSuggestions helpfulSuggestions,
-      Path outputPath) {
-    return new JibBuildRunner(
-        jibContainerBuilder,
-        containerizer,
-        logger,
-        helpfulSuggestions,
-        String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
-        String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
+  public static JibBuildRunner
+  forBuildTar(JibContainerBuilder jibContainerBuilder,
+              Containerizer containerizer, Consumer<LogEvent> logger,
+              HelpfulSuggestions helpfulSuggestions, Path outputPath) {
+    return new JibBuildRunner(jibContainerBuilder, containerizer, logger,
+                              helpfulSuggestions,
+                              String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL,
+                                            outputPath.toString()),
+                              String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL,
+                                            outputPath.toString()));
   }
 
   private static void handleRegistryUnauthorizedException(
       RegistryUnauthorizedException registryUnauthorizedException,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException {
-    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+    if (registryUnauthorizedException.getHttpResponseException()
+            .getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
       // No permissions for registry/repository.
       throw new BuildStepsExecutionException(
           helpfulSuggestions.forHttpStatusCodeForbidden(
@@ -195,13 +190,10 @@ public class JibBuildRunner {
   @Nullable private Path imageJsonOutputPath;
 
   @VisibleForTesting
-  JibBuildRunner(
-      JibContainerBuilder jibContainerBuilder,
-      Containerizer containerizer,
-      Consumer<LogEvent> logger,
-      HelpfulSuggestions helpfulSuggestions,
-      String startupMessage,
-      String successMessage) {
+  JibBuildRunner(JibContainerBuilder jibContainerBuilder,
+                 Containerizer containerizer, Consumer<LogEvent> logger,
+                 HelpfulSuggestions helpfulSuggestions, String startupMessage,
+                 String successMessage) {
     this.jibContainerBuilder = jibContainerBuilder;
     this.containerizer = containerizer;
     this.logger = logger;
@@ -214,17 +206,21 @@ public class JibBuildRunner {
    * Runs the Jib build.
    *
    * @return the built {@link JibContainer}
-   * @throws BuildStepsExecutionException if another exception is thrown during the build
+   * @throws BuildStepsExecutionException if another exception is thrown during
+   *     the build
    * @throws IOException if an I/O exception occurs
-   * @throws CacheDirectoryCreationException if the cache directory could not be created
+   * @throws CacheDirectoryCreationException if the cache directory could not be
+   *     created
    */
-  public JibContainer runBuild()
-      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
+  public JibContainer runBuild() throws BuildStepsExecutionException,
+                                        IOException,
+                                        CacheDirectoryCreationException {
     try {
       logger.accept(LogEvent.lifecycle(""));
       logger.accept(LogEvent.lifecycle(startupMessage));
 
-      JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
+      JibContainer jibContainer =
+          jibContainerBuilder.containerize(containerizer);
 
       logger.accept(LogEvent.lifecycle(""));
       logger.accept(LogEvent.lifecycle(successMessage));
@@ -232,35 +228,42 @@ public class JibBuildRunner {
       // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {
         String imageDigest = jibContainer.getDigest().toString();
-        Files.write(imageDigestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+        Files.write(imageDigestOutputPath,
+                    imageDigest.getBytes(StandardCharsets.UTF_8));
       }
       if (imageIdOutputPath != null) {
         String imageId = jibContainer.getImageId().toString();
-        Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
+        Files.write(imageIdOutputPath,
+                    imageId.getBytes(StandardCharsets.UTF_8));
       }
       if (imageJsonOutputPath != null) {
-        ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJibContainer(jibContainer);
+        ImageMetadataOutput metadataOutput =
+            ImageMetadataOutput.fromJibContainer(jibContainer);
         String imageJson = metadataOutput.toJson();
-        Files.write(imageJsonOutputPath, imageJson.getBytes(StandardCharsets.UTF_8));
+        Files.write(imageJsonOutputPath,
+                    imageJson.getBytes(StandardCharsets.UTF_8));
       }
 
       return jibContainer;
 
     } catch (HttpHostConnectException ex) {
       // Failed to connect to registry.
-      throw new BuildStepsExecutionException(helpfulSuggestions.forHttpHostConnect(), ex);
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forHttpHostConnect(), ex);
 
     } catch (RegistryUnauthorizedException ex) {
       handleRegistryUnauthorizedException(ex, helpfulSuggestions);
 
     } catch (RegistryCredentialsNotSentException ex) {
-      throw new BuildStepsExecutionException(helpfulSuggestions.forCredentialsNotSent(), ex);
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forCredentialsNotSent(), ex);
 
     } catch (RegistryAuthenticationFailedException ex) {
       if (ex.getCause() instanceof ResponseException) {
         handleRegistryUnauthorizedException(
-            new RegistryUnauthorizedException(
-                ex.getServerUrl(), ex.getImageName(), (ResponseException) ex.getCause()),
+            new RegistryUnauthorizedException(ex.getServerUrl(),
+                                              ex.getImageName(),
+                                              (ResponseException)ex.getCause()),
             helpfulSuggestions);
       } else {
         // Unknown cause
@@ -268,19 +271,23 @@ public class JibBuildRunner {
       }
 
     } catch (UnknownHostException ex) {
-      throw new BuildStepsExecutionException(helpfulSuggestions.forUnknownHost(), ex);
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forUnknownHost(), ex);
 
     } catch (InsecureRegistryException ex) {
-      throw new BuildStepsExecutionException(helpfulSuggestions.forInsecureRegistry(), ex);
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forInsecureRegistry(), ex);
 
     } catch (RegistryException ex) {
-      String message = Verify.verifyNotNull(ex.getMessage()); // keep null-away happy
+      String message =
+          Verify.verifyNotNull(ex.getMessage()); // keep null-away happy
       throw new BuildStepsExecutionException(message, ex);
 
     } catch (ExecutionException ex) {
       String message = ex.getCause().getMessage();
       throw new BuildStepsExecutionException(
-          message == null ? "(null exception message)" : message, ex.getCause());
+          message == null ? "(null exception message)" : message,
+          ex.getCause());
 
     } catch (InterruptedException ex) {
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
@@ -290,10 +297,11 @@ public class JibBuildRunner {
   }
 
   /**
-   * Set the location where the image digest will be saved. If {@code null} then digest is not
-   * saved.
+   * Set the location where the image digest will be saved. If {@code null} then
+   * digest is not saved.
    *
-   * @param imageDigestOutputPath the location to write the image digest or {@code null} to skip
+   * @param imageDigestOutputPath the location to write the image digest or
+   *     {@code null} to skip
    * @return this
    */
   public JibBuildRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
@@ -302,9 +310,11 @@ public class JibBuildRunner {
   }
 
   /**
-   * Set the location where the image id will be saved. If {@code null} then digest is not saved.
+   * Set the location where the image id will be saved. If {@code null} then
+   * digest is not saved.
    *
-   * @param imageIdOutputPath the location to write the image id or {@code null} to skip
+   * @param imageIdOutputPath the location to write the image id or {@code null}
+   *     to skip
    * @return this
    */
   public JibBuildRunner writeImageId(@Nullable Path imageIdOutputPath) {
@@ -313,10 +323,11 @@ public class JibBuildRunner {
   }
 
   /**
-   * Set the location where the image metadata json will be saved. If {@code null} then the metadata
-   * is not saved.
+   * Set the location where the image metadata json will be saved. If {@code
+   * null} then the metadata is not saved.
    *
-   * @param imageJsonOutputPath the location to write the image metadata, or {@code null} to skip
+   * @param imageJsonOutputPath the location to write the image metadata, or
+   *     {@code null} to skip
    * @return this
    */
   public JibBuildRunner writeImageJson(@Nullable Path imageJsonOutputPath) {

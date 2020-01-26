@@ -34,10 +34,11 @@ import javax.annotation.Nullable;
 public interface BuildableManifestTemplate extends ManifestTemplate {
 
   /**
-   * Template for inner JSON object representing content descriptor for a layer or container
-   * configuration.
+   * Template for inner JSON object representing content descriptor for a layer
+   * or container configuration.
    *
-   * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI
+   * @see <a
+   *     href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI
    *     Content Descriptors</a>
    */
   @VisibleForTesting
@@ -49,7 +50,8 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     @Nullable private List<String> urls;
     @Nullable private Map<String, String> annotations;
 
-    ContentDescriptorTemplate(String mediaType, long size, DescriptorDigest digest) {
+    ContentDescriptorTemplate(String mediaType, long size,
+                              DescriptorDigest digest) {
       this.mediaType = mediaType;
       this.size = size;
       this.digest = digest;
@@ -63,9 +65,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
       return size;
     }
 
-    void setSize(long size) {
-      this.size = size;
-    }
+    void setSize(long size) { this.size = size; }
 
     @VisibleForTesting
     @Nullable
@@ -73,9 +73,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
       return digest;
     }
 
-    void setDigest(DescriptorDigest digest) {
-      this.digest = digest;
-    }
+    void setDigest(DescriptorDigest digest) { this.digest = digest; }
 
     @VisibleForTesting
     @Nullable
@@ -83,9 +81,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
       return urls;
     }
 
-    void setUrls(List<String> urls) {
-      this.urls = ImmutableList.copyOf(urls);
-    }
+    void setUrls(List<String> urls) { this.urls = ImmutableList.copyOf(urls); }
 
     @VisibleForTesting
     @Nullable
@@ -102,8 +98,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   String getManifestMediaType();
 
   /** @return the content descriptor of the container configuration */
-  @Nullable
-  ContentDescriptorTemplate getContainerConfiguration();
+  @Nullable ContentDescriptorTemplate getContainerConfiguration();
 
   /** @return an unmodifiable view of the layers */
   List<ContentDescriptorTemplate> getLayers();

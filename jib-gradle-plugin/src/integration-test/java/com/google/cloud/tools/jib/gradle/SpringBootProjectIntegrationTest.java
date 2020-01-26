@@ -30,7 +30,9 @@ import org.junit.Test;
 /** Integration tests for building Spring Boot images. */
 public class SpringBootProjectIntegrationTest {
 
-  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+  @ClassRule
+  public static final TestProject springBootProject =
+      new TestProject("spring-boot");
 
   @Nullable private String containerName;
 
@@ -42,30 +44,29 @@ public class SpringBootProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_packagedMode() throws IOException, InterruptedException, DigestException {
+  public void testBuild_packagedMode()
+      throws IOException, InterruptedException, DigestException {
     buildAndRunWebApp(springBootProject, "springboot:gradle", "build.gradle");
 
-    String output =
-        new Command(
-                "docker",
-                "exec",
-                containerName,
-                "/busybox/wc",
-                "-c",
-                "/app/classpath/spring-boot-original.jar")
-            .run();
-    Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n", output);
+    String output = new Command("docker", "exec", containerName, "/busybox/wc",
+                                "-c", "/app/classpath/spring-boot-original.jar")
+                        .run();
+    Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n",
+                        output);
 
-    Assert.assertEquals("Hello world", JibRunHelper.getContent(new URL("http://localhost:8080")));
+    Assert.assertEquals("Hello world", JibRunHelper.getContent(
+                                           new URL("http://localhost:8080")));
   }
 
-  private void buildAndRunWebApp(TestProject project, String label, String gradleBuildFile)
+  private void buildAndRunWebApp(TestProject project, String label,
+                                 String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
+    String nameBase =
+        IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     String targetImage = nameBase + label + System.nanoTime();
     String output =
-        JibRunHelper.buildAndRun(
-            springBootProject, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
+        JibRunHelper.buildAndRun(springBootProject, targetImage,
+                                 gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
   }
 }

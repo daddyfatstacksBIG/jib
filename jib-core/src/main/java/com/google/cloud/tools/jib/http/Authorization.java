@@ -34,9 +34,11 @@ public class Authorization {
    * @param secret the secret
    * @return an {@link Authorization} with a {@code Basic} credentials
    */
-  public static Authorization fromBasicCredentials(String username, String secret) {
+  public static Authorization fromBasicCredentials(String username,
+                                                   String secret) {
     String credentials = username + ":" + secret;
-    String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
+    String token =
+        Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
     return new Authorization("Basic", token);
   }
 
@@ -56,13 +58,9 @@ public class Authorization {
     this.token = token;
   }
 
-  public String getScheme() {
-    return scheme;
-  }
+  public String getScheme() { return scheme; }
 
-  public String getToken() {
-    return token;
-  }
+  public String getToken() { return token; }
 
   /** Return the HTTP {@link Authorization} header value. */
   @Override
@@ -78,8 +76,9 @@ public class Authorization {
     if (!(other instanceof Authorization)) {
       return false;
     }
-    Authorization otherAuthorization = (Authorization) other;
-    return scheme.equals(otherAuthorization.scheme) && token.equals(otherAuthorization.token);
+    Authorization otherAuthorization = (Authorization)other;
+    return scheme.equals(otherAuthorization.scheme) &&
+        token.equals(otherAuthorization.token);
   }
 
   @Override

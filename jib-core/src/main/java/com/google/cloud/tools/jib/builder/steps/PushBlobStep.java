@@ -43,13 +43,10 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final Blob blob;
   private final boolean forcePush;
 
-  PushBlobStep(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      RegistryClient registryClient,
-      BlobDescriptor blobDescriptor,
-      Blob blob,
-      boolean forcePush) {
+  PushBlobStep(BuildContext buildContext,
+               ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+               RegistryClient registryClient, BlobDescriptor blobDescriptor,
+               Blob blob, boolean forcePush) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
@@ -63,30 +60,37 @@ class PushBlobStep implements Callable<BlobDescriptor> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     DescriptorDigest blobDigest = blobDescriptor.getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "pushing blob " + blobDigest, blobDescriptor.getSize());
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(eventHandlers, DESCRIPTION + blobDescriptor);
-        ThrottledAccumulatingConsumer throttledProgressReporter =
-            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+             progressEventDispatcherFactory.create("pushing blob " + blobDigest,
+                                                   blobDescriptor.getSize());
+         TimerEventDispatcher ignored = new TimerEventDispatcher(
+             eventHandlers, DESCRIPTION + blobDescriptor);
+         ThrottledAccumulatingConsumer throttledProgressReporter =
+             new ThrottledAccumulatingConsumer(
+                 progressEventDispatcher::dispatchProgress)) {
 
       // check if the BLOB is available
       if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
-        eventHandlers.dispatch(
-            LogEvent.info(
-                "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
+        eventHandlers.dispatch(LogEvent.info(
+            "Skipping push; BLOB already exists on target registry : " +
+            blobDescriptor));
         return blobDescriptor;
       }
 
-      // If base and target images are in the same registry, then use mount/from to try mounting the
-      // BLOB from the base image repository to the target image repository and possibly avoid
-      // having to push the BLOB. See
-      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
-      String baseRegistry = buildContext.getBaseImageConfiguration().getImageRegistry();
-      String baseRepository = buildContext.getBaseImageConfiguration().getImageRepository();
-      String targetRegistry = buildContext.getTargetImageConfiguration().getImageRegistry();
-      String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
-      registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
+      // If base and target images are in the same registry, then use mount/from
+      // to try mounting the BLOB from the base image repository to the target
+      // image repository and possibly avoid having to push the BLOB. See
+      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount
+      // for details.
+      String baseRegistry =
+          buildContext.getBaseImageConfiguration().getImageRegistry();
+      String baseRepository =
+          buildContext.getBaseImageConfiguration().getImageRepository();
+      String targetRegistry =
+          buildContext.getTargetImageConfiguration().getImageRegistry();
+      String sourceRepository =
+          targetRegistry.equals(baseRegistry) ? baseRepository : null;
+      registryClient.pushBlob(blobDigest, blob, sourceRepository,
+                              throttledProgressReporter);
       return blobDescriptor;
     }
   }

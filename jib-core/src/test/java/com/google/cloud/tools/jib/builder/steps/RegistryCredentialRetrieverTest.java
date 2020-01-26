@@ -45,15 +45,17 @@ public class RegistryCredentialRetrieverTest {
   @Mock private EventHandlers mockEventHandlers;
 
   @Test
-  public void testCall_retrieved() throws CredentialRetrievalException, IOException {
-    BuildContext buildContext =
-        makeFakeBuildContext(
-            Arrays.asList(
-                Optional::empty,
-                () -> Optional.of(Credential.from("baseusername", "basepassword"))),
-            Arrays.asList(
-                () -> Optional.of(Credential.from("targetusername", "targetpassword")),
-                () -> Optional.of(Credential.from("ignored", "ignored"))));
+  public void testCall_retrieved()
+      throws CredentialRetrievalException, IOException {
+    BuildContext buildContext = makeFakeBuildContext(
+        Arrays.asList(
+            Optional::empty,
+            () -> Optional.of(Credential.from("baseusername", "basepassword"))),
+        Arrays.asList(
+            ()
+                -> Optional.of(
+                    Credential.from("targetusername", "targetpassword")),
+            () -> Optional.of(Credential.from("ignored", "ignored"))));
 
     Assert.assertEquals(
         Optional.of(Credential.from("baseusername", "basepassword")),
@@ -66,19 +68,23 @@ public class RegistryCredentialRetrieverTest {
   @Test
   public void testCall_none() throws CredentialRetrievalException, IOException {
     BuildContext buildContext =
-        makeFakeBuildContext(
-            Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
+        makeFakeBuildContext(Arrays.asList(Optional::empty, Optional::empty),
+                             Collections.emptyList());
     Assert.assertFalse(
-        RegistryCredentialRetriever.getBaseImageCredential(buildContext).isPresent());
+        RegistryCredentialRetriever.getBaseImageCredential(buildContext)
+            .isPresent());
 
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for baseregistry/baserepo"));
+        .dispatch(LogEvent.info(
+            "No credentials could be retrieved for baseregistry/baserepo"));
 
     Assert.assertFalse(
-        RegistryCredentialRetriever.getTargetImageCredential(buildContext).isPresent());
+        RegistryCredentialRetriever.getTargetImageCredential(buildContext)
+            .isPresent());
 
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for targetregistry/targetrepo"));
+        .dispatch(LogEvent.info(
+            "No credentials could be retrieved for targetregistry/targetrepo"));
   }
 
   @Test
@@ -86,12 +92,9 @@ public class RegistryCredentialRetrieverTest {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
     BuildContext buildContext =
-        makeFakeBuildContext(
-            Collections.singletonList(
-                () -> {
-                  throw credentialRetrievalException;
-                }),
-            Collections.emptyList());
+        makeFakeBuildContext(Collections.singletonList(
+                                 () -> { throw credentialRetrievalException; }),
+                             Collections.emptyList());
     try {
       RegistryCredentialRetriever.getBaseImageCredential(buildContext);
       Assert.fail("Should have thrown exception");
@@ -101,12 +104,14 @@ public class RegistryCredentialRetrieverTest {
     }
   }
 
-  private BuildContext makeFakeBuildContext(
-      List<CredentialRetriever> baseCredentialRetrievers,
-      List<CredentialRetriever> targetCredentialRetrievers)
+  private BuildContext
+  makeFakeBuildContext(List<CredentialRetriever> baseCredentialRetrievers,
+                       List<CredentialRetriever> targetCredentialRetrievers)
       throws IOException {
-    ImageReference baseImage = ImageReference.of("baseregistry", "baserepo", null);
-    ImageReference targetImage = ImageReference.of("targetregistry", "targetrepo", null);
+    ImageReference baseImage =
+        ImageReference.of("baseregistry", "baserepo", null);
+    ImageReference targetImage =
+        ImageReference.of("targetregistry", "targetrepo", null);
     return BuildContext.builder()
         .setEventHandlers(mockEventHandlers)
         .setBaseImageConfiguration(

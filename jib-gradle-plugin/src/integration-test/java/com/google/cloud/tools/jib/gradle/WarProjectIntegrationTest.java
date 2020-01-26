@@ -30,7 +30,9 @@ import org.junit.Test;
 /** Integration tests for building WAR images. */
 public class WarProjectIntegrationTest {
 
-  @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
+  @ClassRule
+  public static final TestProject servlet25Project =
+      new TestProject("war_servlet25");
 
   @Nullable private String containerName;
 
@@ -42,25 +44,30 @@ public class WarProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_jettyServlet25() throws IOException, InterruptedException, DigestException {
-    verifyBuildAndRun(servlet25Project, "war_jetty_servlet25:gradle", "build.gradle");
+  public void testBuild_jettyServlet25()
+      throws IOException, InterruptedException, DigestException {
+    verifyBuildAndRun(servlet25Project, "war_jetty_servlet25:gradle",
+                      "build.gradle");
   }
 
   @Test
   public void testBuild_tomcatServlet25()
       throws IOException, InterruptedException, DigestException {
-    verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
+    verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle",
+                      "build-tomcat.gradle");
   }
 
-  private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
+  private void verifyBuildAndRun(TestProject project, String label,
+                                 String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
+    String nameBase =
+        IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     String targetImage = nameBase + label + System.nanoTime();
-    String output =
-        JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
+    String output = JibRunHelper.buildAndRun(
+        project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
 
-    Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://localhost:8080/hello")));
+    Assert.assertEquals("Hello world", JibRunHelper.getContent(new URL(
+                                           "http://localhost:8080/hello")));
   }
 }

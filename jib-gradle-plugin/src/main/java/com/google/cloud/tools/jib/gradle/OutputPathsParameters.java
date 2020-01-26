@@ -45,7 +45,8 @@ public class OutputPathsParameters {
 
   @Input
   public String getDigest() {
-    return getRelativeToProjectRoot(digest, PropertyNames.OUTPUT_PATHS_DIGEST).toString();
+    return getRelativeToProjectRoot(digest, PropertyNames.OUTPUT_PATHS_DIGEST)
+        .toString();
   }
 
   @Internal
@@ -53,32 +54,34 @@ public class OutputPathsParameters {
     return getRelativeToProjectRoot(digest, PropertyNames.OUTPUT_PATHS_DIGEST);
   }
 
-  public void setDigest(String digest) {
-    this.digest = Paths.get(digest);
-  }
+  public void setDigest(String digest) { this.digest = Paths.get(digest); }
 
   @Input
   public String getImageId() {
-    return getRelativeToProjectRoot(imageId, PropertyNames.OUTPUT_PATHS_IMAGE_ID).toString();
+    return getRelativeToProjectRoot(imageId,
+                                    PropertyNames.OUTPUT_PATHS_IMAGE_ID)
+        .toString();
   }
 
   @Internal
   Path getImageIdPath() {
-    return getRelativeToProjectRoot(imageId, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
+    return getRelativeToProjectRoot(imageId,
+                                    PropertyNames.OUTPUT_PATHS_IMAGE_ID);
   }
 
-  public void setImageId(String id) {
-    this.imageId = Paths.get(id);
-  }
+  public void setImageId(String id) { this.imageId = Paths.get(id); }
 
   @Input
   public String getImageJson() {
-    return getRelativeToProjectRoot(imageJson, PropertyNames.OUTPUT_PATHS_IMAGE_JSON).toString();
+    return getRelativeToProjectRoot(imageJson,
+                                    PropertyNames.OUTPUT_PATHS_IMAGE_JSON)
+        .toString();
   }
 
   @Internal
   Path getImageJsonPath() {
-    return getRelativeToProjectRoot(imageJson, PropertyNames.OUTPUT_PATHS_IMAGE_JSON);
+    return getRelativeToProjectRoot(imageJson,
+                                    PropertyNames.OUTPUT_PATHS_IMAGE_JSON);
   }
 
   public void setImageJson(String imageJson) {
@@ -87,7 +90,8 @@ public class OutputPathsParameters {
 
   @Input
   public String getTar() {
-    return getRelativeToProjectRoot(tar, PropertyNames.OUTPUT_PATHS_TAR).toString();
+    return getRelativeToProjectRoot(tar, PropertyNames.OUTPUT_PATHS_TAR)
+        .toString();
   }
 
   @Internal
@@ -95,13 +99,13 @@ public class OutputPathsParameters {
     return getRelativeToProjectRoot(tar, PropertyNames.OUTPUT_PATHS_TAR);
   }
 
-  public void setTar(String tar) {
-    this.tar = Paths.get(tar);
-  }
+  public void setTar(String tar) { this.tar = Paths.get(tar); }
 
-  private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
+  private Path getRelativeToProjectRoot(Path configuration,
+                                        String propertyName) {
     String property = System.getProperty(propertyName);
     Path path = property != null ? Paths.get(property) : configuration;
-    return path.isAbsolute() ? path : project.getProjectDir().toPath().resolve(path);
+    return path.isAbsolute() ? path
+                             : project.getProjectDir().toPath().resolve(path);
   }
 }

@@ -35,23 +35,32 @@ public class GradleRawConfigurationTest {
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
 
     AuthParameters authParameters = Mockito.mock(AuthParameters.class);
-    BaseImageParameters baseImageParameters = Mockito.mock(BaseImageParameters.class);
-    TargetImageParameters targetImageParameters = Mockito.mock(TargetImageParameters.class);
-    ContainerParameters containerParameters = Mockito.mock(ContainerParameters.class);
-    DockerClientParameters dockerClientParameters = Mockito.mock(DockerClientParameters.class);
-    OutputPathsParameters outputPathsParameters = Mockito.mock(OutputPathsParameters.class);
+    BaseImageParameters baseImageParameters =
+        Mockito.mock(BaseImageParameters.class);
+    TargetImageParameters targetImageParameters =
+        Mockito.mock(TargetImageParameters.class);
+    ContainerParameters containerParameters =
+        Mockito.mock(ContainerParameters.class);
+    DockerClientParameters dockerClientParameters =
+        Mockito.mock(DockerClientParameters.class);
+    OutputPathsParameters outputPathsParameters =
+        Mockito.mock(OutputPathsParameters.class);
 
     Mockito.when(authParameters.getUsername()).thenReturn("user");
     Mockito.when(authParameters.getPassword()).thenReturn("password");
     Mockito.when(authParameters.getAuthDescriptor()).thenReturn("from.auth");
-    Mockito.when(authParameters.getUsernameDescriptor()).thenReturn("from.auth.username");
-    Mockito.when(authParameters.getPasswordDescriptor()).thenReturn("from.auth.password");
+    Mockito.when(authParameters.getUsernameDescriptor())
+        .thenReturn("from.auth.username");
+    Mockito.when(authParameters.getPasswordDescriptor())
+        .thenReturn("from.auth.password");
 
     Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
     Mockito.when(jibExtension.getTo()).thenReturn(targetImageParameters);
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
-    Mockito.when(jibExtension.getDockerClient()).thenReturn(dockerClientParameters);
-    Mockito.when(jibExtension.getOutputPaths()).thenReturn(outputPathsParameters);
+    Mockito.when(jibExtension.getDockerClient())
+        .thenReturn(dockerClientParameters);
+    Mockito.when(jibExtension.getOutputPaths())
+        .thenReturn(outputPathsParameters);
     Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
 
     Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
@@ -62,28 +71,40 @@ public class GradleRawConfigurationTest {
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
 
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
-    Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
-    Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
+    Mockito.when(containerParameters.getArgs())
+        .thenReturn(Arrays.asList("--log", "info"));
+    Mockito.when(containerParameters.getEntrypoint())
+        .thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(containerParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
-    Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
+    Mockito.when(containerParameters.getJvmFlags())
+        .thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(containerParameters.getLabels())
         .thenReturn(new HashMap<>(ImmutableMap.of("unit", "cm")));
-    Mockito.when(containerParameters.getMainClass()).thenReturn("com.example.Main");
-    Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
+    Mockito.when(containerParameters.getMainClass())
+        .thenReturn("com.example.Main");
+    Mockito.when(containerParameters.getPorts())
+        .thenReturn(Arrays.asList("80/tcp", "0"));
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
-    Mockito.when(containerParameters.getFilesModificationTime()).thenReturn("2011-12-03T22:42:05Z");
+    Mockito.when(containerParameters.getFilesModificationTime())
+        .thenReturn("2011-12-03T22:42:05Z");
 
-    Mockito.when(dockerClientParameters.getExecutablePath()).thenReturn(Paths.get("test"));
+    Mockito.when(dockerClientParameters.getExecutablePath())
+        .thenReturn(Paths.get("test"));
     Mockito.when(dockerClientParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
 
-    Mockito.when(outputPathsParameters.getDigestPath()).thenReturn(Paths.get("digest/path"));
-    Mockito.when(outputPathsParameters.getImageIdPath()).thenReturn(Paths.get("id/path"));
-    Mockito.when(outputPathsParameters.getImageJsonPath()).thenReturn(Paths.get("json/path"));
-    Mockito.when(outputPathsParameters.getTarPath()).thenReturn(Paths.get("tar/path"));
+    Mockito.when(outputPathsParameters.getDigestPath())
+        .thenReturn(Paths.get("digest/path"));
+    Mockito.when(outputPathsParameters.getImageIdPath())
+        .thenReturn(Paths.get("id/path"));
+    Mockito.when(outputPathsParameters.getImageJsonPath())
+        .thenReturn(Paths.get("json/path"));
+    Mockito.when(outputPathsParameters.getTarPath())
+        .thenReturn(Paths.get("tar/path"));
 
-    GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+    GradleRawConfiguration rawConfiguration =
+        new GradleRawConfiguration(jibExtension);
 
     AuthProperty fromAuth = rawConfiguration.getFromAuth();
     Assert.assertEquals("user", fromAuth.getUsername());
@@ -94,29 +115,38 @@ public class GradleRawConfigurationTest {
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
-    Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
-    Assert.assertEquals(
-        new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
+    Assert.assertEquals(Arrays.asList("java", "Main"),
+                        rawConfiguration.getEntrypoint().get());
+    Assert.assertEquals(new HashMap<>(ImmutableMap.of("currency", "dollar")),
+                        rawConfiguration.getEnvironment());
     Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().get());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
-    Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
-    Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());
-    Assert.assertEquals("com.example.Main", rawConfiguration.getMainClass().get());
-    Assert.assertEquals(Arrays.asList("80/tcp", "0"), rawConfiguration.getPorts());
-    Assert.assertEquals(
-        Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments().get());
-    Assert.assertEquals(
-        new HashSet<>(Arrays.asList("additional", "tags")),
-        Sets.newHashSet(rawConfiguration.getToTags()));
+    Assert.assertEquals(Arrays.asList("-cp", "."),
+                        rawConfiguration.getJvmFlags());
+    Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")),
+                        rawConfiguration.getLabels());
+    Assert.assertEquals("com.example.Main",
+                        rawConfiguration.getMainClass().get());
+    Assert.assertEquals(Arrays.asList("80/tcp", "0"),
+                        rawConfiguration.getPorts());
+    Assert.assertEquals(Arrays.asList("--log", "info"),
+                        rawConfiguration.getProgramArguments().get());
+    Assert.assertEquals(new HashSet<>(Arrays.asList("additional", "tags")),
+                        Sets.newHashSet(rawConfiguration.getToTags()));
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
-    Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
-    Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());
-    Assert.assertEquals(
-        new HashMap<>(ImmutableMap.of("docker", "client")),
-        rawConfiguration.getDockerEnvironment());
-    Assert.assertEquals(Paths.get("digest/path"), rawConfiguration.getDigestOutputPath());
-    Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
-    Assert.assertEquals(Paths.get("json/path"), rawConfiguration.getImageJsonOutputPath());
-    Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
+    Assert.assertEquals("2011-12-03T22:42:05Z",
+                        rawConfiguration.getFilesModificationTime());
+    Assert.assertEquals(Paths.get("test"),
+                        rawConfiguration.getDockerExecutable().get());
+    Assert.assertEquals(new HashMap<>(ImmutableMap.of("docker", "client")),
+                        rawConfiguration.getDockerEnvironment());
+    Assert.assertEquals(Paths.get("digest/path"),
+                        rawConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("id/path"),
+                        rawConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("json/path"),
+                        rawConfiguration.getImageJsonOutputPath());
+    Assert.assertEquals(Paths.get("tar/path"),
+                        rawConfiguration.getTarOutputPath());
   }
 }

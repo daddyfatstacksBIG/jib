@@ -49,12 +49,15 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * Tests for {@link RegistryClient}. More comprehensive tests can be found in the integration tests.
+ * Tests for {@link RegistryClient}. More comprehensive tests can be found in
+ * the integration tests.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties systemPropertyRestorer =
+      new RestoreSystemProperties();
 
   @Mock private EventHandlers eventHandlers;
 
@@ -66,11 +69,10 @@ public class RegistryClientTest {
 
   @Before
   public void setUp() throws DigestException {
-    testRegistryClientFactory =
-        RegistryClient.factory(EventHandlers.NONE, "some.server.url", "some image name", null);
-    digest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    testRegistryClientFactory = RegistryClient.factory(
+        EventHandlers.NONE, "some.server.url", "some image name", null);
+    digest = DescriptorDigest.fromHash(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   }
 
   @After
@@ -86,23 +88,24 @@ public class RegistryClientTest {
   @Test
   public void testGetUserAgent_null() {
     Assert.assertTrue(
-        testRegistryClientFactory.newRegistryClient().getUserAgent().startsWith("jib"));
+        testRegistryClientFactory.newRegistryClient().getUserAgent().startsWith(
+            "jib"));
 
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setUserAgentSuffix(null)
-            .newRegistryClient()
-            .getUserAgent()
-            .startsWith("jib"));
+    Assert.assertTrue(testRegistryClientFactory.setUserAgentSuffix(null)
+                          .newRegistryClient()
+                          .getUserAgent()
+                          .startsWith("jib"));
   }
 
   @Test
   public void testGetUserAgent() {
     RegistryClient registryClient =
-        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix").newRegistryClient();
+        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix")
+            .newRegistryClient();
 
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
+    Assert.assertTrue(
+        registryClient.getUserAgent().endsWith(" some user agent suffix"));
   }
 
   @Test
@@ -112,13 +115,14 @@ public class RegistryClientTest {
     RegistryClient registryClient =
         testRegistryClientFactory.setUserAgentSuffix("foo").newRegistryClient();
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
+    Assert.assertTrue(
+        registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
 
   @Test
   public void testDoBearerAuth_returnsFalseOnBasicAuth()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException, RegistryException {
     String basicAuth =
         "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Basic foo\n\n";
     registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
@@ -126,14 +130,16 @@ public class RegistryClientTest {
     RegistryClient registryClient = createRegistryClient(null);
     Assert.assertFalse(registryClient.doPullBearerAuth());
 
-    Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
-    Mockito.verify(eventHandlers).dispatch(logContains("server requires basic auth"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("attempting bearer auth"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("server requires basic auth"));
   }
 
   @Test
   public void testDoBearerAuth()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException, RegistryException {
     setUpAuthServerAndRegistry(1, "HTTP/1.1 200 OK\nContent-Length: 1234\n\n");
 
     RegistryClient registryClient = createRegistryClient(null);
@@ -142,14 +148,16 @@ public class RegistryClientTest {
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(1234, digestAndSize.get().getSize());
 
-    Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
-    Mockito.verify(eventHandlers).dispatch(logContains("bearer auth succeeded"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("attempting bearer auth"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("bearer auth succeeded"));
   }
 
   @Test
   public void testAutomaticTokenRefresh()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException, RegistryException {
     setUpAuthServerAndRegistry(3, "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
 
     RegistryClient registryClient = createRegistryClient(null);
@@ -158,47 +166,58 @@ public class RegistryClientTest {
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(5678, digestAndSize.get().getSize());
 
-    // Verify authServer returned bearer token three times (i.e., refreshed twice)
+    // Verify authServer returned bearer token three times (i.e., refreshed
+    // twice)
     Assert.assertEquals(3, authServer.getTotalResponsesServed());
     Assert.assertEquals(4, registry.getTotalResponsesServed());
 
-    Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
-    Mockito.verify(eventHandlers).dispatch(logContains("bearer auth succeeded"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("attempting bearer auth"));
+    Mockito.verify(eventHandlers)
+        .dispatch(logContains("bearer auth succeeded"));
     Mockito.verify(eventHandlers, Mockito.times(2))
         .dispatch(logContains("refreshing bearer auth token"));
   }
 
   @Test
   public void testConfigureBasicAuth()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException, RegistryException {
     String basicAuth = "HTTP/1.1 200 OK\nContent-Length: 56789\n\n";
     registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
-    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    RegistryClient registryClient =
+        createRegistryClient(Credential.from("user", "pass"));
     registryClient.configureBasicAuth();
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(56789, digestAndSize.get().getSize());
     Assert.assertThat(
-        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+        registry.getInputRead(),
+        CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
   }
 
   /**
-   * Sets up an auth server and a registry. The auth server can return a bearer token up to {@code
-   * maxAuthTokens} times. The registry will initially return "401 Unauthorized" for {@code
-   * maxTokenResponses} times. (Therefore, a registry client has to get auth tokens from the auth
-   * server {@code maxAuthTokens} times. After that, the registry returns {@code finalResponse}.
+   * Sets up an auth server and a registry. The auth server can return a bearer
+   * token up to {@code maxAuthTokens} times. The registry will initially return
+   * "401 Unauthorized" for {@code maxTokenResponses} times. (Therefore, a
+   * registry client has to get auth tokens from the auth server {@code
+   * maxAuthTokens} times. After that, the registry returns {@code
+   * finalResponse}.
    */
-  private void setUpAuthServerAndRegistry(int maxAuthTokens, @Nullable String finalResponse)
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
-    authServer = new TestWebServer(false, Arrays.asList(tokenResponse), maxAuthTokens);
+  private void setUpAuthServerAndRegistry(int maxAuthTokens,
+                                          @Nullable String finalResponse)
+      throws IOException, InterruptedException, GeneralSecurityException,
+             URISyntaxException {
+    String tokenResponse =
+        "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
+    authServer =
+        new TestWebServer(false, Arrays.asList(tokenResponse), maxAuthTokens);
 
     String bearerAuth =
-        "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Bearer realm=\""
-            + authServer.getEndpoint()
-            + "\"\n\n";
-    List<String> responses = new ArrayList<>(Collections.nCopies(maxAuthTokens, bearerAuth));
+        "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Bearer realm=\"" +
+        authServer.getEndpoint() + "\"\n\n";
+    List<String> responses =
+        new ArrayList<>(Collections.nCopies(maxAuthTokens, bearerAuth));
     if (finalResponse != null) {
       responses.add(finalResponse);
     }
@@ -207,14 +226,16 @@ public class RegistryClientTest {
   }
 
   private RegistryClient createRegistryClient(@Nullable Credential credential) {
-    return RegistryClient.factory(
-            eventHandlers, "localhost:" + registry.getLocalPort(), "foo/bar", new PlainHttpClient())
+    return RegistryClient
+        .factory(eventHandlers, "localhost:" + registry.getLocalPort(),
+                 "foo/bar", new PlainHttpClient())
         .setCredential(credential)
         .newRegistryClient();
   }
 
   private LogEvent logContains(String substring) {
-    ArgumentMatcher<LogEvent> matcher = event -> event.getMessage().contains(substring);
+    ArgumentMatcher<LogEvent> matcher =
+        event -> event.getMessage().contains(substring);
     return ArgumentMatchers.argThat(matcher);
   }
 }

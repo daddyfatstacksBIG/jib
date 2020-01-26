@@ -34,7 +34,8 @@ import java.util.List;
  *   "manifests": [
  *     {
  *       "mediaType": "application/vnd.oci.image.manifest.v1+json",
- *       "digest": "sha256:e684b1dceef404268f17d4adf7f755fd9912b8ae64864b3954a83ebb8aa628b3",
+ *       "digest":
+ * "sha256:e684b1dceef404268f17d4adf7f755fd9912b8ae64864b3954a83ebb8aa628b3",
  *       "size": 1132,
  *       "annotations": {
  *         "org.opencontainers.image.ref.name": "gcr.io/project/image:tag"
@@ -44,14 +45,15 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @see <a href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI Image
- *     Index Specification</a>
+ * @see <a
+ *     href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI
+ *     Image Index Specification</a>
  */
 public class OciIndexTemplate implements JsonTemplate {
 
   private final int schemaVersion = 2;
-  private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
-      new ArrayList<>();
+  private final List<BuildableManifestTemplate.ContentDescriptorTemplate>
+      manifests = new ArrayList<>();
 
   /**
    * Adds a manifest reference with the given {@link BlobDescriptor}.
@@ -59,17 +61,21 @@ public class OciIndexTemplate implements JsonTemplate {
    * @param descriptor the manifest blob descriptor
    * @param imageReferenceName the image reference name
    */
-  public void addManifest(BlobDescriptor descriptor, String imageReferenceName) {
-    BuildableManifestTemplate.ContentDescriptorTemplate contentDescriptorTemplate =
+  public void addManifest(BlobDescriptor descriptor,
+                          String imageReferenceName) {
+    BuildableManifestTemplate
+        .ContentDescriptorTemplate contentDescriptorTemplate =
         new BuildableManifestTemplate.ContentDescriptorTemplate(
-            OciManifestTemplate.MANIFEST_MEDIA_TYPE, descriptor.getSize(), descriptor.getDigest());
-    contentDescriptorTemplate.setAnnotations(
-        ImmutableMap.of("org.opencontainers.image.ref.name", imageReferenceName));
+            OciManifestTemplate.MANIFEST_MEDIA_TYPE, descriptor.getSize(),
+            descriptor.getDigest());
+    contentDescriptorTemplate.setAnnotations(ImmutableMap.of(
+        "org.opencontainers.image.ref.name", imageReferenceName));
     manifests.add(contentDescriptorTemplate);
   }
 
   @VisibleForTesting
-  public List<BuildableManifestTemplate.ContentDescriptorTemplate> getManifests() {
+  public List<BuildableManifestTemplate.ContentDescriptorTemplate>
+  getManifests() {
     return manifests;
   }
 }

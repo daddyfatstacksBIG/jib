@@ -48,7 +48,7 @@ public class JibRunHelper {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
           try (InputStream in = connection.getInputStream()) {
             return Blobs.writeToString(Blobs.from(in));
@@ -65,24 +65,19 @@ public class JibRunHelper {
     return buildAndRun(testProject, imageReference, "build.gradle");
   }
 
-  static String buildAndRun(
-      TestProject testProject,
-      String imageReference,
-      String gradleBuildFile,
-      String... extraRunArguments)
+  static String buildAndRun(TestProject testProject, String imageReference,
+                            String gradleBuildFile, String... extraRunArguments)
       throws IOException, InterruptedException, DigestException {
-    BuildResult buildResult =
-        testProject.build(
-            "clean",
-            "jib",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
-            "-b=" + gradleBuildFile);
+    BuildResult buildResult = testProject.build(
+        "clean", "jib", "-Djib.useOnlyProjectCache=true", "-Djib.console=plain",
+        "-D_TARGET_IMAGE=" + imageReference,
+        "-Djib.allowInsecureRegistries=" +
+            imageReference.startsWith("localhost"),
+        "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
   }
@@ -91,71 +86,74 @@ public class JibRunHelper {
       throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         SingleProjectIntegrationTest.simpleTestProject.build(
-            "clean",
-            "jib",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + target,
+            "clean", "jib", "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain", "-D_TARGET_IMAGE=" + target,
             "-D_BASE_IMAGE=" + base,
             "-Djib.allowInsecureRegistries=" + target.startsWith("localhost"),
-            "-b=" + "build-local-base.gradle");
+            "-b="
+                + "build-local-base.gradle");
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigestAndId(SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
+    assertImageDigestAndId(
+        SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(target));
     return pullAndRunBuiltImage(target);
   }
 
-  static void buildAndRunAdditionalTag(
-      TestProject testProject, String imageReference, String additionalTag, String expectedOutput)
-      throws InvalidImageReferenceException, IOException, InterruptedException, DigestException {
-    BuildResult buildResult =
-        testProject.build(
-            "clean",
-            "jib",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
-            "-D_ADDITIONAL_TAG=" + additionalTag);
+  static void
+  buildAndRunAdditionalTag(TestProject testProject, String imageReference,
+                           String additionalTag, String expectedOutput)
+      throws InvalidImageReferenceException, IOException, InterruptedException,
+             DigestException {
+    BuildResult buildResult = testProject.build(
+        "clean", "jib", "-Djib.useOnlyProjectCache=true", "-Djib.console=plain",
+        "-D_TARGET_IMAGE=" + imageReference,
+        "-Djib.allowInsecureRegistries=" +
+            imageReference.startsWith("localhost"),
+        "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
         ImageReference.parse(imageReference).withTag(additionalTag).toString();
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString(additionalImageReference));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(additionalImageReference));
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
-    Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
+    Assert.assertEquals(expectedOutput,
+                        pullAndRunBuiltImage(additionalImageReference));
     assertSimpleCreationTimeIsEqual(Instant.EPOCH, imageReference);
     assertSimpleCreationTimeIsEqual(Instant.EPOCH, additionalImageReference);
   }
 
-  static BuildResult buildToDockerDaemon(
-      TestProject testProject, String imageReference, String gradleBuildFile)
+  static BuildResult buildToDockerDaemon(TestProject testProject,
+                                         String imageReference,
+                                         String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    BuildResult buildResult =
-        testProject.build(
-            "clean",
-            "jibDockerBuild",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
-            "-b=" + gradleBuildFile);
-    assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
+    BuildResult buildResult = testProject.build(
+        "clean", "jibDockerBuild", "-Djib.useOnlyProjectCache=true",
+        "-Djib.console=plain", "-D_TARGET_IMAGE=" + imageReference,
+        "-Djib.allowInsecureRegistries=" +
+            imageReference.startsWith("localhost"),
+        "-b=" + gradleBuildFile);
+    assertBuildSuccess(buildResult, "jibDockerBuild",
+                       "Built image to Docker daemon as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    Assert.assertThat(history,
+                      CoreMatchers.containsString("jib-gradle-plugin"));
 
     return buildResult;
   }
 
-  static String buildToDockerDaemonAndRun(
-      TestProject testProject, String imageReference, String gradleBuildFile)
+  static String buildToDockerDaemonAndRun(TestProject testProject,
+                                          String imageReference,
+                                          String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     buildToDockerDaemon(testProject, imageReference, gradleBuildFile);
     return new Command("docker", "run", "--rm", imageReference).run();
@@ -168,7 +166,8 @@ public class JibRunHelper {
    * @param taskName the name of the Jib task that was run
    * @param successMessage a Jib-specific success message to check for
    */
-  static void assertBuildSuccess(BuildResult buildResult, String taskName, String successMessage) {
+  static void assertBuildSuccess(BuildResult buildResult, String taskName,
+                                 String successMessage) {
     BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibTask = buildResult.task(":" + taskName);
 
@@ -176,29 +175,38 @@ public class JibRunHelper {
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(successMessage));
   }
 
-  static void assertSimpleCreationTimeIsEqual(Instant match, String imageReference)
+  static void assertSimpleCreationTimeIsEqual(Instant match,
+                                              String imageReference)
       throws IOException, InterruptedException {
     String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference)
+            .run()
+            .trim();
     Instant parsed = Instant.parse(inspect);
     Assert.assertEquals(match, parsed);
   }
 
-  static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
+  static void assertSimpleCreationTimeIsAfter(Instant before,
+                                              String imageReference)
       throws IOException, InterruptedException {
     String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference)
+            .run()
+            .trim();
     Instant parsed = Instant.parse(inspect);
     Assert.assertTrue(parsed.isAfter(before));
   }
 
-  static void assertImageDigestAndId(Path projectRoot) throws IOException, DigestException {
+  static void assertImageDigestAndId(Path projectRoot)
+      throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
-    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    String digest =
+        new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     DescriptorDigest digest1 = DescriptorDigest.fromDigest(digest);
 
     Path idPath = projectRoot.resolve("build/jib-image.id");
@@ -209,8 +217,8 @@ public class JibRunHelper {
   }
 
   /**
-   * Pulls a built image and attempts to run it. Also verifies the container configuration and
-   * history of the built image.
+   * Pulls a built image and attempts to run it. Also verifies the container
+   * configuration and history of the built image.
    *
    * @param imageReference the image reference of the built image
    * @param extraRunArguments extra arguments passed to {@code docker run}
@@ -218,13 +226,16 @@ public class JibRunHelper {
    * @throws IOException if an I/O exception occurs
    * @throws InterruptedException if the process was interrupted
    */
-  static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
+  static String pullAndRunBuiltImage(String imageReference,
+                                     String... extraRunArguments)
       throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    Assert.assertThat(history,
+                      CoreMatchers.containsString("jib-gradle-plugin"));
 
-    List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
+    List<String> command =
+        new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
     command.addAll(Arrays.asList(extraRunArguments));
     command.add(imageReference);
     return new Command(command).run();

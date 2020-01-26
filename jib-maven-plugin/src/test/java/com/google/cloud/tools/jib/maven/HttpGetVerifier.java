@@ -28,10 +28,11 @@ import org.junit.Assert;
 class HttpGetVerifier {
 
   /**
-   * Verifies the response body. Repeatedly tries {@code url} at the interval of .5 seconds for up
-   * to 20 seconds until getting OK HTTP response code.
+   * Verifies the response body. Repeatedly tries {@code url} at the interval of
+   * .5 seconds for up to 20 seconds until getting OK HTTP response code.
    */
-  static void verifyBody(String expectedBody, URL url) throws InterruptedException {
+  static void verifyBody(String expectedBody, URL url)
+      throws InterruptedException {
     Assert.assertEquals(expectedBody, getContent(url));
   }
 
@@ -40,7 +41,7 @@ class HttpGetVerifier {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
           try (InputStream in = connection.getInputStream()) {
             return Blobs.writeToString(Blobs.from(in));

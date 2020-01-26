@@ -26,26 +26,24 @@ import org.junit.Test;
 /** Tests for {@link ImageReference}. */
 public class ImageReferenceTest {
 
-  private static final List<String> goodRegistries =
-      Arrays.asList("some.domain---name.123.com:8080", "gcr.io", "localhost", null, "");
+  private static final List<String> goodRegistries = Arrays.asList(
+      "some.domain---name.123.com:8080", "gcr.io", "localhost", null, "");
   private static final List<String> goodRepositories =
-      Arrays.asList("some123_abc/repository__123-456/name---here", "distroless/java", "repository");
-  private static final List<String> goodTags = Arrays.asList("some-.-.Tag", "", "latest", null);
-  private static final List<String> goodDigests =
-      Arrays.asList(
-          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null);
+      Arrays.asList("some123_abc/repository__123-456/name---here",
+                    "distroless/java", "repository");
+  private static final List<String> goodTags =
+      Arrays.asList("some-.-.Tag", "", "latest", null);
+  private static final List<String> goodDigests = Arrays.asList(
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      null);
 
-  private static final List<String> badImageReferences =
-      Arrays.asList(
-          "",
-          ":justsometag",
-          "@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "repository@sha256:a",
-          "repository@notadigest",
-          "Repositorywithuppercase",
-          "registry:8080/Repositorywithuppercase/repository:sometag",
-          "domain.name:nonnumberport/repository",
-          "domain.name:nonnumberport//:no-repository");
+  private static final List<String> badImageReferences = Arrays.asList(
+      "", ":justsometag",
+      "@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "repository@sha256:a", "repository@notadigest", "Repositorywithuppercase",
+      "registry:8080/Repositorywithuppercase/repository:sometag",
+      "domain.name:nonnumberport/repository",
+      "domain.name:nonnumberport//:no-repository");
 
   @Test
   public void testParse_pass() throws InvalidImageReferenceException {
@@ -62,7 +60,8 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testParse_dockerHub_official() throws InvalidImageReferenceException {
+  public void testParse_dockerHub_official()
+      throws InvalidImageReferenceException {
     String imageReferenceString = "busybox";
     ImageReference imageReference = ImageReference.parse(imageReferenceString);
 
@@ -86,10 +85,12 @@ public class ImageReferenceTest {
     for (String badImageReference : badImageReferences) {
       try {
         ImageReference.parse(badImageReference);
-        Assert.fail(badImageReference + " should not be a valid image reference");
+        Assert.fail(badImageReference +
+                    " should not be a valid image reference");
 
       } catch (InvalidImageReferenceException ex) {
-        Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(badImageReference));
+        Assert.assertThat(ex.getMessage(),
+                          CoreMatchers.containsString(badImageReference));
       }
     }
   }
@@ -102,47 +103,59 @@ public class ImageReferenceTest {
 
     Assert.assertEquals(
         expectedRegistry,
-        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRegistry());
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag)
+            .getRegistry());
     Assert.assertEquals(
         expectedRepository,
-        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRepository());
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag)
+            .getRepository());
     Assert.assertEquals(
-        expectedTag, ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag());
+        expectedTag,
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag)
+            .getTag());
     Assert.assertEquals(
         "registry-1.docker.io",
         ImageReference.of(null, expectedRepository, expectedTag).getRegistry());
     Assert.assertEquals(
-        "registry-1.docker.io", ImageReference.of(null, expectedRepository, null).getRegistry());
+        "registry-1.docker.io",
+        ImageReference.of(null, expectedRepository, null).getRegistry());
     Assert.assertEquals(
-        "latest", ImageReference.of(expectedRegistry, expectedRepository, null).getTag());
-    Assert.assertEquals("latest", ImageReference.of(null, expectedRepository, null).getTag());
+        "latest",
+        ImageReference.of(expectedRegistry, expectedRepository, null).getTag());
     Assert.assertEquals(
-        expectedRepository, ImageReference.of(null, expectedRepository, null).getRepository());
+        "latest", ImageReference.of(null, expectedRepository, null).getTag());
+    Assert.assertEquals(
+        expectedRepository,
+        ImageReference.of(null, expectedRepository, null).getRepository());
   }
 
   @Test
   public void testToString() throws InvalidImageReferenceException {
-    Assert.assertEquals("someimage", ImageReference.of(null, "someimage", null).toString());
-    Assert.assertEquals("someimage", ImageReference.of("", "someimage", "").toString());
+    Assert.assertEquals("someimage",
+                        ImageReference.of(null, "someimage", null).toString());
+    Assert.assertEquals("someimage",
+                        ImageReference.of("", "someimage", "").toString());
     Assert.assertEquals(
-        "someotherimage", ImageReference.of(null, "library/someotherimage", null).toString());
+        "someotherimage",
+        ImageReference.of(null, "library/someotherimage", null).toString());
     Assert.assertEquals(
         "someregistry/someotherimage",
         ImageReference.of("someregistry", "someotherimage", null).toString());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toString());
+        ImageReference.of("anotherregistry", "anotherimage", "sometag")
+            .toString());
 
     Assert.assertEquals(
         "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        ImageReference.of(
-                null,
-                "someimage",
+        ImageReference
+            .of(null, "someimage",
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .toString());
     Assert.assertEquals(
         "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1",
-        ImageReference.parse(
+        ImageReference
+            .parse(
                 "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
             .toString());
   }
@@ -150,32 +163,38 @@ public class ImageReferenceTest {
   @Test
   public void testToStringWithTag() {
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithTag());
+        "someimage:latest",
+        ImageReference.of(null, "someimage", null).toStringWithTag());
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithTag());
-    Assert.assertEquals(
-        "someotherimage:latest",
-        ImageReference.of(null, "library/someotherimage", null).toStringWithTag());
+        "someimage:latest",
+        ImageReference.of("", "someimage", "").toStringWithTag());
+    Assert.assertEquals("someotherimage:latest",
+                        ImageReference.of(null, "library/someotherimage", null)
+                            .toStringWithTag());
     Assert.assertEquals(
         "someregistry/someotherimage:latest",
-        ImageReference.of("someregistry", "someotherimage", null).toStringWithTag());
+        ImageReference.of("someregistry", "someotherimage", null)
+            .toStringWithTag());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
+        ImageReference.of("anotherregistry", "anotherimage", "sometag")
+            .toStringWithTag());
   }
 
   @Test
   public void testIsTagDigest() throws InvalidImageReferenceException {
-    Assert.assertFalse(ImageReference.of(null, "someimage", null).isTagDigest());
-    Assert.assertFalse(ImageReference.of(null, "someimage", "latest").isTagDigest());
+    Assert.assertFalse(
+        ImageReference.of(null, "someimage", null).isTagDigest());
+    Assert.assertFalse(
+        ImageReference.of(null, "someimage", "latest").isTagDigest());
     Assert.assertTrue(
-        ImageReference.of(
-                null,
-                "someimage",
+        ImageReference
+            .of(null, "someimage",
                 "sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
             .isTagDigest());
     Assert.assertTrue(
-        ImageReference.parse(
+        ImageReference
+            .parse(
                 "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .isTagDigest());
   }
@@ -191,15 +210,20 @@ public class ImageReferenceTest {
   @Test
   public void testGetRegistry() {
     Assert.assertEquals(
-        "registry-1.docker.io", ImageReference.of(null, "someimage", null).getRegistry());
+        "registry-1.docker.io",
+        ImageReference.of(null, "someimage", null).getRegistry());
     Assert.assertEquals(
-        "registry-1.docker.io", ImageReference.of("docker.io", "someimage", null).getRegistry());
+        "registry-1.docker.io",
+        ImageReference.of("docker.io", "someimage", null).getRegistry());
     Assert.assertEquals(
-        "index.docker.io", ImageReference.of("index.docker.io", "someimage", null).getRegistry());
+        "index.docker.io",
+        ImageReference.of("index.docker.io", "someimage", null).getRegistry());
     Assert.assertEquals(
         "registry.hub.docker.com",
-        ImageReference.of("registry.hub.docker.com", "someimage", null).getRegistry());
-    Assert.assertEquals("gcr.io", ImageReference.of("gcr.io", "someimage", null).getRegistry());
+        ImageReference.of("registry.hub.docker.com", "someimage", null)
+            .getRegistry());
+    Assert.assertEquals(
+        "gcr.io", ImageReference.of("gcr.io", "someimage", null).getRegistry());
   }
 
   @Test
@@ -212,16 +236,19 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality_differentRegistry() throws InvalidImageReferenceException {
+  public void testEquality_differentRegistry()
+      throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
-    ImageReference image2 = ImageReference.parse("registry-1.docker.io/project/image:tag");
+    ImageReference image2 =
+        ImageReference.parse("registry-1.docker.io/project/image:tag");
 
     Assert.assertNotEquals(image1, image2);
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
   @Test
-  public void testEquality_differentRepository() throws InvalidImageReferenceException {
+  public void testEquality_differentRepository()
+      throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
     ImageReference image2 = ImageReference.parse("gcr.io/project2/image:tag");
 
@@ -230,7 +257,8 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality_differentTag() throws InvalidImageReferenceException {
+  public void testEquality_differentTag()
+      throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag1");
     ImageReference image2 = ImageReference.parse("gcr.io/project/image:tag2");
 
@@ -238,7 +266,8 @@ public class ImageReferenceTest {
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
-  private void verifyParse(String registry, String repository, String tagSeparator, String tag)
+  private void verifyParse(String registry, String repository,
+                           String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
     String expectedRegistry = registry;
@@ -246,7 +275,8 @@ public class ImageReferenceTest {
       expectedRegistry = "registry-1.docker.io";
     }
     String expectedRepository = repository;
-    if ("registry-1.docker.io".equals(expectedRegistry) && repository.indexOf('/') < 0) {
+    if ("registry-1.docker.io".equals(expectedRegistry) &&
+        repository.indexOf('/') < 0) {
       expectedRepository = "library/" + expectedRepository;
     }
     String expectedTag = tag;
@@ -264,7 +294,8 @@ public class ImageReferenceTest {
       imageReferenceBuilder.append(tagSeparator).append(tag);
     }
 
-    ImageReference imageReference = ImageReference.parse(imageReferenceBuilder.toString());
+    ImageReference imageReference =
+        ImageReference.parse(imageReferenceBuilder.toString());
 
     Assert.assertEquals(expectedRegistry, imageReference.getRegistry());
     Assert.assertEquals(expectedRepository, imageReference.getRepository());

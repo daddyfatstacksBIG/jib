@@ -57,7 +57,8 @@ class RegistryEndpointCaller<T> {
     Throwable exception = original;
     while (exception != null) {
       String message = exception.getMessage();
-      if (message != null && message.toLowerCase(Locale.US).contains("broken pipe")) {
+      if (message != null &&
+          message.toLowerCase(Locale.US).contains("broken pipe")) {
         return true;
       }
 
@@ -73,7 +74,8 @@ class RegistryEndpointCaller<T> {
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final RegistryEndpointRequestProperties
+      registryEndpointRequestProperties;
   private final FailoverHttpClient httpClient;
 
   /**
@@ -81,15 +83,16 @@ class RegistryEndpointCaller<T> {
    *
    * @param eventHandlers the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
-   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the
+   *     endpoint
    * @param authorization optional authentication credentials to use
-   * @param registryEndpointRequestProperties properties of the registry endpoint request
+   * @param registryEndpointRequestProperties properties of the registry
+   *     endpoint request
    * @param httpClient HTTP client
    */
   @VisibleForTesting
   RegistryEndpointCaller(
-      EventHandlers eventHandlers,
-      String userAgent,
+      EventHandlers eventHandlers, String userAgent,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
@@ -107,10 +110,12 @@ class RegistryEndpointCaller<T> {
    *
    * @return an object representing the response, or {@code null}
    * @throws IOException for most I/O exceptions when making the request
-   * @throws RegistryException for known exceptions when interacting with the registry
+   * @throws RegistryException for known exceptions when interacting with the
+   *     registry
    */
   T call() throws IOException, RegistryException {
-    String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+    String apiRouteBase =
+        "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
     URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
     return call(initialRequestUrl);
   }
@@ -121,7 +126,8 @@ class RegistryEndpointCaller<T> {
    * @param url the endpoint URL to call
    * @return an object representing the response
    * @throws IOException for most I/O exceptions when making the request
-   * @throws RegistryException for known exceptions when interacting with the registry
+   * @throws RegistryException for known exceptions when interacting with the
+   *     registry
    */
   private T call(URL url) throws IOException, RegistryException {
     String serverUrl = registryEndpointRequestProperties.getServerUrl();
@@ -136,32 +142,40 @@ class RegistryEndpointCaller<T> {
             .setAuthorization(authorization);
 
     try (Response response =
-        httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
+             httpClient.call(registryEndpointProvider.getHttpMethod(), url,
+                             requestBuilder.build())) {
 
       return registryEndpointProvider.handleResponse(response);
 
     } catch (ResponseException ex) {
-      // First, see if the endpoint provider handles an exception as an expected response.
+      // First, see if the endpoint provider handles an exception as an expected
+      // response.
       try {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
       } catch (ResponseException responseException) {
-        if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || responseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+        if (responseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST ||
+            responseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_NOT_FOUND ||
+            responseException.getStatusCode() ==
+                HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           throw newRegistryErrorException(responseException);
 
-        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
+        } else if (responseException.getStatusCode() ==
+                   HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          throw new RegistryUnauthorizedException(serverUrl, imageName,
+                                                  responseException);
 
-        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+        } else if (responseException.getStatusCode() ==
+                   HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
           if (responseException.requestAuthorizationCleared()) {
             throw new RegistryCredentialsNotSentException(serverUrl, imageName);
           } else {
             // Credentials are either missing or wrong.
-            throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
+            throw new RegistryUnauthorizedException(serverUrl, imageName,
+                                                    responseException);
           }
 
         } else {
@@ -173,7 +187,8 @@ class RegistryEndpointCaller<T> {
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
       logError("    " + ex.getClass().getName());
-      logError("    " + (ex.getMessage() == null ? "(null exception message)" : ex.getMessage()));
+      logError("    " + (ex.getMessage() == null ? "(null exception message)"
+                                                 : ex.getMessage()));
       logErrorIfBrokenPipe(ex);
 
       if (ex instanceof SSLException) {
@@ -184,24 +199,23 @@ class RegistryEndpointCaller<T> {
   }
 
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(ResponseException responseException) {
+  RegistryErrorException
+  newRegistryErrorException(ResponseException responseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
             registryEndpointProvider.getActionDescription(), responseException);
 
     try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
+      ErrorResponseTemplate errorResponse = JsonTemplateMapper.readJson(
+          responseException.getContent(), ErrorResponseTemplate.class);
       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
         registryErrorExceptionBuilder.addReason(errorEntry);
       }
     } catch (IOException ex) {
       registryErrorExceptionBuilder.addReason(
-          "registry returned error code "
-              + responseException.getStatusCode()
-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + responseException.getContent()
-              + "\n");
+          "registry returned error code " + responseException.getStatusCode() +
+          "; possible causes include invalid or wrong reference. Actual error output follows:\n" +
+          responseException.getContent() + "\n");
     }
 
     return registryErrorExceptionBuilder.build();
@@ -209,15 +223,17 @@ class RegistryEndpointCaller<T> {
 
   /** Logs error message in red. */
   private void logError(String message) {
-    eventHandlers.dispatch(LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
+    eventHandlers.dispatch(
+        LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
   }
 
   private void logErrorIfBrokenPipe(IOException ex) {
     if (isBrokenPipe(ex)) {
       logError(
           "broken pipe: the server shut down the connection. Check the server log if possible. "
-              + "This could also be a proxy issue. For example, a proxy may prevent sending "
-              + "packets that are too large.");
+          +
+          "This could also be a proxy issue. For example, a proxy may prevent sending "
+          + "packets that are too large.");
     }
   }
 }

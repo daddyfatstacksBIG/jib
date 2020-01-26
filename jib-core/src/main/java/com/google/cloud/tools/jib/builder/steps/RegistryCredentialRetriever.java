@@ -31,19 +31,23 @@ class RegistryCredentialRetriever {
   /** Retrieves credentials for the base image. */
   static Optional<Credential> getBaseImageCredential(BuildContext buildContext)
       throws CredentialRetrievalException {
-    return retrieve(buildContext.getBaseImageConfiguration(), buildContext.getEventHandlers());
+    return retrieve(buildContext.getBaseImageConfiguration(),
+                    buildContext.getEventHandlers());
   }
 
   /** Retrieves credentials for the target image. */
-  static Optional<Credential> getTargetImageCredential(BuildContext buildContext)
+  static Optional<Credential>
+  getTargetImageCredential(BuildContext buildContext)
       throws CredentialRetrievalException {
-    return retrieve(buildContext.getTargetImageConfiguration(), buildContext.getEventHandlers());
+    return retrieve(buildContext.getTargetImageConfiguration(),
+                    buildContext.getEventHandlers());
   }
 
-  private static Optional<Credential> retrieve(
-      ImageConfiguration imageConfiguration, EventHandlers eventHandlers)
+  private static Optional<Credential>
+  retrieve(ImageConfiguration imageConfiguration, EventHandlers eventHandlers)
       throws CredentialRetrievalException {
-    for (CredentialRetriever retriever : imageConfiguration.getCredentialRetrievers()) {
+    for (CredentialRetriever retriever :
+         imageConfiguration.getCredentialRetrievers()) {
       Optional<Credential> credential = retriever.retrieve();
       if (credential.isPresent()) {
         return credential;
@@ -53,7 +57,8 @@ class RegistryCredentialRetriever {
     String registry = imageConfiguration.getImageRegistry();
     String repository = imageConfiguration.getImageRepository();
     eventHandlers.dispatch(
-        LogEvent.info("No credentials could be retrieved for " + registry + "/" + repository));
+        LogEvent.info("No credentials could be retrieved for " + registry +
+                      "/" + repository));
     return Optional.empty();
   }
 }

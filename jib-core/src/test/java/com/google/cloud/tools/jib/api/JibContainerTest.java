@@ -41,19 +41,18 @@ public class JibContainerTest {
   public void setUp() throws DigestException, InvalidImageReferenceException {
     targetImage1 = ImageReference.parse("gcr.io/project/image:tag");
     targetImage2 = ImageReference.parse("gcr.io/project/image:tag2");
-    digest1 =
-        DescriptorDigest.fromDigest(
-            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
-    digest2 =
-        DescriptorDigest.fromDigest(
-            "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+    digest1 = DescriptorDigest.fromDigest(
+        "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+    digest2 = DescriptorDigest.fromDigest(
+        "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
     tags1 = ImmutableSet.of("latest", "custom-tag");
     tags2 = ImmutableSet.of("latest");
   }
 
   @Test
   public void testCreation() {
-    JibContainer container = new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
 
     Assert.assertEquals(targetImage1, container.getTargetImage());
     Assert.assertEquals(digest1, container.getDigest());
@@ -63,8 +62,10 @@ public class JibContainerTest {
 
   @Test
   public void testEquality() {
-    JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1);
-    JibContainer container2 = new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container1 =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container2 =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
 
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
@@ -72,8 +73,10 @@ public class JibContainerTest {
 
   @Test
   public void testEquality_differentTargetImage() {
-    JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1);
-    JibContainer container2 = new JibContainer(targetImage2, digest1, digest2, tags1);
+    JibContainer container1 =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container2 =
+        new JibContainer(targetImage2, digest1, digest2, tags1);
 
     Assert.assertNotEquals(container1, container2);
     Assert.assertNotEquals(container1.hashCode(), container2.hashCode());
@@ -81,8 +84,10 @@ public class JibContainerTest {
 
   @Test
   public void testEquality_differentImageDigest() {
-    JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1);
-    JibContainer container2 = new JibContainer(targetImage1, digest2, digest2, tags1);
+    JibContainer container1 =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container2 =
+        new JibContainer(targetImage1, digest2, digest2, tags1);
 
     Assert.assertNotEquals(container1, container2);
     Assert.assertNotEquals(container1.hashCode(), container2.hashCode());
@@ -90,8 +95,10 @@ public class JibContainerTest {
 
   @Test
   public void testEquality_differentImageId() {
-    JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1);
-    JibContainer container2 = new JibContainer(targetImage1, digest1, digest2, tags1);
+    JibContainer container1 =
+        new JibContainer(targetImage1, digest1, digest1, tags1);
+    JibContainer container2 =
+        new JibContainer(targetImage1, digest1, digest2, tags1);
 
     Assert.assertNotEquals(container1, container2);
     Assert.assertNotEquals(container1.hashCode(), container2.hashCode());
@@ -99,8 +106,10 @@ public class JibContainerTest {
 
   @Test
   public void testEquality_differentTags() {
-    JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1);
-    JibContainer container2 = new JibContainer(targetImage1, digest1, digest1, tags2);
+    JibContainer container1 =
+        new JibContainer(targetImage1, digest1, digest1, tags1);
+    JibContainer container2 =
+        new JibContainer(targetImage1, digest1, digest1, tags2);
 
     Assert.assertNotEquals(container1, container2);
     Assert.assertNotEquals(container1.hashCode(), container2.hashCode());

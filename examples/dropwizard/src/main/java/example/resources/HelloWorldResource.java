@@ -17,19 +17,16 @@
 package example.resources;
 
 import com.codahale.metrics.annotation.Timed;
-
+import example.JibExampleConfiguration;
+import example.api.Saying;
+import example.config.HelloWorldConfiguration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-
-import example.JibExampleConfiguration;
-import example.api.Saying;
-import example.config.HelloWorldConfiguration;
 
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
@@ -46,9 +43,10 @@ public class HelloWorldResource {
   }
 
   public static HelloWorldResource from(JibExampleConfiguration conf) {
-    final HelloWorldConfiguration helloConfiguration = conf.getHelloConfiguration();
-    return new HelloWorldResource(
-        helloConfiguration.getTemplate(), helloConfiguration.getDefaultName());
+    final HelloWorldConfiguration helloConfiguration =
+        conf.getHelloConfiguration();
+    return new HelloWorldResource(helloConfiguration.getTemplate(),
+                                  helloConfiguration.getDefaultName());
   }
 
   @GET

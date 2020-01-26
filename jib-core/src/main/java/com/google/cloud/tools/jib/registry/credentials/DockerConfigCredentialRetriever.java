@@ -34,11 +34,12 @@ import java.util.function.Consumer;
 /**
  * Retrieves registry credentials from the Docker config.
  *
- * <p>The credentials are searched in the following order (stopping when credentials are found):
+ * <p>The credentials are searched in the following order (stopping when
+ * credentials are found):
  *
  * <ol>
- *   <li>The credential helper from {@code credHelpers} defined for a registry, if available.
- *   <li>The {@code credsStore} credential helper, if available.
+ *   <li>The credential helper from {@code credHelpers} defined for a registry,
+ * if available. <li>The {@code credsStore} credential helper, if available.
  *   <li>If there is an {@code auth} defined for a registry.
  * </ol>
  *
@@ -61,29 +62,30 @@ public class DockerConfigCredentialRetriever {
     this(registry, DOCKER_CONFIG_FILE);
   }
 
-  public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
+  public DockerConfigCredentialRetriever(String registry,
+                                         Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
   }
 
-  public Path getDockerConfigFile() {
-    return dockerConfigFile;
-  }
+  public Path getDockerConfigFile() { return dockerConfigFile; }
 
   /**
    * Retrieves credentials for a registry. Tries all possible known aliases.
    *
    * @param logger a consumer for handling log events
-   * @return {@link Credential} found for {@code registry}, or {@link Optional#empty} if not found
+   * @return {@link Credential} found for {@code registry}, or {@link
+   *     Optional#empty} if not found
    * @throws IOException if failed to parse the config JSON
    */
-  public Optional<Credential> retrieve(Consumer<LogEvent> logger) throws IOException {
+  public Optional<Credential> retrieve(Consumer<LogEvent> logger)
+      throws IOException {
     if (!Files.exists(dockerConfigFile)) {
       return Optional.empty();
     }
     DockerConfig dockerConfig =
-        new DockerConfig(
-            JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(
+            dockerConfigFile, DockerConfigTemplate.class));
     return retrieve(dockerConfig, logger);
   }
 
@@ -92,29 +94,33 @@ public class DockerConfigCredentialRetriever {
    *
    * @param dockerConfig the {@link DockerConfig} to retrieve from
    * @param logger a consumer for handling log events
-   * @return the retrieved credentials, or {@code Optional#empty} if none are found
+   * @return the retrieved credentials, or {@code Optional#empty} if none are
+   *     found
    */
   @VisibleForTesting
-  Optional<Credential> retrieve(DockerConfig dockerConfig, Consumer<LogEvent> logger) {
+  Optional<Credential> retrieve(DockerConfig dockerConfig,
+                                Consumer<LogEvent> logger) {
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
-      // First, find a credential helper from "credentialHelpers" and "credsStore" in order.
+      // First, find a credential helper from "credentialHelpers" and
+      // "credsStore" in order.
       DockerCredentialHelper dockerCredentialHelper =
           dockerConfig.getCredentialHelperFor(registryAlias);
       if (dockerCredentialHelper != null) {
         try {
           Path helperPath = dockerCredentialHelper.getCredentialHelper();
-          logger.accept(LogEvent.info("trying " + helperPath + " for " + registryAlias));
+          logger.accept(
+              LogEvent.info("trying " + helperPath + " for " + registryAlias));
           // Tries with the given registry alias (may be the original registry).
           return Optional.of(dockerCredentialHelper.retrieve());
 
-        } catch (IOException
-            | CredentialHelperUnhandledServerUrlException
-            | CredentialHelperNotFoundException ex) {
+        } catch (IOException | CredentialHelperUnhandledServerUrlException |
+                 CredentialHelperNotFoundException ex) {
           // Warns the user that the specified credential helper cannot be used.
           if (ex.getMessage() != null) {
             logger.accept(LogEvent.warn(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
-              logger.accept(LogEvent.warn("  Caused by: " + ex.getCause().getMessage()));
+              logger.accept(
+                  LogEvent.warn("  Caused by: " + ex.getCause().getMessage()));
             }
           }
         }
@@ -123,13 +129,17 @@ public class DockerConfigCredentialRetriever {
       // Lastly, find defined auth.
       String auth = dockerConfig.getAuthFor(registryAlias);
       if (auth != null) {
-        // 'auth' is a basic authentication token that should be parsed back into credentials
+        // 'auth' is a basic authentication token that should be parsed back
+        // into credentials
         String usernameColonPassword =
             new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
-        String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
-        String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-        logger.accept(
-            LogEvent.info("Docker config auths section defines credentials for " + registryAlias));
+        String username = usernameColonPassword.substring(
+            0, usernameColonPassword.indexOf(":"));
+        String password = usernameColonPassword.substring(
+            usernameColonPassword.indexOf(":") + 1);
+        logger.accept(LogEvent.info(
+            "Docker config auths section defines credentials for " +
+            registryAlias));
         return Optional.of(Credential.from(username, password));
       }
     }

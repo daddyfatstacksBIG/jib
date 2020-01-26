@@ -47,15 +47,17 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v21()
-      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException,
-          BadContainerConfigurationFormatException {
+      throws IOException, LayerPropertyNotFoundException, DigestException,
+             URISyntaxException, BadContainerConfigurationFormatException {
     // Loads the JSON string.
-    Path jsonFile =
-        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
+    Path jsonFile = Paths.get(getClass()
+                                  .getClassLoader()
+                                  .getResource("core/json/v21manifest.json")
+                                  .toURI());
 
     // Deserializes into a manifest JSON object.
-    V21ManifestTemplate manifestTemplate =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
+    V21ManifestTemplate manifestTemplate = JsonTemplateMapper.readJsonFromFile(
+        jsonFile, V21ManifestTemplate.class);
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate);
 
@@ -73,37 +75,37 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v22()
-      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("core/json/v22manifest.json", V22ManifestTemplate.class);
+      throws IOException, LayerPropertyNotFoundException,
+             LayerCountMismatchException, DigestException, URISyntaxException,
+             BadContainerConfigurationFormatException {
+    testToImage_buildable("core/json/v22manifest.json",
+                          V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
-      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("core/json/ocimanifest.json", OciManifestTemplate.class);
+      throws IOException, LayerPropertyNotFoundException,
+             LayerCountMismatchException, DigestException, URISyntaxException,
+             BadContainerConfigurationFormatException {
+    testToImage_buildable("core/json/ocimanifest.json",
+                          OciManifestTemplate.class);
   }
 
   @Test
-  public void testPortMapToList() throws BadContainerConfigurationFormatException {
+  public void testPortMapToList()
+      throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
-        ImmutableSortedMap.of(
-            "1000",
-            ImmutableMap.of(),
-            "2000/tcp",
-            ImmutableMap.of(),
-            "3000/udp",
-            ImmutableMap.of());
-    ImmutableSet<Port> expected = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
+        ImmutableSortedMap.of("1000", ImmutableMap.of(), "2000/tcp",
+                              ImmutableMap.of(), "3000/udp", ImmutableMap.of());
+    ImmutableSet<Port> expected =
+        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
     Assert.assertEquals(expected, JsonToImageTranslator.portMapToSet(input));
 
     ImmutableList<Map<String, Map<?, ?>>> badInputs =
-        ImmutableList.of(
-            ImmutableMap.of("abc", ImmutableMap.of()),
-            ImmutableMap.of("1000-2000", ImmutableMap.of()),
-            ImmutableMap.of("/udp", ImmutableMap.of()),
-            ImmutableMap.of("123/xxx", ImmutableMap.of()));
+        ImmutableList.of(ImmutableMap.of("abc", ImmutableMap.of()),
+                         ImmutableMap.of("1000-2000", ImmutableMap.of()),
+                         ImmutableMap.of("/udp", ImmutableMap.of()),
+                         ImmutableMap.of("123/xxx", ImmutableMap.of()));
     for (Map<String, Map<?, ?>> badInput : badInputs) {
       try {
         JsonToImageTranslator.portMapToSet(badInput);
@@ -114,21 +116,20 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testVolumeMapToList() throws BadContainerConfigurationFormatException {
+  public void testVolumeMapToList()
+      throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
-        ImmutableSortedMap.of(
-            "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
+        ImmutableSortedMap.of("/var/job-result-data", ImmutableMap.of(),
+                              "/var/log/my-app-logs", ImmutableMap.of());
     ImmutableSet<AbsoluteUnixPath> expected =
-        ImmutableSet.of(
-            AbsoluteUnixPath.get("/var/job-result-data"),
-            AbsoluteUnixPath.get("/var/log/my-app-logs"));
+        ImmutableSet.of(AbsoluteUnixPath.get("/var/job-result-data"),
+                        AbsoluteUnixPath.get("/var/log/my-app-logs"));
     Assert.assertEquals(expected, JsonToImageTranslator.volumeMapToSet(input));
 
-    ImmutableList<Map<String, Map<?, ?>>> badInputs =
-        ImmutableList.of(
-            ImmutableMap.of("var/job-result-data", ImmutableMap.of()),
-            ImmutableMap.of("log", ImmutableMap.of()),
-            ImmutableMap.of("C:/udp", ImmutableMap.of()));
+    ImmutableList<Map<String, Map<?, ?>>> badInputs = ImmutableList.of(
+        ImmutableMap.of("var/job-result-data", ImmutableMap.of()),
+        ImmutableMap.of("log", ImmutableMap.of()),
+        ImmutableMap.of("C:/udp", ImmutableMap.of()));
     for (Map<String, Map<?, ?>> badInput : badInputs) {
       try {
         JsonToImageTranslator.volumeMapToSet(badInput);
@@ -142,7 +143,8 @@ public class JsonToImageTranslatorTest {
   public void testJsonToImageTranslatorRegex() {
     assertGoodEnvironmentPattern("NAME=VALUE", "NAME", "VALUE");
     assertGoodEnvironmentPattern("A1203921=www=ww", "A1203921", "www=ww");
-    assertGoodEnvironmentPattern("&*%(&#$(*@(%&@$*$(=", "&*%(&#$(*@(%&@$*$(", "");
+    assertGoodEnvironmentPattern("&*%(&#$(*@(%&@$*$(=", "&*%(&#$(*@(%&@$*$(",
+                                 "");
     assertGoodEnvironmentPattern("m_a_8943=100", "m_a_8943", "100");
     assertGoodEnvironmentPattern("A_B_C_D=*****", "A_B_C_D", "*****");
 
@@ -150,8 +152,8 @@ public class JsonToImageTranslatorTest {
     assertBadEnvironmentPattern("A_B_C");
   }
 
-  private void assertGoodEnvironmentPattern(
-      String input, String expectedName, String expectedValue) {
+  private void assertGoodEnvironmentPattern(String input, String expectedName,
+                                            String expectedValue) {
     Matcher matcher = JsonToImageTranslator.ENVIRONMENT_PATTERN.matcher(input);
     Assert.assertTrue(matcher.matches());
     Assert.assertEquals(expectedName, matcher.group("name"));
@@ -163,25 +165,30 @@ public class JsonToImageTranslatorTest {
     Assert.assertFalse(matcher.matches());
   }
 
-  private <T extends BuildableManifestTemplate> void testToImage_buildable(
-      String jsonFilename, Class<T> manifestTemplateClass)
-      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
+  private <T extends BuildableManifestTemplate> void
+  testToImage_buildable(String jsonFilename, Class<T> manifestTemplateClass)
+      throws IOException, LayerPropertyNotFoundException,
+             LayerCountMismatchException, DigestException, URISyntaxException,
+             BadContainerConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
-        Paths.get(
-            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+        Paths.get(getClass()
+                      .getClassLoader()
+                      .getResource("core/json/containerconfig.json")
+                      .toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
-            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+            containerConfigurationJsonFile,
+            ContainerConfigurationTemplate.class);
 
     // Loads the manifest JSON.
-    Path manifestJsonFile =
-        Paths.get(getClass().getClassLoader().getResource(jsonFilename).toURI());
-    T manifestTemplate =
-        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, manifestTemplateClass);
+    Path manifestJsonFile = Paths.get(
+        getClass().getClassLoader().getResource(jsonFilename).toURI());
+    T manifestTemplate = JsonTemplateMapper.readJsonFromFile(
+        manifestJsonFile, manifestTemplateClass);
 
-    Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
+    Image image = JsonToImageTranslator.toImage(manifestTemplate,
+                                                containerConfigurationTemplate);
 
     List<Layer> layers = image.getLayers();
     Assert.assertEquals(1, layers.size());
@@ -196,29 +203,30 @@ public class JsonToImageTranslatorTest {
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         layers.get(0).getDiffId());
     Assert.assertEquals(
-        ImmutableList.of(
-            HistoryEntry.builder()
-                .setCreationTimestamp(Instant.EPOCH)
-                .setAuthor("Bazel")
-                .setCreatedBy("bazel build ...")
-                .setEmptyLayer(true)
-                .build(),
-            HistoryEntry.builder()
-                .setCreationTimestamp(Instant.ofEpochSecond(20))
-                .setAuthor("Jib")
-                .setCreatedBy("jib")
-                .build()),
+        ImmutableList.of(HistoryEntry.builder()
+                             .setCreationTimestamp(Instant.EPOCH)
+                             .setAuthor("Bazel")
+                             .setCreatedBy("bazel build ...")
+                             .setEmptyLayer(true)
+                             .build(),
+                         HistoryEntry.builder()
+                             .setCreationTimestamp(Instant.ofEpochSecond(20))
+                             .setAuthor("Jib")
+                             .setCreatedBy("jib")
+                             .build()),
         image.getHistory());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
-    Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
-    Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
+    Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"),
+                        image.getEntrypoint());
+    Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"),
+                        image.getEnvironment());
     Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
-        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)), image.getExposedPorts());
+        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)),
+        image.getExposedPorts());
     Assert.assertEquals(
-        ImmutableSet.of(
-            AbsoluteUnixPath.get("/var/job-result-data"),
-            AbsoluteUnixPath.get("/var/log/my-app-logs")),
+        ImmutableSet.of(AbsoluteUnixPath.get("/var/job-result-data"),
+                        AbsoluteUnixPath.get("/var/log/my-app-logs")),
         image.getVolumes());
     Assert.assertEquals("tomcat", image.getUser());
     Assert.assertEquals("value1", image.getLabels().get("key1"));

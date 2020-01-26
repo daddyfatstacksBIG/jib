@@ -47,7 +47,10 @@ import java.util.function.Consumer;
 /** Checks if Jib is up-to-date. */
 public class UpdateChecker {
 
-  /** JSON template for the configuration file used to enable/disable update checks. */
+  /**
+   * JSON template for the configuration file used to enable/disable update
+   * checks.
+   */
   @VisibleForTesting
   static class ConfigJsonTemplate implements JsonTemplate {
     private boolean disableUpdateCheck;
@@ -73,25 +76,20 @@ public class UpdateChecker {
    * @param toolName the tool name
    * @return a new {@link UpdateChecker}
    */
-  public static Future<Optional<String>> checkForUpdate(
-      ExecutorService executorService, Consumer<LogEvent> log, String versionUrl, String toolName) {
+  public static Future<Optional<String>>
+  checkForUpdate(ExecutorService executorService, Consumer<LogEvent> log,
+                 String versionUrl, String toolName) {
     return executorService.submit(
-        () ->
-            performUpdateCheck(
-                log,
-                Verify.verifyNotNull(ProjectInfo.VERSION),
-                versionUrl,
-                getConfigDir(),
-                toolName));
+        ()
+            -> performUpdateCheck(log,
+                                  Verify.verifyNotNull(ProjectInfo.VERSION),
+                                  versionUrl, getConfigDir(), toolName));
   }
 
   @VisibleForTesting
-  static Optional<String> performUpdateCheck(
-      Consumer<LogEvent> log,
-      String currentVersion,
-      String versionUrl,
-      Path configDir,
-      String toolName) {
+  static Optional<String>
+  performUpdateCheck(Consumer<LogEvent> log, String currentVersion,
+                     String versionUrl, Path configDir, String toolName) {
     // Abort if offline or update checks are disabled
     if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
@@ -105,19 +103,15 @@ public class UpdateChecker {
       if (Files.exists(configFile)) {
         // Abort if update checks are disabled
         try {
-          ConfigJsonTemplate config =
-              JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
+          ConfigJsonTemplate config = JsonTemplateMapper.readJsonFromFile(
+              configFile, ConfigJsonTemplate.class);
           if (config.disableUpdateCheck) {
             return Optional.empty();
           }
         } catch (IOException ex) {
-          log.accept(
-              LogEvent.warn(
-                  "Failed to read global Jib config: "
-                      + ex.getMessage()
-                      + "; you may need to fix or delete "
-                      + configFile
-                      + "; "));
+          log.accept(LogEvent.warn(
+              "Failed to read global Jib config: " + ex.getMessage() +
+              "; you may need to fix or delete " + configFile + "; "));
           return Optional.empty();
         }
       } else {
@@ -127,8 +121,10 @@ public class UpdateChecker {
         try (OutputStream outputStream = Files.newOutputStream(configFile)) {
           JsonTemplateMapper.writeTo(config, outputStream);
         } catch (IOException ex) {
-          // If attempt to generate new config file failed, delete so we can try again next time
-          log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
+          // If attempt to generate new config file failed, delete so we can try
+          // again next time
+          log.accept(LogEvent.debug("Failed to generate global Jib config; " +
+                                    ex.getMessage()));
           Files.deleteIfExists(configFile);
         }
       }
@@ -136,41 +132,41 @@ public class UpdateChecker {
       // Check time of last update check
       if (Files.exists(lastUpdateCheck)) {
         try {
-          String fileContents =
-              new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
+          String fileContents = new String(Files.readAllBytes(lastUpdateCheck),
+                                           StandardCharsets.UTF_8);
           Instant modifiedTime = Instant.parse(fileContents);
           if (modifiedTime.plus(Duration.ofDays(1)).isAfter(Instant.now())) {
             return Optional.empty();
           }
         } catch (DateTimeParseException | IOException ex) {
           // If reading update time failed, file might be corrupt, so delete it
-          log.accept(LogEvent.debug("Failed to read lastUpdateCheck; " + ex.getMessage()));
+          log.accept(LogEvent.debug("Failed to read lastUpdateCheck; " +
+                                    ex.getMessage()));
           Files.delete(lastUpdateCheck);
         }
       }
 
       // Check for update
-      FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+      FailoverHttpClient httpClient =
+          new FailoverHttpClient(true, false, ignored -> {});
       try {
-        Response response =
-            httpClient.get(
-                new URL(versionUrl),
-                Request.builder()
-                    .setHttpTimeout(3000)
-                    .setUserAgent("jib " + currentVersion + " " + toolName)
-                    .build());
-        VersionJsonTemplate version =
-            JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
-        Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+        Response response = httpClient.get(
+            new URL(versionUrl),
+            Request.builder()
+                .setHttpTimeout(3000)
+                .setUserAgent("jib " + currentVersion + " " + toolName)
+                .build());
+        VersionJsonTemplate version = JsonTemplateMapper.readJson(
+            response.getBody(), VersionJsonTemplate.class);
+        Files.write(lastUpdateCheck,
+                    Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
         return Optional.of(
-            "A new version of Jib ("
-                + version.latest
-                + ") is available (currently using "
-                + currentVersion
-                + "). Update your build configuration to use the latest features and fixes!");
+            "A new version of Jib (" + version.latest +
+            ") is available (currently using " + currentVersion +
+            "). Update your build configuration to use the latest features and fixes!");
 
       } finally {
         httpClient.shutDown();
@@ -184,15 +180,18 @@ public class UpdateChecker {
   }
 
   /**
-   * Returns a message indicating Jib should be upgraded if the check succeeded and the current
-   * version is outdated, or returns {@code Optional.empty()} if the check was interrupted or did
-   * not determine that a later version was available.
+   * Returns a message indicating Jib should be upgraded if the check succeeded
+   * and the current version is outdated, or returns {@code Optional.empty()} if
+   * the check was interrupted or did not determine that a later version was
+   * available.
    *
-   * @param updateMessageFuture the {@link Future} returned by {@link UpdateChecker#checkForUpdate}
-   * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code
-   *     Optional.empty()}.
+   * @param updateMessageFuture the {@link Future} returned by {@link
+   *     UpdateChecker#checkForUpdate}
+   * @return the {@link Optional} message to upgrade Jib if a later version was
+   *     found, else {@code Optional.empty()}.
    */
-  public static Optional<String> finishUpdateCheck(Future<Optional<String>> updateMessageFuture) {
+  public static Optional<String>
+  finishUpdateCheck(Future<Optional<String>> updateMessageFuture) {
     if (updateMessageFuture.isDone()) {
       try {
         return updateMessageFuture.get();
@@ -205,14 +204,15 @@ public class UpdateChecker {
   }
 
   /**
-   * Returns the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
-   * otherwise returns the default config directory.
+   * Returns the config directory set by {@link PropertyNames#CONFIG_DIRECTORY}
+   * if not null, otherwise returns the default config directory.
    *
-   * @return the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
-   *     otherwise returns the default config directory.
+   * @return the config directory set by {@link PropertyNames#CONFIG_DIRECTORY}
+   *     if not null, otherwise returns the default config directory.
    */
   private static Path getConfigDir() {
-    String configDirProperty = System.getProperty(PropertyNames.CONFIG_DIRECTORY);
+    String configDirProperty =
+        System.getProperty(PropertyNames.CONFIG_DIRECTORY);
     if (!Strings.isNullOrEmpty(configDirProperty)) {
       return Paths.get(configDirProperty);
     }

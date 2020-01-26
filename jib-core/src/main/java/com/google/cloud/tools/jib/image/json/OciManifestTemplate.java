@@ -34,37 +34,43 @@ import javax.annotation.Nullable;
  *   "config": {
  *     "mediaType": "application/vnd.oci.image.config.v1+json",
  *     "size": 631,
- *     "digest": "sha256:26b84ca5b9050d32e68f66ad0f3e2bbcd247198a6e6e09a7effddf126eb8d873"
+ *     "digest":
+ * "sha256:26b84ca5b9050d32e68f66ad0f3e2bbcd247198a6e6e09a7effddf126eb8d873"
  *   },
  *   "layers": [
  *     {
  *       "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
  *       "size": 1991435,
- *       "digest": "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"
+ *       "digest":
+ * "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"
  *     },
  *     {
  *       "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
  *       "size": 32,
- *       "digest": "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
+ *       "digest":
+ * "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
  *     }
  *   ]
  * }
  * }</pre>
  *
- * @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI Image
- *     Manifest Specification</a>
+ * @see <a
+ *     href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI
+ *     Image Manifest Specification</a>
  */
 public class OciManifestTemplate implements BuildableManifestTemplate {
 
   /** The OCI manifest media type. */
-  public static final String MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json";
+  public static final String MANIFEST_MEDIA_TYPE =
+      "application/vnd.oci.image.manifest.v1+json";
 
   /** The OCI container configuration media type. */
   private static final String CONTAINER_CONFIGURATION_MEDIA_TYPE =
       "application/vnd.oci.image.config.v1+json";
 
   /** The OCI layer media type. */
-  private static final String LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+gzip";
+  private static final String LAYER_MEDIA_TYPE =
+      "application/vnd.oci.image.layer.v1.tar+gzip";
 
   private final int schemaVersion = 2;
   private final String mediaType = MANIFEST_MEDIA_TYPE;
@@ -98,7 +104,8 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
 
   @Override
   public void setContainerConfiguration(long size, DescriptorDigest digest) {
-    config = new ContentDescriptorTemplate(CONTAINER_CONFIGURATION_MEDIA_TYPE, size, digest);
+    config = new ContentDescriptorTemplate(CONTAINER_CONFIGURATION_MEDIA_TYPE,
+                                           size, digest);
   }
 
   @Override

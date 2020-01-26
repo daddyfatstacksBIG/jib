@@ -46,7 +46,8 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
    *
    * @param settings decrypted Maven settings
    */
-  MavenSettingsServerCredentials(Settings settings, SettingsDecrypter decrypter) {
+  MavenSettingsServerCredentials(Settings settings,
+                                 SettingsDecrypter decrypter) {
     this.settings = settings;
     this.decrypter = decrypter;
   }
@@ -55,25 +56,29 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
    * Retrieves credentials for {@code registry} from Maven settings.
    *
    * @param registry the registry
-   * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
+   * @return the auth info for the registry, or {@link Optional#empty} if none
+   *     could be retrieved
    */
   @Override
-  public Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException {
+  public Optional<AuthProperty> inferAuth(String registry)
+      throws InferredAuthException {
 
     Server server = getServerFromMavenSettings(registry);
     if (server == null) {
       return Optional.empty();
     }
 
-    SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(server);
+    SettingsDecryptionRequest request =
+        new DefaultSettingsDecryptionRequest(server);
     SettingsDecryptionResult result = decrypter.decrypt(request);
-    // Un-encrypted passwords are passed through, so a problem indicates a real issue.
-    // If there are any ERROR or FATAL problems reported, then decryption failed.
+    // Un-encrypted passwords are passed through, so a problem indicates a real
+    // issue. If there are any ERROR or FATAL problems reported, then decryption
+    // failed.
     for (SettingsProblem problem : result.getProblems()) {
-      if (problem.getSeverity() == SettingsProblem.Severity.ERROR
-          || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-        throw new InferredAuthException(
-            "Unable to decrypt server(" + registry + ") info from settings.xml: " + problem);
+      if (problem.getSeverity() == SettingsProblem.Severity.ERROR ||
+          problem.getSeverity() == SettingsProblem.Severity.FATAL) {
+        throw new InferredAuthException("Unable to decrypt server(" + registry +
+                                        ") info from settings.xml: " + problem);
       }
     }
     Server resultServer = result.getServer();
@@ -81,34 +86,32 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
     String username = resultServer.getUsername();
     String password = resultServer.getPassword();
 
-    return Optional.of(
-        new AuthProperty() {
+    return Optional.of(new AuthProperty() {
+      @Override
+      public String getUsername() {
+        return username;
+      }
 
-          @Override
-          public String getUsername() {
-            return username;
-          }
+      @Override
+      public String getPassword() {
+        return password;
+      }
 
-          @Override
-          public String getPassword() {
-            return password;
-          }
+      @Override
+      public String getAuthDescriptor() {
+        return CREDENTIAL_SOURCE;
+      }
 
-          @Override
-          public String getAuthDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
+      @Override
+      public String getUsernameDescriptor() {
+        return CREDENTIAL_SOURCE;
+      }
 
-          @Override
-          public String getUsernameDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
-
-          @Override
-          public String getPasswordDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
-        });
+      @Override
+      public String getPasswordDescriptor() {
+        return CREDENTIAL_SOURCE;
+      }
+    });
   }
 
   @Nullable

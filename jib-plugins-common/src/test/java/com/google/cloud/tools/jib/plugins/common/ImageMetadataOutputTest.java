@@ -25,13 +25,15 @@ public class ImageMetadataOutputTest {
 
   private static final String TEST_JSON =
       "{\"image\":"
-          + "\"gcr.io/project/image:tag\","
-          + "\"imageId\":"
-          + "\"sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9\","
-          + "\"imageDigest\":"
-          + "\"sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc\","
-          + "\"tags\":[\"latest\",\"tag\"]"
-          + "}";
+      + "\"gcr.io/project/image:tag\","
+      + "\"imageId\":"
+      +
+      "\"sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9\","
+      + "\"imageDigest\":"
+      +
+      "\"sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc\","
+      + "\"tags\":[\"latest\",\"tag\"]"
+      + "}";
 
   @Test
   public void testFromJson() throws IOException {

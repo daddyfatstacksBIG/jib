@@ -35,47 +35,42 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
- * configuration digest ("image id") as {#link BuildResult}.
+ * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and
+ * the container configuration digest ("image id") as {#link BuildResult}.
  */
 class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing manifest";
 
-  static ImmutableList<PushImageStep> makeList(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      RegistryClient registryClient,
-      BlobDescriptor containerConfigurationDigestAndSize,
-      Image builtImage)
+  static ImmutableList<PushImageStep>
+  makeList(BuildContext buildContext,
+           ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+           RegistryClient registryClient,
+           BlobDescriptor containerConfigurationDigestAndSize, Image builtImage)
       throws IOException {
     Set<String> tags = buildContext.getAllTargetImageTags();
 
-    try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), "Preparing manifest pushers");
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+    try (TimerEventDispatcher ignored = new TimerEventDispatcher(
+             buildContext.getEventHandlers(), "Preparing manifest pushers");
+         ProgressEventDispatcher progressEventDispatcher =
+             progressEventDispatcherFactory.create("launching manifest pushers",
+                                                   tags.size())) {
 
       // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
           new ImageToJsonTranslator(builtImage)
-              .getManifestTemplate(
-                  buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
+              .getManifestTemplate(buildContext.getTargetFormat(),
+                                   containerConfigurationDigestAndSize);
 
-      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
+      DescriptorDigest manifestDigest =
+          Digests.computeJsonDigest(manifestTemplate);
 
       return tags.stream()
-          .map(
-              tag ->
-                  new PushImageStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      registryClient,
-                      manifestTemplate,
-                      tag,
-                      manifestDigest,
-                      containerConfigurationDigestAndSize.getDigest()))
+          .map(tag
+               -> new PushImageStep(
+                   buildContext, progressEventDispatcher.newChildProducer(),
+                   registryClient, manifestTemplate, tag, manifestDigest,
+                   containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -89,14 +84,11 @@ class PushImageStep implements Callable<BuildResult> {
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
-  PushImageStep(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      RegistryClient registryClient,
-      BuildableManifestTemplate manifestTemplate,
-      String tag,
-      DescriptorDigest imageDigest,
-      DescriptorDigest imageId) {
+  PushImageStep(BuildContext buildContext,
+                ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+                RegistryClient registryClient,
+                BuildableManifestTemplate manifestTemplate, String tag,
+                DescriptorDigest imageDigest, DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
@@ -109,10 +101,13 @@ class PushImageStep implements Callable<BuildResult> {
   @Override
   public BuildResult call() throws IOException, RegistryException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
-        ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
-      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
+    try (TimerEventDispatcher ignored =
+             new TimerEventDispatcher(eventHandlers, DESCRIPTION);
+         ProgressEventDispatcher ignored2 =
+             progressEventDispatcherFactory.create(
+                 "pushing manifest for " + tag, 1)) {
+      eventHandlers.dispatch(
+          LogEvent.info("Pushing manifest for " + tag + "..."));
 
       registryClient.pushManifest(manifestTemplate, tag);
       return new BuildResult(imageDigest, imageId);

@@ -49,7 +49,8 @@ import java.util.function.Function;
 public class DockerClient {
 
   /**
-   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
+   * Contains the size, image ID, and diff IDs of an image inspected with {@code
+   * docker inspect}.
    */
   public static class DockerImageDetails implements JsonTemplate {
     private long size;
@@ -66,9 +67,7 @@ public class DockerClient {
       this.diffIds = diffIds;
     }
 
-    public long getSize() {
-      return size;
-    }
+    public long getSize() { return size; }
 
     public DescriptorDigest getImageId() throws DigestException {
       return DescriptorDigest.fromDigest(imageId);
@@ -87,21 +86,23 @@ public class DockerClient {
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /**
-   * Checks if Docker is installed on the user's system and accessible by running the default {@code
-   * docker} command.
+   * Checks if Docker is installed on the user's system and accessible by
+   * running the default {@code docker} command.
    *
-   * @return {@code true} if Docker is installed on the user's system and accessible
+   * @return {@code true} if Docker is installed on the user's system and
+   *     accessible
    */
   public static boolean isDefaultDockerInstalled() {
     return isDockerInstalled(DEFAULT_DOCKER_CLIENT);
   }
 
   /**
-   * Checks if Docker is installed on the user's system and accessible by running the given {@code
-   * docker} executable.
+   * Checks if Docker is installed on the user's system and accessible by
+   * running the given {@code docker} executable.
    *
    * @param dockerExecutable path to the executable to test running
-   * @return {@code true} if Docker is installed on the user's system and accessible
+   * @return {@code true} if Docker is installed on the user's system and
+   *     accessible
    */
   public static boolean isDockerInstalled(Path dockerExecutable) {
     try {
@@ -114,15 +115,17 @@ public class DockerClient {
   }
 
   /**
-   * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
-   * for that {@code docker} command.
+   * Gets a function that takes a {@code docker} subcommand and gives back a
+   * {@link ProcessBuilder} for that {@code docker} command.
    *
    * @param dockerExecutable path to {@code docker}
-   * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
+   * @return the default {@link ProcessBuilder} factory for running a {@code
+   *     docker} subcommand
    */
   @VisibleForTesting
-  static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
+  static Function<List<String>, ProcessBuilder>
+  defaultProcessBuilderFactory(String dockerExecutable,
+                               ImmutableMap<String, String> dockerEnvironment) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
       dockerCommand.add(dockerExecutable);
@@ -137,27 +140,33 @@ public class DockerClient {
   }
 
   /**
-   * Parses the results of {@code docker inspect} into an {@link DockerImageDetails}.
+   * Parses the results of {@code docker inspect} into an {@link
+   * DockerImageDetails}.
    *
-   * @param inspectOutput the output of the {@code docker inspect} command containing the size,
-   *     image ID, and diff IDs
+   * @param inspectOutput the output of the {@code docker inspect} command
+   *     containing the size, image ID, and diff IDs
    * @return the {@link DockerImageDetails}
    */
   @VisibleForTesting
-  static DockerImageDetails parseInspectResults(String inspectOutput) throws IOException {
+  static DockerImageDetails parseInspectResults(String inspectOutput)
+      throws IOException {
     return JsonTemplateMapper.readJson(inspectOutput, DockerImageDetails.class);
   }
 
   private static String getStderrOutput(Process process) {
-    try (InputStreamReader stderr =
-        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+    try (InputStreamReader stderr = new InputStreamReader(
+             process.getErrorStream(), StandardCharsets.UTF_8)) {
       return CharStreams.toString(stderr);
     } catch (IOException ex) {
-      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
+      return "unknown (failed to read error message from stderr due to " +
+          ex.getMessage() + ")";
     }
   }
 
-  /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
+  /**
+   * Factory for generating the {@link ProcessBuilder} for running {@code
+   * docker} commands.
+   */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
 
   /**
@@ -166,10 +175,10 @@ public class DockerClient {
    * @param dockerExecutable path to {@code docker}
    * @param dockerEnvironment environment variables for {@code docker}
    */
-  public DockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
-    this(
-        defaultProcessBuilderFactory(
-            dockerExecutable.toString(), ImmutableMap.copyOf(dockerEnvironment)));
+  public DockerClient(Path dockerExecutable,
+                      Map<String, String> dockerEnvironment) {
+    this(defaultProcessBuilderFactory(dockerExecutable.toString(),
+                                      ImmutableMap.copyOf(dockerEnvironment)));
   }
 
   @VisibleForTesting
@@ -188,37 +197,40 @@ public class DockerClient {
    * @throws InterruptedException if the 'docker load' process is interrupted
    * @throws IOException if streaming the blob to 'docker load' fails
    */
-  public String load(ImageTarball imageTarball, Consumer<Long> writtenByteCountListener)
+  public String load(ImageTarball imageTarball,
+                     Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
-    try (NotifyingOutputStream stdin =
-        new NotifyingOutputStream(dockerProcess.getOutputStream(), writtenByteCountListener)) {
+    try (NotifyingOutputStream stdin = new NotifyingOutputStream(
+             dockerProcess.getOutputStream(), writtenByteCountListener)) {
       imageTarball.writeTo(stdin);
 
     } catch (IOException ex) {
-      // Tries to read from stderr. Not using getStderrOutput(), as we want to show the error
-      // message from the tarball I/O write failure when reading from stderr fails.
+      // Tries to read from stderr. Not using getStderrOutput(), as we want to
+      // show the error message from the tarball I/O write failure when reading
+      // from stderr fails.
       String error;
-      try (InputStreamReader stderr =
-          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+      try (InputStreamReader stderr = new InputStreamReader(
+               dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
         error = CharStreams.toString(stderr);
       } catch (IOException ignored) {
-        // This ignores exceptions from reading stderr and uses the original exception from
-        // writing to stdin.
+        // This ignores exceptions from reading stderr and uses the original
+        // exception from writing to stdin.
         error = ex.getMessage();
       }
-      throw new IOException("'docker load' command failed with error: " + error, ex);
+      throw new IOException("'docker load' command failed with error: " + error,
+                            ex);
     }
 
-    try (InputStreamReader stdout =
-        new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
+    try (InputStreamReader stdout = new InputStreamReader(
+             dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(stdout);
 
       if (dockerProcess.waitFor() != 0) {
-        throw new IOException(
-            "'docker load' command failed with error: " + getStderrOutput(dockerProcess));
+        throw new IOException("'docker load' command failed with error: " +
+                              getStderrOutput(dockerProcess));
       }
 
       return output;
@@ -236,21 +248,23 @@ public class DockerClient {
    * @throws InterruptedException if the 'docker save' process is interrupted
    * @throws IOException if creating the tarball fails
    */
-  public void save(
-      ImageReference imageReference, Path outputPath, Consumer<Long> writtenByteCountListener)
+  public void save(ImageReference imageReference, Path outputPath,
+                   Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
     Process dockerProcess = docker("save", imageReference.toString());
 
-    try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
-        OutputStream fileStream = new BufferedOutputStream(Files.newOutputStream(outputPath));
-        NotifyingOutputStream notifyingFileStream =
-            new NotifyingOutputStream(fileStream, writtenByteCountListener)) {
+    try (InputStream stdout =
+             new BufferedInputStream(dockerProcess.getInputStream());
+         OutputStream fileStream =
+             new BufferedOutputStream(Files.newOutputStream(outputPath));
+         NotifyingOutputStream notifyingFileStream =
+             new NotifyingOutputStream(fileStream, writtenByteCountListener)) {
       ByteStreams.copy(stdout, notifyingFileStream);
     }
 
     if (dockerProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker save' command failed with error: " + getStderrOutput(dockerProcess));
+      throw new IOException("'docker save' command failed with error: " +
+                            getStderrOutput(dockerProcess));
     }
   }
 
@@ -259,26 +273,25 @@ public class DockerClient {
    *
    * @param imageReference the image to inspect
    * @return the size, image ID, and diff IDs of the image
-   * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
-   * @throws InterruptedException if the {@code docker inspect} process was interrupted
+   * @throws IOException if an I/O exception occurs or {@code docker inspect}
+   *     failed
+   * @throws InterruptedException if the {@code docker inspect} process was
+   *     interrupted
    */
   public DockerImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
-    Process inspectProcess =
-        docker(
-            "inspect",
-            "-f",
-            "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
-            "--type",
-            "image",
-            imageReference.toString());
+    Process inspectProcess = docker(
+        "inspect", "-f",
+        "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
+        "--type", "image", imageReference.toString());
     if (inspectProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+      throw new IOException("'docker inspect' command failed with error: " +
+                            getStderrOutput(inspectProcess));
     }
     return parseInspectResults(
-        CharStreams.toString(
-                new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8))
+        CharStreams
+            .toString(new InputStreamReader(inspectProcess.getInputStream(),
+                                            StandardCharsets.UTF_8))
             .trim());
   }
 

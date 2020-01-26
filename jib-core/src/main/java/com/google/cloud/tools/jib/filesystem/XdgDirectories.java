@@ -26,16 +26,18 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Obtains OS-specific directories based on the XDG Base Directory Specification.
+ * Obtains OS-specific directories based on the XDG Base Directory
+ * Specification.
  *
  * <p>Specifically, from the specification:
  *
  * <ul>
- *   <li>These directories are defined by the environment variables {@code $XDG_CACHE_HOME} and
+ *   <li>These directories are defined by the environment variables {@code
+ * $XDG_CACHE_HOME} and
  *       {@code $XDG_CONFIG_HOME}.
- *   <li>If {@code $XDG_CACHE_HOME} / {@code $XDG_CONFIG_HOME} is either not set or empty, a
- *       platform-specific equivalent of {@code $HOME/.cache} / {@code $HOME/.config} should be
- *       used.
+ *   <li>If {@code $XDG_CACHE_HOME} / {@code $XDG_CONFIG_HOME} is either not set
+ * or empty, a platform-specific equivalent of {@code $HOME/.cache} / {@code
+ * $HOME/.config} should be used.
  * </ul>
  *
  * @see <a
@@ -43,10 +45,12 @@ import java.util.logging.Logger;
  */
 public class XdgDirectories {
 
-  private static final Logger LOGGER = Logger.getLogger(XdgDirectories.class.getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(XdgDirectories.class.getName());
   private static final Path JIB_SUBDIRECTORY_LINUX =
       Paths.get("google-cloud-tools-java").resolve("jib");
-  private static final Path JIB_SUBDIRECTORY_OTHER = Paths.get("Google").resolve("Jib");
+  private static final Path JIB_SUBDIRECTORY_OTHER =
+      Paths.get("Google").resolve("Jib");
 
   public static Path getCacheHome() {
     return getCacheHome(System.getProperties(), System.getenv());
@@ -66,9 +70,10 @@ public class XdgDirectories {
    * <p>For macOS, this is {@code $HOME/Library/Caches/Google/Jib/}.
    */
   @VisibleForTesting
-  static Path getCacheHome(Properties properties, Map<String, String> environment) {
-    return getOsSpecificDirectory(
-        properties, environment, "XDG_CACHE_HOME", ".cache", "Cache", "Caches");
+  static Path getCacheHome(Properties properties,
+                           Map<String, String> environment) {
+    return getOsSpecificDirectory(properties, environment, "XDG_CACHE_HOME",
+                                  ".cache", "Cache", "Caches");
   }
 
   /**
@@ -81,28 +86,26 @@ public class XdgDirectories {
    * <p>For macOS, this is {@code $HOME/Library/Preferences/Google/Jib/}.
    */
   @VisibleForTesting
-  static Path getConfigHome(Properties properties, Map<String, String> environment) {
-    return getOsSpecificDirectory(
-        properties, environment, "XDG_CONFIG_HOME", ".config", "Config", "Preferences");
+  static Path getConfigHome(Properties properties,
+                            Map<String, String> environment) {
+    return getOsSpecificDirectory(properties, environment, "XDG_CONFIG_HOME",
+                                  ".config", "Config", "Preferences");
   }
 
   /**
    * Helper method for resolving directories on different operating systems.
    *
-   * @param xdgEnvVariable the name of the environment variable used to resolve the XDG base
-   *     directory
+   * @param xdgEnvVariable the name of the environment variable used to resolve
+   *     the XDG base directory
    * @param linuxFolder ".config" or ".cache"
    * @param windowsFolder "Config" or "Cache"
    * @param macFolder "Preferences" or "Caches"
    * @return the full path constructed from the given parameters
    */
-  private static Path getOsSpecificDirectory(
-      Properties properties,
-      Map<String, String> environment,
-      String xdgEnvVariable,
-      String linuxFolder,
-      String windowsFolder,
-      String macFolder) {
+  private static Path
+  getOsSpecificDirectory(Properties properties, Map<String, String> environment,
+                         String xdgEnvVariable, String linuxFolder,
+                         String windowsFolder, String macFolder) {
 
     Path windowsSubDirectory = JIB_SUBDIRECTORY_OTHER.resolve(windowsFolder);
     String rawOsName = properties.getProperty("os.name");

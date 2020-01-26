@@ -26,12 +26,11 @@ import java.net.URL;
 /** Forces sending all requests in plain-HTTP protocol. For testing only. */
 class PlainHttpClient extends FailoverHttpClient {
 
-  PlainHttpClient() {
-    super(true, true, ignored -> {});
-  }
+  PlainHttpClient() { super(true, true, ignored -> {}); }
 
   @Override
-  public Response call(String httpMethod, URL url, Request request) throws IOException {
+  public Response call(String httpMethod, URL url, Request request)
+      throws IOException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
     return super.call(httpMethod, httpUrl.toURL(), request);

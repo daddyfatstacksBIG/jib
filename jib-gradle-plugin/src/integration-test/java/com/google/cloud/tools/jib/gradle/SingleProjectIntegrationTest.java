@@ -51,105 +51,108 @@ public class SingleProjectIntegrationTest {
   public static final LocalRegistry localRegistry2 =
       new LocalRegistry(6000, "testuser2", "testpassword2");
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject("simple");
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static boolean isJava11RuntimeOrHigher() {
-    Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
+    Iterable<String> split =
+        Splitter.on(".").split(System.getProperty("java.version"));
     return Integer.valueOf(split.iterator().next()) >= 11;
   }
 
-  private static void assertWorkingDirectory(String expected, String imageReference)
+  private static void assertWorkingDirectory(String expected,
+                                             String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
-            .run()
-            .trim());
+    Assert.assertEquals(expected,
+                        new Command("docker", "inspect", "-f",
+                                    "{{.Config.WorkingDir}}", imageReference)
+                            .run()
+                            .trim());
   }
 
   private static void assertEntrypoint(String expected, String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
-            .run()
-            .trim());
+    Assert.assertEquals(expected,
+                        new Command("docker", "inspect", "-f",
+                                    "{{.Config.Entrypoint}}", imageReference)
+                            .run()
+                            .trim());
   }
 
   private static void assertLayerSize(int expected, String imageReference)
       throws IOException, InterruptedException {
     Command command =
-        new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
+        new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}",
+                    imageReference);
     String layers = command.run().trim();
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
   /**
-   * Asserts that the test project has the required exposed ports, labels and volumes.
+   * Asserts that the test project has the required exposed ports, labels and
+   * volumes.
    *
    * @param imageReference the image to test
    * @throws IOException if the {@code docker inspect} command fails to run
-   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   * @throws InterruptedException if the {@code docker inspect} command is
+   *     interrupted
    */
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    String dockerInspect =
+        new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(dockerInspect, CoreMatchers.containsString(
+                                         "            \"Volumes\": {\n"
+                                         + "                \"/var/log\": {},\n"
+                                         + "                \"/var/log2\": {}\n"
+                                         + "            },"));
+    Assert.assertThat(dockerInspect, CoreMatchers.containsString(
+                                         "            \"ExposedPorts\": {\n"
+                                         + "                \"1000/tcp\": {},\n"
+                                         + "                \"2000/udp\": {},\n"
+                                         + "                \"2001/udp\": {},\n"
+                                         + "                \"2002/udp\": {},\n"
+                                         + "                \"2003/udp\": {}"));
     Assert.assertThat(
         dockerInspect,
-        CoreMatchers.containsString(
-            "            \"Volumes\": {\n"
-                + "                \"/var/log\": {},\n"
-                + "                \"/var/log2\": {}\n"
-                + "            },"));
-    Assert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    Assert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }"));
+        CoreMatchers.containsString("            \"Labels\": {\n"
+                                    + "                \"key1\": \"value1\",\n"
+                                    + "                \"key2\": \"value2\"\n"
+                                    + "            }"));
   }
 
-  static String readDigestFile(Path digestPath) throws IOException, DigestException {
+  static String readDigestFile(Path digestPath)
+      throws IOException, DigestException {
     Assert.assertTrue(Files.exists(digestPath));
-    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    String digest =
+        new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
-  private static String buildAndRunComplex(
-      String imageReference, String username, String password, LocalRegistry targetRegistry)
+  private static String buildAndRunComplex(String imageReference,
+                                           String username, String password,
+                                           LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
-    Path baseCache = simpleTestProject.getProjectRoot().resolve("build/jib-base-cache");
-    BuildResult buildResult =
-        simpleTestProject.build(
-            "clean",
-            "jib",
-            "-Djib.baseImageCache=" + baseCache,
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-D_TARGET_USERNAME=" + username,
-            "-D_TARGET_PASSWORD=" + password,
-            "-DsendCredentialsOverHttp=true",
-            "-b=complex-build.gradle");
+    Path baseCache =
+        simpleTestProject.getProjectRoot().resolve("build/jib-base-cache");
+    BuildResult buildResult = simpleTestProject.build(
+        "clean", "jib", "-Djib.baseImageCache=" + baseCache,
+        "-Djib.console=plain", "-D_TARGET_IMAGE=" + imageReference,
+        "-D_TARGET_USERNAME=" + username, "-D_TARGET_PASSWORD=" + password,
+        "-DsendCredentialsOverHttp=true", "-b=complex-build.gradle");
 
-    JibRunHelper.assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    JibRunHelper.assertBuildSuccess(buildResult, "jib",
+                                    "Built and pushed image as ");
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(imageReference));
 
     targetRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    Assert.assertThat(history,
+                      CoreMatchers.containsString("jib-gradle-plugin"));
 
     String output = new Command("docker", "run", "--rm", imageReference).run();
     Assert.assertEquals(
@@ -162,27 +165,25 @@ public class SingleProjectIntegrationTest {
 
   @Before
   public void setup() throws IOException, InterruptedException {
-    // Pull distroless and push to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    // Pull distroless and push to local registry so we can test 'from'
+    // credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest",
+                                      "distroless/java");
   }
 
   @Test
   public void testBuild_simple()
-      throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
+      throws IOException, InterruptedException, DigestException,
+             InvalidImageReferenceException {
     String targetImage =
-        IntegrationTestingConfiguration.getTestRepositoryLocation()
-            + "/simpleimage:gradle"
-            + System.nanoTime();
+        IntegrationTestingConfiguration.getTestRepositoryLocation() +
+        "/simpleimage:gradle" + System.nanoTime();
 
     // Test empty output error
     try {
-      simpleTestProject.build(
-          "clean",
-          "jib",
-          "-Djib.useOnlyProjectCache=true",
-          "-Djib.console=plain",
-          "-x=classes",
-          "-D_TARGET_IMAGE=" + targetImage);
+      simpleTestProject.build("clean", "jib", "-Djib.useOnlyProjectCache=true",
+                              "-Djib.console=plain", "-x=classes",
+                              "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
 
     } catch (UnexpectedBuildFailure ex) {
@@ -199,12 +200,15 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         output);
 
-    String digest =
-        readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
-    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
-    Assert.assertEquals(output, JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest));
+    String digest = readDigestFile(
+        simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
+    String imageReferenceWithDigest =
+        ImageReference.parse(targetImage).withTag(digest).toString();
+    Assert.assertEquals(
+        output, JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest));
 
-    String id = readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
+    String id = readDigestFile(
+        simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
@@ -221,9 +225,8 @@ public class SingleProjectIntegrationTest {
   public void testBuild_dockerDaemonBase()
       throws IOException, InterruptedException, DigestException {
     String targetImage =
-        IntegrationTestingConfiguration.getTestRepositoryLocation()
-            + "/simplewithdockerdaemonbase:gradle"
-            + System.nanoTime();
+        IntegrationTestingConfiguration.getTestRepositoryLocation() +
+        "/simplewithdockerdaemonbase:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
@@ -232,13 +235,16 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_tarBase() throws IOException, InterruptedException, DigestException {
-    Path path = temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
-    new Command("docker", "save", "gcr.io/distroless/java:latest", "-o", path.toString()).run();
+  public void testBuild_tarBase()
+      throws IOException, InterruptedException, DigestException {
+    Path path =
+        temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
+    new Command("docker", "save", "gcr.io/distroless/java:latest", "-o",
+                path.toString())
+        .run();
     String targetImage =
-        IntegrationTestingConfiguration.getTestRepositoryLocation()
-            + "/simplewithtarbase:gradle"
-            + System.nanoTime();
+        IntegrationTestingConfiguration.getTestRepositoryLocation() +
+        "/simplewithtarbase:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
@@ -248,23 +254,19 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testBuild_failOffline() {
     String targetImage =
-        IntegrationTestingConfiguration.getTestRepositoryLocation()
-            + "/simpleimageoffline:gradle"
-            + System.nanoTime();
+        IntegrationTestingConfiguration.getTestRepositoryLocation() +
+        "/simpleimageoffline:gradle" + System.nanoTime();
 
     try {
       simpleTestProject.build(
-          "--offline",
-          "clean",
-          "jib",
-          "-Djib.useOnlyProjectCache=true",
-          "-Djib.console=plain",
-          "-D_TARGET_IMAGE=" + targetImage);
+          "--offline", "clean", "jib", "-Djib.useOnlyProjectCache=true",
+          "-Djib.console=plain", "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
           ex.getMessage(),
-          CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
+          CoreMatchers.containsString(
+              "Cannot build to a container registry in offline mode"));
     }
   }
 
@@ -273,11 +275,12 @@ public class SingleProjectIntegrationTest {
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage =
+        "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-java11.gradle"));
+        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage,
+                                               "build-java11.gradle"));
   }
 
   @Test
@@ -287,7 +290,8 @@ public class SingleProjectIntegrationTest {
 
     try {
       JibRunHelper.buildToDockerDaemonAndRun(
-          simpleTestProject, "willnotbuild", "build-java11-incompatible.gradle");
+          simpleTestProject, "willnotbuild",
+          "build-java11-incompatible.gradle");
       Assert.fail();
 
     } catch (UnexpectedBuildFailure ex) {
@@ -295,53 +299,64 @@ public class SingleProjectIntegrationTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
-                  + "configure a Java 11-compatible base image using the 'jib.from.image' "
-                  + "parameter, or set targetCompatibility = 8 or below in your build "
-                  + "configuration"));
+              +
+              "configure a Java 11-compatible base image using the 'jib.from.image' "
+              +
+              "parameter, or set targetCompatibility = 8 or below in your build "
+              + "configuration"));
     }
   }
 
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage =
+        "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-extra-dirs.gradle"));
+            +
+            "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage,
+                                               "build-extra-dirs.gradle"));
     assertLayerSize(9, targetImage); // one more than usual
   }
 
   @Test
-  public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
+  public void
+  testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage =
+        "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
+            +
+            "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage,
+                                               "build-extra-dirs2.gradle"));
     assertLayerSize(9, targetImage); // one more than usual
   }
 
   @Test
   public void testBuild_complex()
-      throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
-    String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
+      throws IOException, InterruptedException, DigestException,
+             InvalidImageReferenceException {
+    String targetImage =
+        "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
-    String output = buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    String output = buildAndRunComplex(targetImage, "testuser2",
+                                       "testpassword2", localRegistry2);
 
-    String digest =
-        readDigestFile(
-            simpleTestProject.getProjectRoot().resolve("build/different-jib-image.digest"));
-    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
+    String digest = readDigestFile(simpleTestProject.getProjectRoot().resolve(
+        "build/different-jib-image.digest"));
+    String imageReferenceWithDigest =
+        ImageReference.parse(targetImage).withTag(digest).toString();
     localRegistry2.pull(imageReferenceWithDigest);
     Assert.assertEquals(
-        output, new Command("docker", "run", "--rm", imageReferenceWithDigest).run());
+        output,
+        new Command("docker", "run", "--rm", imageReferenceWithDigest).run());
 
-    String id =
-        readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
+    String id = readDigestFile(
+        simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
@@ -350,8 +365,10 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
-    String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
+  public void testBuild_complex_sameFromAndToRegistry()
+      throws IOException, InterruptedException {
+    String targetImage =
+        "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
@@ -359,12 +376,14 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
+  public void testDockerDaemon_simple()
+      throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
+        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage,
+                                               "build.gradle"));
     JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
     assertWorkingDirectory("/home", targetImage);
@@ -377,21 +396,26 @@ public class SingleProjectIntegrationTest {
     Assert.assertEquals(
         "Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n",
         JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-jar-containerization.gradle"));
+            simpleTestProject, targetImage,
+            "build-jar-containerization.gradle"));
   }
 
   @Test
-  public void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
-    Path baseLayersCacheDirectory =
-        simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+  public void testBuild_skipDownloadingBaseImageLayers()
+      throws IOException, InterruptedException {
+    Path baseLayersCacheDirectory = simpleTestProject.getProjectRoot().resolve(
+        "build/jib-base-cache/layers");
+    String targetImage =
+        "localhost:6000/simpleimage:gradle" + System.nanoTime();
 
-    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    buildAndRunComplex(targetImage, "testuser2", "testpassword2",
+                       localRegistry2);
     // Base image layer tarballs exist.
     Assert.assertTrue(Files.exists(baseLayersCacheDirectory));
     Assert.assertTrue(baseLayersCacheDirectory.toFile().list().length >= 2);
 
-    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    buildAndRunComplex(targetImage, "testuser2", "testpassword2",
+                       localRegistry2);
     // no base layers downloaded after "gradle clean jib ..."
     Assert.assertFalse(Files.exists(baseLayersCacheDirectory));
   }
@@ -409,51 +433,46 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
+  public void testBuild_dockerClient()
+      throws IOException, InterruptedException, DigestException {
     Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     new Command(
-            "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
+        "chmod", "+x",
+        simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
         .run();
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
 
-    BuildResult buildResult =
-        simpleTestProject.build(
-            "clean",
-            "jibDockerBuild",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + targetImage,
-            "-b=build-dockerclient.gradle",
-            "--debug");
-    JibRunHelper.assertBuildSuccess(
-        buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
+    BuildResult buildResult = simpleTestProject.build(
+        "clean", "jibDockerBuild", "-Djib.useOnlyProjectCache=true",
+        "-Djib.console=plain", "-D_TARGET_IMAGE=" + targetImage,
+        "-b=build-dockerclient.gradle", "--debug");
+    JibRunHelper.assertBuildSuccess(buildResult, "jibDockerBuild",
+                                    "Built image to Docker daemon as ");
     JibRunHelper.assertImageDigestAndId(simpleTestProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(targetImage));
     Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Docker load called. value1 value2"));
+        buildResult.getOutput(),
+        CoreMatchers.containsString("Docker load called. value1 value2"));
   }
 
   @Test
   public void testBuildTar_simple() throws IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
 
-    String outputPath =
-        simpleTestProject
-            .getProjectRoot()
-            .resolve("build")
-            .resolve("different-jib-image.tar")
-            .toString();
-    BuildResult buildResult =
-        simpleTestProject.build(
-            "clean",
-            "jibBuildTar",
-            "-Djib.useOnlyProjectCache=true",
-            "-Djib.console=plain",
-            "-D_TARGET_IMAGE=" + targetImage);
+    String outputPath = simpleTestProject.getProjectRoot()
+                            .resolve("build")
+                            .resolve("different-jib-image.tar")
+                            .toString();
+    BuildResult buildResult = simpleTestProject.build(
+        "clean", "jibBuildTar", "-Djib.useOnlyProjectCache=true",
+        "-Djib.console=plain", "-D_TARGET_IMAGE=" + targetImage);
 
-    JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+    JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar",
+                                    "Built image tarball at ");
+    Assert.assertThat(buildResult.getOutput(),
+                      CoreMatchers.containsString(outputPath));
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(

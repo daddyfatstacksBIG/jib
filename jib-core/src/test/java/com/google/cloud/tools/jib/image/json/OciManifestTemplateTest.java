@@ -33,10 +33,13 @@ import org.junit.Test;
 public class OciManifestTemplateTest {
 
   @Test
-  public void testToJson() throws DigestException, IOException, URISyntaxException {
+  public void testToJson()
+      throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
-    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
+    String expectedJson =
+        new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
     OciManifestTemplate manifestJson = new OciManifestTemplate();
@@ -52,24 +55,28 @@ public class OciManifestTemplateTest {
             "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
 
     // Serializes the JSON object.
-    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));
+    Assert.assertEquals(expectedJson,
+                        JsonTemplateMapper.toUtf8String(manifestJson));
   }
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException, DigestException {
+  public void testFromJson()
+      throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
-    OciManifestTemplate manifestJson =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, OciManifestTemplate.class);
+    OciManifestTemplate manifestJson = JsonTemplateMapper.readJsonFromFile(
+        jsonFile, OciManifestTemplate.class);
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         manifestJson.getContainerConfiguration().getDigest());
 
-    Assert.assertEquals(1000, manifestJson.getContainerConfiguration().getSize());
+    Assert.assertEquals(1000,
+                        manifestJson.getContainerConfiguration().getSize());
 
     Assert.assertEquals(
         DescriptorDigest.fromHash(

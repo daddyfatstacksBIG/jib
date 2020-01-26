@@ -57,19 +57,23 @@ class CacheStorageReader {
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
-    try (Stream<Path> layerDirectories = Files.list(cacheStorageFiles.getLayersDirectory())) {
-      List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
-      Set<DescriptorDigest> layerDigests = new HashSet<>(layerDirectoriesList.size());
+  Set<DescriptorDigest> fetchDigests()
+      throws IOException, CacheCorruptedException {
+    try (Stream<Path> layerDirectories =
+             Files.list(cacheStorageFiles.getLayersDirectory())) {
+      List<Path> layerDirectoriesList =
+          layerDirectories.collect(Collectors.toList());
+      Set<DescriptorDigest> layerDigests =
+          new HashSet<>(layerDirectoriesList.size());
       for (Path layerDirectory : layerDirectoriesList) {
         try {
-          layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
+          layerDigests.add(DescriptorDigest.fromHash(
+              layerDirectory.getFileName().toString()));
 
         } catch (DigestException ex) {
           throw new CacheCorruptedException(
               cacheStorageFiles.getCacheDirectory(),
-              "Found non-digest file in layers directory",
-              ex);
+              "Found non-digest file in layers directory", ex);
         }
       }
       return layerDigests;
@@ -77,10 +81,12 @@ class CacheStorageReader {
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached manifest and container configuration for an image
+   * reference.
    *
    * @param imageReference the image reference
-   * @return the manifest and container configuration for the image reference, if found
+   * @return the manifest and container configuration for the image reference,
+   *     if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
@@ -94,11 +100,12 @@ class CacheStorageReader {
 
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       // TODO: Consolidate with ManifestPuller
-      ObjectNode node =
-          new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
+      ObjectNode node = new ObjectMapper().readValue(
+          Files.newInputStream(manifestPath), ObjectNode.class);
       if (!node.has("schemaVersion")) {
         throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
+            cacheStorageFiles.getCacheDirectory(),
+            "Cannot find field 'schemaVersion' in manifest");
       }
 
       int schemaVersion = node.get("schemaVersion").asInt(-1);
@@ -110,9 +117,9 @@ class CacheStorageReader {
 
       if (schemaVersion == 1) {
         return Optional.of(
-            new ManifestAndConfig(
-                JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
-                null));
+            new ManifestAndConfig(JsonTemplateMapper.readJsonFromFile(
+                                      manifestPath, V21ManifestTemplate.class),
+                                  null));
       }
       if (schemaVersion == 2) {
         // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
@@ -120,14 +127,15 @@ class CacheStorageReader {
 
         ManifestTemplate manifestTemplate;
         if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
+          manifestTemplate = JsonTemplateMapper.readJsonFromFile(
+              manifestPath, V22ManifestTemplate.class);
         } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, OciManifestTemplate.class);
+          manifestTemplate = JsonTemplateMapper.readJsonFromFile(
+              manifestPath, OciManifestTemplate.class);
         } else {
           throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
+              cacheStorageFiles.getCacheDirectory(),
+              "Unknown manifest mediaType: " + mediaType);
         }
 
         Path configPath = imageDirectory.resolve("config.json");
@@ -137,18 +145,21 @@ class CacheStorageReader {
               "Manifest found, but missing container configuration");
         }
         ContainerConfigurationTemplate config =
-            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+            JsonTemplateMapper.readJsonFromFile(
+                configPath, ContainerConfigurationTemplate.class);
 
         return Optional.of(new ManifestAndConfig(manifestTemplate, config));
       }
       throw new CacheCorruptedException(
           cacheStorageFiles.getCacheDirectory(),
-          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+          "Unknown schemaVersion in manifest: " + schemaVersion +
+              " - only 1 and 2 are supported");
     }
   }
 
   /**
-   * Retrieves the {@link CachedLayer} for the layer with digest {@code layerDigest}.
+   * Retrieves the {@link CachedLayer} for the layer with digest {@code
+   * layerDigest}.
    *
    * @param layerDigest the layer digest
    * @return the {@link CachedLayer} referenced by the layer digest, if found
@@ -163,15 +174,13 @@ class CacheStorageReader {
     }
 
     try (Stream<Path> files = Files.list(layerDirectory)) {
-      List<Path> layerFiles =
-          files.filter(CacheStorageFiles::isLayerFile).collect(Collectors.toList());
+      List<Path> layerFiles = files.filter(CacheStorageFiles::isLayerFile)
+                                  .collect(Collectors.toList());
       if (layerFiles.size() != 1) {
         throw new CacheCorruptedException(
             cacheStorageFiles.getCacheDirectory(),
-            "No or multiple layer files found for layer hash "
-                + layerDigest.getHash()
-                + " in directory: "
-                + layerDirectory);
+            "No or multiple layer files found for layer hash " +
+                layerDigest.getHash() + " in directory: " + layerDirectory);
       }
 
       Path layerFile = layerFiles.get(0);
@@ -180,13 +189,15 @@ class CacheStorageReader {
               .setLayerDigest(layerDigest)
               .setLayerSize(Files.size(layerFile))
               .setLayerBlob(Blobs.from(layerFile))
-              .setLayerDiffId(cacheStorageFiles.getDigestFromFilename(layerFile))
+              .setLayerDiffId(
+                  cacheStorageFiles.getDigestFromFilename(layerFile))
               .build());
     }
   }
 
   /**
-   * Retrieves the {@link CachedLayer} for the local base image layer with the given diff ID.
+   * Retrieves the {@link CachedLayer} for the local base image layer with the
+   * given diff ID.
    *
    * @param diffId the diff ID
    * @return the {@link CachedLayer} referenced by the diff ID, if found
@@ -195,27 +206,27 @@ class CacheStorageReader {
    */
   Optional<CachedLayer> retrieveTarLayer(DescriptorDigest diffId)
       throws IOException, CacheCorruptedException {
-    Path layerDirectory = cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
+    Path layerDirectory =
+        cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
     if (!Files.exists(layerDirectory)) {
       return Optional.empty();
     }
 
     try (Stream<Path> files = Files.list(layerDirectory)) {
-      List<Path> layerFiles =
-          files.filter(CacheStorageFiles::isLayerFile).collect(Collectors.toList());
+      List<Path> layerFiles = files.filter(CacheStorageFiles::isLayerFile)
+                                  .collect(Collectors.toList());
       if (layerFiles.size() != 1) {
         throw new CacheCorruptedException(
             cacheStorageFiles.getCacheDirectory(),
-            "No or multiple layer files found for layer hash "
-                + diffId.getHash()
-                + " in directory: "
-                + layerDirectory);
+            "No or multiple layer files found for layer hash " +
+                diffId.getHash() + " in directory: " + layerDirectory);
       }
 
       Path layerFile = layerFiles.get(0);
       return Optional.of(
           CachedLayer.builder()
-              .setLayerDigest(cacheStorageFiles.getDigestFromFilename(layerFile))
+              .setLayerDigest(
+                  cacheStorageFiles.getDigestFromFilename(layerFile))
               .setLayerSize(Files.size(layerFile))
               .setLayerBlob(Blobs.from(layerFile))
               .setLayerDiffId(diffId)
@@ -224,22 +235,25 @@ class CacheStorageReader {
   }
 
   /**
-   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the given image ID.
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the
+   * given image ID.
    *
    * @param imageId the image ID
-   * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
+   * @return the {@link ContainerConfigurationTemplate} referenced by the image
+   *     ID, if found
    * @throws IOException if an I/O exception occurs
    */
-  Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
-      throws IOException {
+  Optional<ContainerConfigurationTemplate>
+  retrieveLocalConfig(DescriptorDigest imageId) throws IOException {
     Path configPath =
-        cacheStorageFiles.getLocalDirectory().resolve("config").resolve(imageId.getHash());
+        cacheStorageFiles.getLocalDirectory().resolve("config").resolve(
+            imageId.getHash());
     if (!Files.exists(configPath)) {
       return Optional.empty();
     }
 
-    ContainerConfigurationTemplate config =
-        JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+    ContainerConfigurationTemplate config = JsonTemplateMapper.readJsonFromFile(
+        configPath, ContainerConfigurationTemplate.class);
     return Optional.of(config);
   }
 
@@ -248,7 +262,8 @@ class CacheStorageReader {
    *
    * @param selector the selector
    * @return the layer digest {@code selector} selects, if found
-   * @throws CacheCorruptedException if the selector file contents was not a valid layer digest
+   * @throws CacheCorruptedException if the selector file contents was not a
+   *     valid layer digest
    * @throws IOException if an I/O exception occurs
    */
   Optional<DescriptorDigest> select(DescriptorDigest selector)
@@ -266,12 +281,9 @@ class CacheStorageReader {
     } catch (DigestException ex) {
       throw new CacheCorruptedException(
           cacheStorageFiles.getCacheDirectory(),
-          "Expected valid layer digest as contents of selector file `"
-              + selectorFile
-              + "` for selector `"
-              + selector.getHash()
-              + "`, but got: "
-              + selectorFileContents);
+          "Expected valid layer digest as contents of selector file `" +
+              selectorFile + "` for selector `" + selector.getHash() +
+              "`, but got: " + selectorFileContents);
     }
   }
 }

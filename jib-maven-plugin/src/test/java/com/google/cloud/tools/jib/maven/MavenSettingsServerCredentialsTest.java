@@ -29,20 +29,21 @@ import org.junit.Test;
 /** Tests for {@link MavenSettingsServerCredentials}. */
 public class MavenSettingsServerCredentialsTest {
 
-  private MavenSettingsServerCredentials mavenSettingsServerCredentialsNoMasterPassword;
+  private MavenSettingsServerCredentials
+      mavenSettingsServerCredentialsNoMasterPassword;
   private MavenSettingsServerCredentials mavenSettingsServerCredentials;
-  private Path testSettings = Paths.get("src/test/resources/maven/settings/settings.xml");
+  private Path testSettings =
+      Paths.get("src/test/resources/maven/settings/settings.xml");
   private Path testSettingsSecurity =
       Paths.get("src/test/resources/maven/settings/settings-security.xml");
-  private Path testSettingsSecurityEmpty =
-      Paths.get("src/test/resources/maven/settings/settings-security.empty.xml");
+  private Path testSettingsSecurityEmpty = Paths.get(
+      "src/test/resources/maven/settings/settings-security.empty.xml");
 
   @Before
   public void setUp() {
-    mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(
-            SettingsFixture.newSettings(testSettings),
-            SettingsFixture.newSettingsDecrypter(testSettingsSecurity));
+    mavenSettingsServerCredentials = new MavenSettingsServerCredentials(
+        SettingsFixture.newSettings(testSettings),
+        SettingsFixture.newSettingsDecrypter(testSettingsSecurity));
     mavenSettingsServerCredentialsNoMasterPassword =
         new MavenSettingsServerCredentials(
             SettingsFixture.newSettings(testSettings),
@@ -57,58 +58,70 @@ public class MavenSettingsServerCredentialsTest {
     } catch (InferredAuthException ex) {
       Assert.assertThat(
           ex.getMessage(),
-          CoreMatchers.startsWith("Unable to decrypt server(badServer) info from settings.xml:"));
+          CoreMatchers.startsWith(
+              "Unable to decrypt server(badServer) info from settings.xml:"));
     }
   }
 
   @Test
   public void testInferredAuth_successEncrypted() throws InferredAuthException {
-    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("encryptedServer");
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentials.inferAuth("encryptedServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("encryptedUser", auth.get().getUsername());
     Assert.assertEquals("password1", auth.get().getPassword());
   }
 
   @Test
-  public void testInferredAuth_successUnencrypted() throws InferredAuthException {
-    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("simpleServer");
+  public void testInferredAuth_successUnencrypted()
+      throws InferredAuthException {
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentials.inferAuth("simpleServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("simpleUser", auth.get().getUsername());
     Assert.assertEquals("password2", auth.get().getPassword());
   }
 
   @Test
-  public void testInferredAuth_successNoPasswordDoesNotBlowUp() throws InferredAuthException {
+  public void testInferredAuth_successNoPasswordDoesNotBlowUp()
+      throws InferredAuthException {
     Optional<AuthProperty> auth =
-        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("simpleServer");
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth(
+            "simpleServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("simpleUser", auth.get().getUsername());
     Assert.assertEquals("password2", auth.get().getPassword());
   }
 
   @Test
-  public void testInferredAuth_registryWithHostAndPort() throws InferredAuthException {
+  public void testInferredAuth_registryWithHostAndPort()
+      throws InferredAuthException {
     Optional<AuthProperty> auth =
-        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com:8080");
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth(
+            "docker.example.com:8080");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("registryUser", auth.get().getUsername());
     Assert.assertEquals("registryPassword", auth.get().getPassword());
   }
 
   @Test
-  public void testInferredAuth_registryWithHostWithoutPort() throws InferredAuthException {
+  public void testInferredAuth_registryWithHostWithoutPort()
+      throws InferredAuthException {
     Optional<AuthProperty> auth =
-        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com");
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth(
+            "docker.example.com");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("registryUser", auth.get().getUsername());
     Assert.assertEquals("registryPassword", auth.get().getPassword());
   }
 
   @Test
-  public void testInferredAuth_registrySettingsWithPort() throws InferredAuthException {
+  public void testInferredAuth_registrySettingsWithPort()
+      throws InferredAuthException {
     // Attempt to resolve WITHOUT the port. Should work as well.
     Optional<AuthProperty> auth =
-        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com:5432");
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth(
+            "docker.example.com:5432");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("registryUser", auth.get().getUsername());
     Assert.assertEquals("registryPassword", auth.get().getPassword());
@@ -116,6 +129,7 @@ public class MavenSettingsServerCredentialsTest {
 
   @Test
   public void testInferredAuth_notFound() throws InferredAuthException {
-    Assert.assertFalse(mavenSettingsServerCredentials.inferAuth("serverUnknown").isPresent());
+    Assert.assertFalse(
+        mavenSettingsServerCredentials.inferAuth("serverUnknown").isPresent());
   }
 }

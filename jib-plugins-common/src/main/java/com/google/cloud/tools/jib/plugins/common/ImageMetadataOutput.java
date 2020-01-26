@@ -27,15 +27,18 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Builds a JSON string containing metadata about a {@link JibContainer} from a build.
+ * Builds a JSON string containing metadata about a {@link JibContainer} from a
+ * build.
  *
  * <p>Example:
  *
  * <pre>{@code
  * {
  *   "image": "gcr.io/project/image:tag",
- *   "imageId": "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9",
- *   "imageDigest": "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6f",
+ *   "imageId":
+ * "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9",
+ *   "imageDigest":
+ * "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6f",
  *   "tags": ["latest", "tag"]
  * }
  * }</pre>
@@ -64,32 +67,26 @@ public class ImageMetadataOutput implements JsonTemplate {
     return JsonTemplateMapper.readJson(json, ImageMetadataOutput.class);
   }
 
-  public static ImageMetadataOutput fromJibContainer(JibContainer jibContainer) {
+  public static ImageMetadataOutput
+  fromJibContainer(JibContainer jibContainer) {
     String image = jibContainer.getTargetImage().toString();
     String imageId = jibContainer.getImageId().toString();
     String imageDigest = jibContainer.getDigest().toString();
 
-    // Make sure tags always appear in a predictable way, by sorting them into a list
+    // Make sure tags always appear in a predictable way, by sorting them into a
+    // list
     List<String> tags = ImmutableList.sortedCopyOf(jibContainer.getTags());
 
     return new ImageMetadataOutput(image, imageId, imageDigest, tags);
   }
 
-  public String getImage() {
-    return image;
-  }
+  public String getImage() { return image; }
 
-  public String getImageId() {
-    return imageId;
-  }
+  public String getImageId() { return imageId; }
 
-  public String getImageDigest() {
-    return imageDigest;
-  }
+  public String getImageDigest() { return imageDigest; }
 
-  public List<String> getTags() {
-    return tags;
-  }
+  public List<String> getTags() { return tags; }
 
   public String toJson() throws IOException {
     return JsonTemplateMapper.toUtf8String(this);

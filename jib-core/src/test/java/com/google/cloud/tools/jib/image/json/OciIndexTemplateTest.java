@@ -34,10 +34,13 @@ import org.junit.Test;
 public class OciIndexTemplateTest {
 
   @Test
-  public void testToJson() throws DigestException, IOException, URISyntaxException {
+  public void testToJson()
+      throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/ociindex.json").toURI());
-    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ociindex.json").toURI());
+    String expectedJson =
+        new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
     OciIndexTemplate ociIndexJson = new OciIndexTemplate();
@@ -49,13 +52,16 @@ public class OciIndexTemplateTest {
         "regis.try/repo:tag");
 
     // Serializes the JSON object.
-    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(ociIndexJson));
+    Assert.assertEquals(expectedJson,
+                        JsonTemplateMapper.toUtf8String(ociIndexJson));
   }
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException, DigestException {
+  public void testFromJson()
+      throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("core/json/ociindex.json").toURI());
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ociindex.json").toURI());
 
     // Deserializes into a manifest JSON object.
     OciIndexTemplate ociIndexJson =
@@ -68,7 +74,8 @@ public class OciIndexTemplateTest {
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         manifest.getDigest());
     Assert.assertEquals(
-        "regis.try/repo:tag", manifest.getAnnotations().get("org.opencontainers.image.ref.name"));
+        "regis.try/repo:tag",
+        manifest.getAnnotations().get("org.opencontainers.image.ref.name"));
     Assert.assertEquals(1000, manifest.getSize());
   }
 }

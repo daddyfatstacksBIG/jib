@@ -43,18 +43,20 @@ public class PushBlobStepTest {
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
 
-  @Mock(answer = Answers.RETURNS_MOCKS)
-  private BuildContext buildContext;
+  @Mock(answer = Answers.RETURNS_MOCKS) private BuildContext buildContext;
 
   @Before
   public void setUp() {
     Mockito.when(buildContext.getTargetImageConfiguration())
-        .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
+        .thenReturn(
+            ImageConfiguration.builder(ImageReference.scratch()).build());
   }
 
   @Test
-  public void testCall_doBlobCheckAndBlobExists() throws IOException, RegistryException {
-    Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.of(blobDescriptor));
+  public void testCall_doBlobCheckAndBlobExists()
+      throws IOException, RegistryException {
+    Mockito.when(registryClient.checkBlob(Mockito.any()))
+        .thenReturn(Optional.of(blobDescriptor));
 
     call(false);
 
@@ -64,8 +66,10 @@ public class PushBlobStepTest {
   }
 
   @Test
-  public void testCall_doBlobCheckAndBlobDoesNotExist() throws IOException, RegistryException {
-    Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.empty());
+  public void testCall_doBlobCheckAndBlobDoesNotExist()
+      throws IOException, RegistryException {
+    Mockito.when(registryClient.checkBlob(Mockito.any()))
+        .thenReturn(Optional.empty());
 
     call(false);
 
@@ -75,7 +79,8 @@ public class PushBlobStepTest {
   }
 
   @Test
-  public void testCall_forcePushWithNoBlobCheck() throws IOException, RegistryException {
+  public void testCall_forcePushWithNoBlobCheck()
+      throws IOException, RegistryException {
     call(true);
 
     Mockito.verify(registryClient, Mockito.never()).checkBlob(Mockito.any());
@@ -84,13 +89,8 @@ public class PushBlobStepTest {
   }
 
   private void call(boolean forcePush) throws IOException, RegistryException {
-    new PushBlobStep(
-            buildContext,
-            progressDispatcherFactory,
-            registryClient,
-            blobDescriptor,
-            null,
-            forcePush)
+    new PushBlobStep(buildContext, progressDispatcherFactory, registryClient,
+                     blobDescriptor, null, forcePush)
         .call();
   }
 }

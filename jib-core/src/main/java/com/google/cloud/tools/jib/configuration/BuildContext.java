@@ -43,22 +43,26 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
- * Build context for the builder process. Includes static build configuration options as well as
- * various services for execution (such as event dispatching, thread execution service, and HTTP
- * client). Informational instances (particularly configuration options such as {@link
- * ContainerConfiguration}, {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
+ * Build context for the builder process. Includes static build configuration
+ * options as well as various services for execution (such as event dispatching,
+ * thread execution service, and HTTP client). Informational instances
+ * (particularly configuration options such as {@link ContainerConfiguration},
+ * {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
  * immutable.
  */
 public class BuildContext implements Closeable {
 
   /** The default target format of the container manifest. */
-  private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
-      V22ManifestTemplate.class;
+  private static final Class<? extends BuildableManifestTemplate>
+      DEFAULT_TARGET_FORMAT = V22ManifestTemplate.class;
 
   /** The default tool identifier. */
   private static final String DEFAULT_TOOL_NAME = "jib";
 
-  /** Builds an immutable {@link BuildContext}. Instantiate with {@link #builder}. */
+  /**
+   * Builds an immutable {@link BuildContext}. Instantiate with {@link
+   * #builder}.
+   */
   public static class Builder {
 
     // All the parameters below are set to their default values.
@@ -70,8 +74,10 @@ public class BuildContext implements Closeable {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private boolean offline = false;
-    private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
+    private ImmutableList<LayerConfiguration> layerConfigurations =
+        ImmutableList.of();
+    private Class<? extends BuildableManifestTemplate> targetFormat =
+        DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
@@ -82,10 +88,12 @@ public class BuildContext implements Closeable {
     /**
      * Sets the base image configuration.
      *
-     * @param imageConfiguration the {@link ImageConfiguration} describing the base image
+     * @param imageConfiguration the {@link ImageConfiguration} describing the
+     *     base image
      * @return this
      */
-    public Builder setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
+    public Builder
+    setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
       this.baseImageConfiguration = imageConfiguration;
       return this;
     }
@@ -93,17 +101,20 @@ public class BuildContext implements Closeable {
     /**
      * Sets the target image configuration.
      *
-     * @param imageConfiguration the {@link ImageConfiguration} describing the target image
+     * @param imageConfiguration the {@link ImageConfiguration} describing the
+     *     target image
      * @return this
      */
-    public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
+    public Builder
+    setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
       this.targetImageConfiguration = imageConfiguration;
       return this;
     }
 
     /**
-     * Sets the tags to tag the target image with (in addition to the tag in the target image
-     * configuration image reference set via {@link #setTargetImageConfiguration}).
+     * Sets the tags to tag the target image with (in addition to the tag in the
+     * target image configuration image reference set via {@link
+     * #setTargetImageConfiguration}).
      *
      * @param tags a set of tags
      * @return this
@@ -119,7 +130,8 @@ public class BuildContext implements Closeable {
      * @param containerConfiguration the {@link ContainerConfiguration}
      * @return this
      */
-    public Builder setContainerConfiguration(ContainerConfiguration containerConfiguration) {
+    public Builder
+    setContainerConfiguration(ContainerConfiguration containerConfiguration) {
       this.containerConfiguration = containerConfiguration;
       return this;
     }
@@ -127,10 +139,12 @@ public class BuildContext implements Closeable {
     /**
      * Sets the location of the cache for storing application layers.
      *
-     * @param applicationLayersCacheDirectory the application layers cache directory
+     * @param applicationLayersCacheDirectory the application layers cache
+     *     directory
      * @return this
      */
-    public Builder setApplicationLayersCacheDirectory(Path applicationLayersCacheDirectory) {
+    public Builder
+    setApplicationLayersCacheDirectory(Path applicationLayersCacheDirectory) {
       this.applicationLayersCacheDirectory = applicationLayersCacheDirectory;
       return this;
     }
@@ -138,10 +152,12 @@ public class BuildContext implements Closeable {
     /**
      * Sets the location of the cache for storing base image layers.
      *
-     * @param baseImageLayersCacheDirectory the base image layers cache directory
+     * @param baseImageLayersCacheDirectory the base image layers cache
+     *     directory
      * @return this
      */
-    public Builder setBaseImageLayersCacheDirectory(Path baseImageLayersCacheDirectory) {
+    public Builder
+    setBaseImageLayersCacheDirectory(Path baseImageLayersCacheDirectory) {
       this.baseImageLayersCacheDirectory = baseImageLayersCacheDirectory;
       return this;
     }
@@ -153,17 +169,18 @@ public class BuildContext implements Closeable {
      * @return this
      */
     public Builder setTargetFormat(ImageFormat targetFormat) {
-      this.targetFormat =
-          targetFormat == ImageFormat.Docker
-              ? V22ManifestTemplate.class
-              : OciManifestTemplate.class;
+      this.targetFormat = targetFormat == ImageFormat.Docker
+                              ? V22ManifestTemplate.class
+                              : OciManifestTemplate.class;
       return this;
     }
 
     /**
-     * Sets whether or not to allow communication over HTTP (as opposed to HTTPS).
+     * Sets whether or not to allow communication over HTTP (as opposed to
+     * HTTPS).
      *
-     * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
+     * @param allowInsecureRegistries if {@code true}, insecure connections will
+     *     be allowed
      * @return this
      */
     public Builder setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -183,12 +200,13 @@ public class BuildContext implements Closeable {
     }
 
     /**
-     * Controls the optimization which skips downloading base image layers that exist in a target
-     * registry. If the user does not set this property then read as false.
+     * Controls the optimization which skips downloading base image layers that
+     * exist in a target registry. If the user does not set this property then
+     * read as false.
      *
-     * @param alwaysCacheBaseImage if {@code true}, base image layers are always pulled and cached.
-     *     If {@code false}, base image layers will not be pulled/cached if they already exist on
-     *     the target registry.
+     * @param alwaysCacheBaseImage if {@code true}, base image layers are always
+     *     pulled and cached. If {@code false}, base image layers will not be
+     *     pulled/cached if they already exist on the target registry.
      * @return this
      */
     public Builder setAlwaysCacheBaseImage(boolean alwaysCacheBaseImage) {
@@ -201,7 +219,8 @@ public class BuildContext implements Closeable {
      * @param layerConfigurations the configurations for the layers
      * @return this
      */
-    public Builder setLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
+    public Builder
+    setLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
       this.layerConfigurations = ImmutableList.copyOf(layerConfigurations);
       return this;
     }
@@ -229,19 +248,21 @@ public class BuildContext implements Closeable {
     }
 
     /**
-     * Sets the {@link ExecutorService} Jib executes on. By default, Jib uses {@link
-     * Executors#newCachedThreadPool}.
+     * Sets the {@link ExecutorService} Jib executes on. By default, Jib uses
+     * {@link Executors#newCachedThreadPool}.
      *
      * @param executorService the {@link ExecutorService}
      * @return this
      */
-    public Builder setExecutorService(@Nullable ExecutorService executorService) {
+    public Builder
+    setExecutorService(@Nullable ExecutorService executorService) {
       this.executorService = executorService;
       return this;
     }
 
     /**
-     * Builds a new {@link BuildContext} using the parameters passed into the builder.
+     * Builds a new {@link BuildContext} using the parameters passed into the
+     * builder.
      *
      * @return the corresponding build context
      * @throws IOException if an I/O exception occurs
@@ -263,52 +284,52 @@ public class BuildContext implements Closeable {
       }
 
       switch (missingFields.size()) {
-        case 0: // No errors
-          Preconditions.checkNotNull(baseImageConfiguration);
-          if (!baseImageConfiguration.getImage().isTagDigest()
-              && !baseImageConfiguration.getImage().isScratch()) {
-            eventHandlers.dispatch(
-                LogEvent.warn(
-                    "Base image '"
-                        + baseImageConfiguration.getImage()
-                        + "' does not use a specific image digest - build may not be reproducible"));
-          }
+      case 0: // No errors
+        Preconditions.checkNotNull(baseImageConfiguration);
+        if (!baseImageConfiguration.getImage().isTagDigest() &&
+            !baseImageConfiguration.getImage().isScratch()) {
+          eventHandlers.dispatch(LogEvent.warn(
+              "Base image '" + baseImageConfiguration.getImage() +
+              "' does not use a specific image digest - build may not be reproducible"));
+        }
 
-          return new BuildContext(
-              baseImageConfiguration,
-              Preconditions.checkNotNull(targetImageConfiguration),
-              additionalTargetImageTags,
-              containerConfiguration,
-              Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
-              Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
-              targetFormat,
-              offline,
-              layerConfigurations,
-              toolName,
-              eventHandlers,
-              // TODO: try setting global User-Agent: here
-              new FailoverHttpClient(
-                  allowInsecureRegistries,
-                  JibSystemProperties.sendCredentialsOverHttp(),
-                  eventHandlers::dispatch),
-              executorService == null ? Executors.newCachedThreadPool() : executorService,
-              executorService == null, // shutDownExecutorService
-              alwaysCacheBaseImage);
+        return new BuildContext(
+            baseImageConfiguration,
+            Preconditions.checkNotNull(targetImageConfiguration),
+            additionalTargetImageTags, containerConfiguration,
+            Cache.withDirectory(
+                Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
+            Cache.withDirectory(
+                Preconditions.checkNotNull(applicationLayersCacheDirectory)),
+            targetFormat, offline, layerConfigurations, toolName, eventHandlers,
+            // TODO: try setting global User-Agent: here
+            new FailoverHttpClient(
+                allowInsecureRegistries,
+                JibSystemProperties.sendCredentialsOverHttp(),
+                eventHandlers::dispatch),
+            executorService == null ? Executors.newCachedThreadPool()
+                                    : executorService,
+            executorService == null, // shutDownExecutorService
+            alwaysCacheBaseImage);
 
-        case 1:
-          throw new IllegalStateException(missingFields.get(0) + " is required but not set");
+      case 1:
+        throw new IllegalStateException(missingFields.get(0) +
+                                        " is required but not set");
 
-        case 2:
-          throw new IllegalStateException(
-              missingFields.get(0) + " and " + missingFields.get(1) + " are required but not set");
+      case 2:
+        throw new IllegalStateException(missingFields.get(0) + " and " +
+                                        missingFields.get(1) +
+                                        " are required but not set");
 
-        default:
-          missingFields.add("and " + missingFields.remove(missingFields.size() - 1));
-          StringJoiner errorMessage = new StringJoiner(", ", "", " are required but not set");
-          for (String missingField : missingFields) {
-            errorMessage.add(missingField);
-          }
-          throw new IllegalStateException(errorMessage.toString());
+      default:
+        missingFields.add("and " +
+                          missingFields.remove(missingFields.size() - 1));
+        StringJoiner errorMessage =
+            new StringJoiner(", ", "", " are required but not set");
+        for (String missingField : missingFields) {
+          errorMessage.add(missingField);
+        }
+        throw new IllegalStateException(errorMessage.toString());
       }
     }
 
@@ -330,9 +351,7 @@ public class BuildContext implements Closeable {
    *
    * @return a new {@link Builder}
    */
-  public static Builder builder() {
-    return new Builder();
-  }
+  public static Builder builder() { return new Builder(); }
 
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
@@ -351,22 +370,19 @@ public class BuildContext implements Closeable {
   private final boolean alwaysCacheBaseImage;
 
   /** Instantiate with {@link #builder}. */
-  private BuildContext(
-      ImageConfiguration baseImageConfiguration,
-      ImageConfiguration targetImageConfiguration,
-      ImmutableSet<String> additionalTargetImageTags,
-      @Nullable ContainerConfiguration containerConfiguration,
-      Cache baseImageLayersCache,
-      Cache applicationLayersCache,
-      Class<? extends BuildableManifestTemplate> targetFormat,
-      boolean offline,
-      ImmutableList<LayerConfiguration> layerConfigurations,
-      String toolName,
-      EventHandlers eventHandlers,
-      FailoverHttpClient httpClient,
-      ExecutorService executorService,
-      boolean shutDownExecutorService,
-      boolean alwaysCacheBaseImage) {
+  private BuildContext(ImageConfiguration baseImageConfiguration,
+                       ImageConfiguration targetImageConfiguration,
+                       ImmutableSet<String> additionalTargetImageTags,
+                       @Nullable ContainerConfiguration containerConfiguration,
+                       Cache baseImageLayersCache, Cache applicationLayersCache,
+                       Class<? extends BuildableManifestTemplate> targetFormat,
+                       boolean offline,
+                       ImmutableList<LayerConfiguration> layerConfigurations,
+                       String toolName, EventHandlers eventHandlers,
+                       FailoverHttpClient httpClient,
+                       ExecutorService executorService,
+                       boolean shutDownExecutorService,
+                       boolean alwaysCacheBaseImage) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -394,7 +410,8 @@ public class BuildContext implements Closeable {
 
   public ImmutableSet<String> getAllTargetImageTags() {
     ImmutableSet.Builder<String> allTargetImageTags =
-        ImmutableSet.builderWithExpectedSize(1 + additionalTargetImageTags.size());
+        ImmutableSet.builderWithExpectedSize(1 +
+                                             additionalTargetImageTags.size());
     allTargetImageTags.add(targetImageConfiguration.getImageTag());
     allTargetImageTags.addAll(additionalTargetImageTags);
     return allTargetImageTags.build();
@@ -409,52 +426,40 @@ public class BuildContext implements Closeable {
     return targetFormat;
   }
 
-  public String getToolName() {
-    return toolName;
-  }
+  public String getToolName() { return toolName; }
 
-  public EventHandlers getEventHandlers() {
-    return eventHandlers;
-  }
+  public EventHandlers getEventHandlers() { return eventHandlers; }
 
-  public ExecutorService getExecutorService() {
-    return executorService;
-  }
+  public ExecutorService getExecutorService() { return executorService; }
 
   /**
    * Gets the {@link Cache} for base image layers.
    *
    * @return the {@link Cache} for base image layers
    */
-  public Cache getBaseImageLayersCache() {
-    return baseImageLayersCache;
-  }
+  public Cache getBaseImageLayersCache() { return baseImageLayersCache; }
   /**
    * Gets the {@link Cache} for application layers.
    *
    * @return the {@link Cache} for application layers
    */
-  public Cache getApplicationLayersCache() {
-    return applicationLayersCache;
-  }
+  public Cache getApplicationLayersCache() { return applicationLayersCache; }
 
   /**
    * Gets whether or not to run the build in offline mode.
    *
-   * @return {@code true} if the build will run in offline mode; {@code false} otherwise
+   * @return {@code true} if the build will run in offline mode; {@code false}
+   *     otherwise
    */
-  public boolean isOffline() {
-    return offline;
-  }
+  public boolean isOffline() { return offline; }
 
   /**
    * Gets whether or not to force caching the base images.
    *
-   * @return {@code true} if the user wants to force the build to always pull the image layers.
+   * @return {@code true} if the user wants to force the build to always pull
+   *     the image layers.
    */
-  public boolean getAlwaysCacheBaseImage() {
-    return alwaysCacheBaseImage;
-  }
+  public boolean getAlwaysCacheBaseImage() { return alwaysCacheBaseImage; }
 
   /**
    * Gets the configurations for building the layers.
@@ -466,8 +471,8 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
-   * configuration.
+   * Creates a new {@link RegistryClient.Factory} for the base image with fields
+   * from the build configuration.
    *
    * @return a new {@link RegistryClient.Factory}
    */
@@ -476,33 +481,31 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
-   * configuration.
+   * Creates a new {@link RegistryClient.Factory} for the target image with
+   * fields from the build configuration.
    *
    * @return a new {@link RegistryClient.Factory}
    */
   public RegistryClient.Factory newTargetImageRegistryClientFactory() {
-    // if base and target are on the same registry, try enabling cross-repository mounts
-    if (baseImageConfiguration
-        .getImageRegistry()
-        .equals(targetImageConfiguration.getImageRegistry())) {
-      return RegistryClient.factory(
-              getEventHandlers(),
-              targetImageConfiguration.getImageRegistry(),
-              targetImageConfiguration.getImageRepository(),
-              baseImageConfiguration.getImageRepository(),
-              httpClient)
+    // if base and target are on the same registry, try enabling
+    // cross-repository mounts
+    if (baseImageConfiguration.getImageRegistry().equals(
+            targetImageConfiguration.getImageRegistry())) {
+      return RegistryClient
+          .factory(getEventHandlers(),
+                   targetImageConfiguration.getImageRegistry(),
+                   targetImageConfiguration.getImageRepository(),
+                   baseImageConfiguration.getImageRepository(), httpClient)
           .setUserAgentSuffix(getToolName());
     }
     return newRegistryClientFactory(targetImageConfiguration);
   }
 
-  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
-    return RegistryClient.factory(
-            getEventHandlers(),
-            imageConfiguration.getImageRegistry(),
-            imageConfiguration.getImageRepository(),
-            httpClient)
+  private RegistryClient.Factory
+  newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+    return RegistryClient
+        .factory(getEventHandlers(), imageConfiguration.getImageRegistry(),
+                 imageConfiguration.getImageRepository(), httpClient)
         .setUserAgentSuffix(getToolName());
   }
 

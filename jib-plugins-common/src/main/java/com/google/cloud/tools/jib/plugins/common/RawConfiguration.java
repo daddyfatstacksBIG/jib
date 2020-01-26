@@ -26,8 +26,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Holds raw plugin configuration parameter values. Acts as a common adapter for heterogeneous
- * plugin configuration models.
+ * Holds raw plugin configuration parameter values. Acts as a common adapter for
+ * heterogeneous plugin configuration models.
  */
 public interface RawConfiguration {
 
