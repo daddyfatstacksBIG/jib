@@ -1,7 +1,7 @@
 # Proposal: Make sub project/module jars included in container reproducible
 
 Relevant issue:
-[#1945](https://github.com/GoogleContainerTools/jib/issues/1945)  
+[#1945](https://github.com/GoogleContainerTools/jib/issues/1945)
 Relevent PR: [#2070](https://github.com/GoogleContainerTools/jib/pull/2070)
 
 | ❌ Aborted ❌                                                                                                                                                                    |
