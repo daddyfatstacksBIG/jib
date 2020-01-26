@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "mediaType": "type",
-  "config":{
+  "config": {
     "mediaType": "type",
     "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "size": 10
   },
-  "layers":[
+  "layers": [
     {
       "mediaType": "type",
       "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -16,20 +16,30 @@
       "mediaType": "type",
       "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "size": 2,
-      "urls": ["url-foo", "url-bar"]
+      "urls": [
+        "url-foo",
+        "url-bar"
+      ]
     },
     {
       "mediaType": "type",
       "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "size": 3,
-      "annotations": {"key-foo":"value-foo"}
+      "annotations": {
+        "key-foo": "value-foo"
+      }
     },
     {
       "mediaType": "type",
       "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "size": 4,
-      "urls": ["cool-url"],
-      "annotations": {"key1":"value1", "key2":"value2"}
+      "urls": [
+        "cool-url"
+      ],
+      "annotations": {
+        "key1": "value1",
+        "key2": "value2"
+      }
     }
   ]
 }
