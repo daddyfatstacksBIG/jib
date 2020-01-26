@@ -7,7 +7,7 @@ set -x
 # protected credential store, so "docker login" fails to modify it.
 # https://github.com/GoogleContainerTools/jib/issues/2189
 if [ "$KOKORO_JOB_CLUSTER" = "MACOS_EXTERNAL" ]; then
-  cat <<< '{"credsStore":"gcr"}' > "$HOME/.docker/config.json"
+  cat <<<'{"credsStore":"gcr"}' >"$HOME/.docker/config.json"
 fi
 
 gcloud components install docker-credential-gcr
@@ -31,7 +31,7 @@ export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 if [ "$KOKORO_JOB_CLUSTER" = "MACOS_EXTERNAL" ]; then
   osascript -e 'quit app "Docker"'
   open -a Docker
-  while ! docker info > /dev/null 2>&1; do sleep 1; done
+  while ! docker info >/dev/null 2>&1; do sleep 1; done
 fi
 
 cd github/jib
