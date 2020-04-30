@@ -36,58 +36,68 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-/** Helper for constructing {@link JavaContainerBuilder}-based {@link JibContainerBuilder}s. */
+/**
+ * Helper for constructing {@link JavaContainerBuilder}-based {@link
+ * JibContainerBuilder}s.
+ */
 public class JavaContainerBuilderHelper {
 
   /**
-   * Returns a {@link FileEntriesLayer} for adding the extra directory to the container.
+   * Returns a {@link FileEntriesLayer} for adding the extra directory to the
+   * container.
    *
-   * @param extraDirectory the source extra directory path
-   * @param extraDirectoryPermissions map from path on container to file permissions
+   * @param sourceDirectory the source extra directory path
+   * @param targetDirectory the root directory on the container to place the
+   *     files in
+   * @param extraDirectoryPermissions map from path on container to file
+   *     permissions
    * @param modificationTimeProvider file modification time provider
-   * @return a {@link FileEntriesLayer} for adding the extra directory to the container
+   * @return a {@link FileEntriesLayer} for adding the extra directory to the
+   *     container
    * @throws IOException if walking the extra directory fails
    */
   public static FileEntriesLayer extraDirectoryLayerConfiguration(
-      Path extraDirectory,
+      Path sourceDirectory, AbsoluteUnixPath targetDirectory,
       Map<String, FilePermissions> extraDirectoryPermissions,
       BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
     Map<PathMatcher, FilePermissions> pathMatchers = new LinkedHashMap<>();
-    for (Map.Entry<String, FilePermissions> entry : extraDirectoryPermissions.entrySet()) {
+    for (Map.Entry<String, FilePermissions> entry :
+         extraDirectoryPermissions.entrySet()) {
       pathMatchers.put(
-          FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
+          FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()),
+          entry.getValue());
     }
 
-    new DirectoryWalker(extraDirectory)
-        .filterRoot()
-        .walk(
-            localPath -> {
-              AbsoluteUnixPath pathOnContainer =
-                  AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
-              Instant modificationTime = modificationTimeProvider.apply(localPath, pathOnContainer);
-              FilePermissions permissions =
-                  extraDirectoryPermissions.get(pathOnContainer.toString());
-              if (permissions == null) {
-                // Check for matching globs
-                Path containerPath = Paths.get(pathOnContainer.toString());
-                for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
-                  if (entry.getKey().matches(containerPath)) {
-                    builder.addEntry(
-                        localPath, pathOnContainer, entry.getValue(), modificationTime);
-                    return;
-                  }
-                }
+    new DirectoryWalker(sourceDirectory).filterRoot().walk(localPath -> {
+      AbsoluteUnixPath pathOnContainer =
+          targetDirectory.resolve(sourceDirectory.relativize(localPath));
+      Instant modificationTime =
+          modificationTimeProvider.apply(localPath, pathOnContainer);
+      FilePermissions permissions =
+          extraDirectoryPermissions.get(pathOnContainer.toString());
+      if (permissions == null) {
+        // Check for matching globs
+        Path containerPath = Paths.get(pathOnContainer.toString());
+        for (Map.Entry<PathMatcher, FilePermissions> entry :
+             pathMatchers.entrySet()) {
+          if (entry.getKey().matches(containerPath)) {
+            builder.addEntry(localPath, pathOnContainer, entry.getValue(),
+                             modificationTime);
+            return;
+          }
+        }
 
-                // Add with default permissions
-                builder.addEntry(localPath, pathOnContainer, modificationTime);
-              } else {
-                // Add with explicit permissions
-                builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
-              }
-            });
+        // Add with default permissions
+        builder.addEntry(localPath, pathOnContainer, modificationTime);
+      } else {
+        // Add with explicit permissions
+        builder.addEntry(localPath, pathOnContainer, permissions,
+                         modificationTime);
+      }
+    });
     return builder.build();
   }
 
@@ -96,21 +106,24 @@ public class JavaContainerBuilderHelper {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param explodedWar the exploded WAR directory
-   * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
+   * @return {@link JibContainerBuilder} containing the layers for the exploded
+   *     WAR
    * @throws IOException if adding layer contents fails
    */
-  public static JibContainerBuilder fromExplodedWar(
-      JavaContainerBuilder javaContainerBuilder, Path explodedWar) throws IOException {
+  public static JibContainerBuilder
+  fromExplodedWar(JavaContainerBuilder javaContainerBuilder, Path explodedWar)
+      throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
     Predicate<Path> isClassFile =
         // Don't use Path.endsWith(), since Path works on path elements.
-        path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
+        path
+        -> path.startsWith(webInfClasses) &&
+               path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
 
-    javaContainerBuilder
-        .setResourcesDestination(RelativeUnixPath.get(""))
+    javaContainerBuilder.setResourcesDestination(RelativeUnixPath.get(""))
         .setClassesDestination(RelativeUnixPath.get("WEB-INF/classes"))
         .setDependenciesDestination(RelativeUnixPath.get("WEB-INF/lib"));
 
@@ -124,12 +137,14 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()
-              .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
+              .filter(
+                  path -> !path.getFileName().toString().contains("SNAPSHOT"))
               .walk());
       javaContainerBuilder.addSnapshotDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()
-              .filter(path -> path.getFileName().toString().contains("SNAPSHOT"))
+              .filter(
+                  path -> path.getFileName().toString().contains("SNAPSHOT"))
               .walk());
     }
     return javaContainerBuilder.toContainerBuilder();

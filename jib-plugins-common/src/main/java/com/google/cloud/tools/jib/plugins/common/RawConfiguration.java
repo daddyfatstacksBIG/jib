@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import java.nio.file.Path;
@@ -25,10 +26,17 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Holds raw plugin configuration parameter values. Acts as a common adapter for heterogeneous
- * plugin configuration models.
+ * Holds raw plugin configuration parameter values. Acts as a common adapter for
+ * heterogeneous plugin configuration models.
  */
 public interface RawConfiguration {
+
+  static interface ExtensionConfiguration {
+
+    String getExtensionClass();
+
+    Map<String, String> getProperties();
+  }
 
   Optional<String> getFromImage();
 
@@ -78,7 +86,7 @@ public interface RawConfiguration {
 
   String getCreationTime();
 
-  List<Path> getExtraDirectories();
+  Map<Path, AbsoluteUnixPath> getExtraDirectories();
 
   Map<String, FilePermissions> getExtraDirectoryPermissions();
 
@@ -95,4 +103,6 @@ public interface RawConfiguration {
   Path getImageIdOutputPath();
 
   Path getImageJsonOutputPath();
+
+  List<? extends ExtensionConfiguration> getPluginExtensions();
 }

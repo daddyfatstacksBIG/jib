@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +54,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getFromCredHelper() {
-    return Optional.ofNullable(jibPluginConfiguration.getBaseImageCredentialHelperName());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getBaseImageCredentialHelperName());
   }
 
   @Override
@@ -67,7 +70,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getToCredHelper() {
-    return Optional.ofNullable(jibPluginConfiguration.getTargetImageCredentialHelperName());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getTargetImageCredentialHelperName());
   }
 
   @Override
@@ -147,7 +151,8 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getProperty(String propertyName) {
-    return Optional.ofNullable(jibPluginConfiguration.getProperty(propertyName));
+    return Optional.ofNullable(
+        jibPluginConfiguration.getProperty(propertyName));
   }
 
   @Override
@@ -161,18 +166,24 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<Path> getExtraDirectories() {
-    return MojoCommon.getExtraDirectories(jibPluginConfiguration);
+  public Map<Path, AbsoluteUnixPath> getExtraDirectories() {
+    Map<Path, AbsoluteUnixPath> directoryMap = new LinkedHashMap<>();
+    for (Path path : MojoCommon.getExtraDirectories(jibPluginConfiguration)) {
+      directoryMap.put(path, AbsoluteUnixPath.get("/"));
+    }
+    return directoryMap;
   }
 
   @Override
   public Map<String, FilePermissions> getExtraDirectoryPermissions() {
-    return MojoCommon.convertPermissionsList(jibPluginConfiguration.getExtraDirectoryPermissions());
+    return MojoCommon.convertPermissionsList(
+        jibPluginConfiguration.getExtraDirectoryPermissions());
   }
 
   @Override
   public Optional<Path> getDockerExecutable() {
-    return Optional.ofNullable(jibPluginConfiguration.getDockerClientExecutable());
+    return Optional.ofNullable(
+        jibPluginConfiguration.getDockerClientExecutable());
   }
 
   @Override
@@ -203,5 +214,10 @@ public class MavenRawConfiguration implements RawConfiguration {
   @Override
   public Path getImageJsonOutputPath() {
     return jibPluginConfiguration.getImageJsonOutputPath();
+  }
+
+  @Override
+  public List<? extends ExtensionConfiguration> getPluginExtensions() {
+    return jibPluginConfiguration.getPluginExtensions();
   }
 }

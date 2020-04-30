@@ -19,17 +19,19 @@ again.
 
 Jib comes as 3 public components:
 
-  - `jib-core`: a library for building containers
-  - `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
-  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
+- `jib-core`: a library for building containers
+- `jib-maven-plugin`: a Maven plugin that uses `jib-core` and
+  `jib-plugins-common`
+- `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and
+  `jib-plugins-common`
 
 And 1 internal component:
 
-  - `jib-plugins-common`: a library with helpers for maven/gradle plugins
+- `jib-plugins-common`: a library with helpers for maven/gradle plugins
 
-The project is configured as a single gradle build. Run `./gradlew build` to build the
-whole project. Run `./gradlew install` to install all public components into the
-local maven repository.
+The project is configured as a single gradle build. Run `./gradlew build` to
+build the whole project. Run `./gradlew install` to install all public
+components into the local maven repository.
 
 ## Code Reviews
 
@@ -37,24 +39,28 @@ local maven repository.
    ```
    git config --global user.email "janedoe@google.com"
    ```
-   If you're a Googler or other corporate contributor,
-   use your corporate email address here, not your personal address.
+   If you're a Googler or other corporate contributor, use your corporate email
+   address here, not your personal address.
 2. Fork the repository into your own Github account.
-3. We follow our own [Java style guide](STYLE_GUIDE.md) that extends the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
-3. Please include unit tests (and integration tests if applicable) for all new code.
-4. Make sure all existing tests pass (but see the note below about integration tests).
-   * run `./gradlew clean goJF build integrationTest`
-5. Associate the change with an existing issue or file a [new issue](../../issues).
-6. Create a pull request!
+3. We follow our own [Java style guide](STYLE_GUIDE.md) that extends the
+   [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
+4. Please include unit tests (and integration tests if applicable) for all new
+   code.
+5. Make sure all existing tests pass (but see the note below about integration
+   tests).
+   - run `./gradlew clean goJF build integrationTest`
+6. Associate the change with an existing issue or file a
+   [new issue](../../issues).
+7. Create a pull request!
 
 **Note** that in order to run integration tests, you will need to set one of the
 following environment variables:
 
-  - `JIB_INTEGRATION_TESTING_PROJECT`: the GCP project to use for testing;
-    the registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
-  - `JIB_INTEGRATION_TESTING_LOCATION`: a specific registry for testing.
-    To run the integration tests locally, you can run
-    `docker run -d -p 9990:5000 registry:2` and use `localhost:9990`.
+- `JIB_INTEGRATION_TESTING_PROJECT`: the GCP project to use for testing; the
+  registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
+- `JIB_INTEGRATION_TESTING_LOCATION`: a specific registry for testing. To run
+  the integration tests locally, you can run
+  `docker run -d -p 9990:5000 registry:2` and use `localhost:9990`.
 
 You will also need Docker installed with the daemon running. Note that the
 integration tests will create local registries on ports 5000 and 6000.
@@ -63,20 +69,20 @@ integration tests will create local registries on ports 5000 and 6000.
 
 ## Configuring Eclipse
 
-Although jib is a mix of Gradle and Maven projects, we build everything using one
-unifed gradle build. There is special code to include some projects directly as
-source, but importing your project should be pretty straight forward.
+Although jib is a mix of Gradle and Maven projects, we build everything using
+one unifed gradle build. There is special code to include some projects directly
+as source, but importing your project should be pretty straight forward.
 
-  1. Ensure you have installed the Gradle tooling for Eclipse, called
-     _Buildship_ (available from [the Eclipse
-     Marketplace](https://marketplace.eclipse.org/content/buildship-gradle-integration)).
-  1. **Import the Gradle project:** Buildship does [not yet support
-     Eclipse Smart Import](https://github.com/eclipse/buildship/issues/356).
-     Use _File &rarr; Import &rarr; Gradle &rarr; Existing Gradle Project_
-     and import `jib`.
+1. Ensure you have installed the Gradle tooling for Eclipse, called _Buildship_
+   (available from
+   [the Eclipse Marketplace](https://marketplace.eclipse.org/content/buildship-gradle-integration)).
+1. **Import the Gradle project:** Buildship does
+   [not yet support Eclipse Smart Import](https://github.com/eclipse/buildship/issues/356).
+   Use _File &rarr; Import &rarr; Gradle &rarr; Existing Gradle Project_ and
+   import `jib`.
 
-Note that you will likely need to re-apply these changes whenever
-you refresh or update these projects.
+Note that you will likely need to re-apply these changes whenever you refresh or
+update these projects.
 
 ## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
 
@@ -84,23 +90,25 @@ you refresh or update these projects.
 
 To use a local build of the `jib-maven-plugin`:
 
-  1. Build and install `jib-maven-plugin` into your local `~/.m2/repository`
-     with `./gradlew jib-maven-plugin:install`;
-  1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT`
-     version of the `com.google.cloud.tools.jib` plugin.
+1. Build and install `jib-maven-plugin` into your local `~/.m2/repository` with
+   `./gradlew jib-maven-plugin:install`;
+1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT` version of
+   the `com.google.cloud.tools.jib` plugin.
 
-If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse):
+If developing from within Eclipse with M2Eclipse (the Maven tooling for
+Eclipse):
 
-  1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT`
-     version of the `com.google.cloud.tools.jib` plugin.
-  1. Create and launch a _Maven Build_ launch configuration for the
-     test project, and ensure the _Resolve Workspace artifacts_ is checked.
+1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT` version of
+   the `com.google.cloud.tools.jib` plugin.
+1. Create and launch a _Maven Build_ launch configuration for the test project,
+   and ensure the _Resolve Workspace artifacts_ is checked.
 
 ### Attaching a debugger
 
 Run `mvnDebug jib:build` and attach to port 8000.
 
-If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just launch the _Maven Build_ with _Debug_.
+If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just
+launch the _Maven Build_ with _Debug_.
 
 ## Debugging the Jib Gradle Plugin (`jib-gradle-plugin`)
 
@@ -108,25 +116,28 @@ If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just l
 
 To use a local build of the `jib-gradle-plugin`:
 
-  1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository`
-     with `./gradlew jib-gradle-plugin:install`
-  1. Add a `pluginManagement` block to your test project's `settings.gradle` to enable reading plugins from the local maven repository. It must be the first block in the file before any `include` directives.
-        ```groovy
-        pluginManagement {
-          repositories {
-            mavenLocal()
-            gradlePluginPortal()
-          }
-        }
-        ```
-  1. Modify your test project's `build.gradle` to use the snapshot version
-        ```groovy
-        plugins {
-          // id 'com.google.cloud.tools.jib' version '2.1.0'
-          id 'com.google.cloud.tools.jib' version '2.1.1-SNAPSHOT'
-        }
+1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository` with
+   `./gradlew jib-gradle-plugin:install`
+1. Add a `pluginManagement` block to your test project's `settings.gradle` to
+   enable reading plugins from the local maven repository. It must be the first
+   block in the file before any `include` directives.
+   ```groovy
+   pluginManagement {
+     repositories {
+       mavenLocal()
+       gradlePluginPortal()
+     }
+   }
+   ```
+1. Modify your test project's `build.gradle` to use the snapshot version
 
-        ```
+   ```groovy
+   plugins {
+     // id 'com.google.cloud.tools.jib' version '2.2.0'
+     id 'com.google.cloud.tools.jib' version '2.2.1-SNAPSHOT'
+   }
+
+   ```
 
 ### Attaching a debugger
 
