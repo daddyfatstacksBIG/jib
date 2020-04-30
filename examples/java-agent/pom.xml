@@ -58,7 +58,7 @@
             <goals>
               <goal>revision</goal>
             </goals>
-            <!-- *NOTE*: The default phase of revision is initialize, but 
+            <!-- *NOTE*: The default phase of revision is initialize, but
               in case you want to change it, you can do so by adding the phase here -->
             <phase>initialize</phase>
             <configuration>
