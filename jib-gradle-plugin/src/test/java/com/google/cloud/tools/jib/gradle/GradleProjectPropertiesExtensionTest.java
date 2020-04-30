@@ -50,8 +50,7 @@ public class GradleProjectPropertiesExtensionTest {
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private Logger mockLogger;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private Project mockProject;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS) private Project mockProject;
 
   private final JibContainerBuilder containerBuilder = Jib.fromScratch();
 
@@ -67,14 +66,16 @@ public class GradleProjectPropertiesExtensionTest {
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
 
-    gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider);
+    gradleProjectProperties = new GradleProjectProperties(
+        mockProject, mockLogger, mockTempDirectoryProvider);
   }
 
   @Test
-  public void testRunPluginExtensions_noExtensionsFound() throws JibPluginExtensionException {
+  public void testRunPluginExtensions_noExtensionsFound()
+      throws JibPluginExtensionException {
     JibContainerBuilder extendedBuilder =
-        gradleProjectProperties.runPluginExtensions(Collections.emptyIterator(), containerBuilder);
+        gradleProjectProperties.runPluginExtensions(Collections.emptyIterator(),
+                                                    containerBuilder);
     Assert.assertSame(extendedBuilder, containerBuilder);
 
     gradleProjectProperties.waitForLoggingThread();
@@ -83,33 +84,32 @@ public class GradleProjectPropertiesExtensionTest {
 
   @Test
   public void testRunPluginExtensions() throws JibPluginExtensionException {
-    JibGradlePluginExtension extension =
-        (buildPlan, gradleData, logger) -> {
-          logger.log(LogLevel.ERROR, "awesome error from my extension");
-          return buildPlan.toBuilder().setUser("user from extension").build();
-        };
+    JibGradlePluginExtension extension = (buildPlan, gradleData, logger) -> {
+      logger.log(LogLevel.ERROR, "awesome error from my extension");
+      return buildPlan.toBuilder().setUser("user from extension").build();
+    };
 
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
             Arrays.asList(extension).iterator(), containerBuilder);
-    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
+    Assert.assertEquals("user from extension",
+                        extendedBuilder.toContainerBuildPlan().getUser());
 
     gradleProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLogger).error("awesome error from my extension");
     Mockito.verify(mockLogger)
-        .lifecycle(
-            Mockito.startsWith(
-                "Running extension: com.google.cloud.tools.jib.gradle.GradleProjectProperties"));
+        .lifecycle(Mockito.startsWith(
+            "Running extension: com.google.cloud.tools.jib.gradle.GradleProjectProperties"));
   }
 
   @Test
   public void testRunPluginExtensions_exceptionFromExtension() {
     FileNotFoundException fakeException = new FileNotFoundException();
-    JibGradlePluginExtension extension =
-        (buildPlan, gradleData, logger) -> {
-          throw new JibPluginExtensionException(
-              JibGradlePluginExtension.class, "exception from extension", fakeException);
-        };
+    JibGradlePluginExtension extension = (buildPlan, gradleData, logger) -> {
+      throw new JibPluginExtensionException(JibGradlePluginExtension.class,
+                                            "exception from extension",
+                                            fakeException);
+    };
 
     try {
       gradleProjectProperties.runPluginExtensions(
@@ -124,16 +124,19 @@ public class GradleProjectPropertiesExtensionTest {
   @Test
   public void testRunPluginExtensions_invalidBaseImageFromExtension() {
     JibGradlePluginExtension extension =
-        (buildPlan, gradleData, logger) -> buildPlan.toBuilder().setBaseImage(" in*val+id").build();
+        (buildPlan, gradleData,
+         logger) -> buildPlan.toBuilder().setBaseImage(" in*val+id").build();
 
     try {
       gradleProjectProperties.runPluginExtensions(
           Arrays.asList(extension).iterator(), containerBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
-      Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
+      Assert.assertEquals("invalid base image reference:  in*val+id",
+                          ex.getMessage());
       Assert.assertThat(
-          ex.getCause(), CoreMatchers.instanceOf(InvalidImageReferenceException.class));
+          ex.getCause(),
+          CoreMatchers.instanceOf(InvalidImageReferenceException.class));
     }
   }
 }

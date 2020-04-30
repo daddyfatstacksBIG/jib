@@ -27,10 +27,15 @@ import java.nio.file.Path;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Project property methods that require maven/gradle-specific implementations. */
+/**
+ * Project property methods that require maven/gradle-specific implementations.
+ */
 public interface ProjectProperties {
 
-  /** Directory name for the cache. The directory will be relative to the build output directory. */
+  /**
+   * Directory name for the cache. The directory will be relative to the build
+   * output directory.
+   */
   String CACHE_DIRECTORY_NAME = "jib-cache";
 
   // TODO: Move out of ProjectProperties.
@@ -57,11 +62,13 @@ public interface ProjectProperties {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param containerizingMode mode to containerize the app
-   * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
+   * @return a {@link JibContainerBuilder} with classes, resources, and
+   *     dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
-  JibContainerBuilder createJibContainerBuilder(
-      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
+  JibContainerBuilder
+  createJibContainerBuilder(JavaContainerBuilder javaContainerBuilder,
+                            ContainerizingMode containerizingMode)
       throws IOException;
 
   List<Path> getClassFiles() throws IOException;
@@ -71,12 +78,13 @@ public interface ProjectProperties {
   String getJarPluginName();
 
   /**
-   * Returns the name of the main class configured in a jar plugin, or null if none is found.
+   * Returns the name of the main class configured in a jar plugin, or null if
+   * none is found.
    *
-   * @return the name of the main class configured in a jar plugin, or {@code null} if none is found
+   * @return the name of the main class configured in a jar plugin, or {@code
+   *     null} if none is found
    */
-  @Nullable
-  String getMainClassFromJar();
+  @Nullable String getMainClassFromJar();
 
   boolean isWarProject();
 
@@ -88,8 +96,8 @@ public interface ProjectProperties {
 
   boolean isOffline();
 
-  JibContainerBuilder runPluginExtensions(
-      List<? extends ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
+  JibContainerBuilder
+  runPluginExtensions(List<? extends ExtensionConfiguration> extensionConfigs,
+                      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException;
 }

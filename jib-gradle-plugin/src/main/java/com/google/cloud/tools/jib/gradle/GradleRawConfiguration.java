@@ -130,7 +130,8 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getWorkingDirectory() {
-    return Optional.ofNullable(jibExtension.getContainer().getWorkingDirectory());
+    return Optional.ofNullable(
+        jibExtension.getContainer().getWorkingDirectory());
   }
 
   @Override
@@ -169,12 +170,14 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Map<String, FilePermissions> getExtraDirectoryPermissions() {
-    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
+    return TaskCommon.convertPermissionsMap(
+        jibExtension.getExtraDirectories().getPermissions());
   }
 
   @Override
   public Optional<Path> getDockerExecutable() {
-    return Optional.ofNullable(jibExtension.getDockerClient().getExecutablePath());
+    return Optional.ofNullable(
+        jibExtension.getDockerClient().getExecutablePath());
   }
 
   @Override

@@ -60,21 +60,21 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * Configures and provides {@code JibBuildRunner} for the image building tasks based on raw plugin
- * configuration values and project properties.
+ * Configures and provides {@code JibBuildRunner} for the image building tasks
+ * based on raw plugin configuration values and project properties.
  */
 public class PluginConfigurationProcessor {
 
-  // Known "generated" dependencies -- these require that the underlying system run a build step
-  // before they are available for sync'ing
+  // Known "generated" dependencies -- these require that the underlying system
+  // run a build step before they are available for sync'ing
   private static final ImmutableList<String> GENERATED_LAYERS =
-      ImmutableList.of(
-          LayerType.PROJECT_DEPENDENCIES.getName(),
-          LayerType.RESOURCES.getName(),
-          LayerType.CLASSES.getName());
+      ImmutableList.of(LayerType.PROJECT_DEPENDENCIES.getName(),
+                       LayerType.RESOURCES.getName(),
+                       LayerType.CLASSES.getName());
 
-  // Known "constant" layers -- changes to these layers require a change to the build definition,
-  // which we consider non-syncable. These should not be included in the sync-map.
+  // Known "constant" layers -- changes to these layers require a change to the
+  // build definition, which we consider non-syncable. These should not be
+  // included in the sync-map.
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
@@ -83,60 +83,70 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration the raw configuration from the plugin
    * @param inferredAuthProvider the plugin specific auth provider
-   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
-   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @param projectProperties an plugin specific implementation of {@link
+   *     ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link
+   *     HelpfulSuggestions}
    * @return new {@link JibBuildRunner} to execute a build
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
-   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws InvalidAppRootException if the specific path for application root
+   *     is invalid
    * @throws IOException if an error occurs creating the container builder
-   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   * @throws InvalidWorkingDirectoryException if the working directory specified
+   *     for the build is invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is
    *     invalid
-   * @throws InvalidContainerVolumeException if a specific container volume is invalid
-   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
-   *     this build
-   * @throws NumberFormatException if a string to number conversion operation fails
-   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
-   *     specified
-   * @throws InvalidFilesModificationTimeException if configured modification time could not be
-   *     parsed
-   * @throws InvalidCreationTimeException if configured creation time could not be parsed
-   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java
+   *     version cannot support this build
+   * @throws NumberFormatException if a string to number conversion operation
+   *     fails
+   * @throws InvalidContainerizingModeException if an invalid {@link
+   *     ContainerizingMode} was specified
+   * @throws InvalidFilesModificationTimeException if configured modification
+   *     time could not be parsed
+   * @throws InvalidCreationTimeException if configured creation time could not
+   *     be parsed
+   * @throws JibPluginExtensionException if an error occurred while running
+   *     plugin extensions
    */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
-    ImageReference targetImageReference =
-        getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
-    DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+      throws InvalidImageReferenceException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException, JibPluginExtensionException {
+    ImageReference targetImageReference = getGeneratedTargetDockerTag(
+        rawConfiguration, projectProperties, helpfulSuggestions);
+    DockerDaemonImage targetImage =
+        DockerDaemonImage.named(targetImageReference);
     if (rawConfiguration.getDockerExecutable().isPresent()) {
-      targetImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+      targetImage.setDockerExecutable(
+          rawConfiguration.getDockerExecutable().get());
     }
     targetImage.setDockerEnvironment(rawConfiguration.getDockerEnvironment());
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
-        processCommonConfiguration(
-            rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+        processCommonConfiguration(rawConfiguration, inferredAuthProvider,
+                                   projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
         projectProperties
-            .runPluginExtensions(rawConfiguration.getPluginExtensions(), jibContainerBuilder)
+            .runPluginExtensions(rawConfiguration.getPluginExtensions(),
+                                 jibContainerBuilder)
             .setFormat(ImageFormat.Docker);
 
-    return JibBuildRunner.forBuildToDockerDaemon(
-            updatedContainerBuilder,
-            containerizer,
-            projectProperties::log,
-            helpfulSuggestions,
-            targetImageReference,
-            rawConfiguration.getToTags())
+    return JibBuildRunner
+        .forBuildToDockerDaemon(updatedContainerBuilder, containerizer,
+                                projectProperties::log, helpfulSuggestions,
+                                targetImageReference,
+                                rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
@@ -147,55 +157,62 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration the raw configuration from the plugin
    * @param inferredAuthProvider the plugin specific auth provider
-   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
-   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @param projectProperties an plugin specific implementation of {@link
+   *     ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link
+   *     HelpfulSuggestions}
    * @return new {@link JibBuildRunner} to execute a build
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
-   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws InvalidAppRootException if the specific path for application root
+   *     is invalid
    * @throws IOException if an error occurs creating the container builder
-   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   * @throws InvalidWorkingDirectoryException if the working directory specified
+   *     for the build is invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is
    *     invalid
-   * @throws InvalidContainerVolumeException if a specific container volume is invalid
-   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
-   *     this build
-   * @throws NumberFormatException if a string to number conversion operation fails
-   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
-   *     specified
-   * @throws InvalidFilesModificationTimeException if configured modification time could not be
-   *     parsed
-   * @throws InvalidCreationTimeException if configured creation time could not be parsed
-   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java
+   *     version cannot support this build
+   * @throws NumberFormatException if a string to number conversion operation
+   *     fails
+   * @throws InvalidContainerizingModeException if an invalid {@link
+   *     ContainerizingMode} was specified
+   * @throws InvalidFilesModificationTimeException if configured modification
+   *     time could not be parsed
+   * @throws InvalidCreationTimeException if configured creation time could not
+   *     be parsed
+   * @throws JibPluginExtensionException if an error occurred while running
+   *     plugin extensions
    */
-  public static JibBuildRunner createJibBuildRunnerForTarImage(
-      RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
-      ProjectProperties projectProperties,
-      HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
-    ImageReference targetImageReference =
-        getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
-    TarImage targetImage =
-        TarImage.at(rawConfiguration.getTarOutputPath()).named(targetImageReference);
+  public static JibBuildRunner
+  createJibBuildRunnerForTarImage(RawConfiguration rawConfiguration,
+                                  InferredAuthProvider inferredAuthProvider,
+                                  ProjectProperties projectProperties,
+                                  HelpfulSuggestions helpfulSuggestions)
+      throws InvalidImageReferenceException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException, JibPluginExtensionException {
+    ImageReference targetImageReference = getGeneratedTargetDockerTag(
+        rawConfiguration, projectProperties, helpfulSuggestions);
+    TarImage targetImage = TarImage.at(rawConfiguration.getTarOutputPath())
+                               .named(targetImageReference);
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
-        processCommonConfiguration(
-            rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+        processCommonConfiguration(rawConfiguration, inferredAuthProvider,
+                                   projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
         projectProperties.runPluginExtensions(
             rawConfiguration.getPluginExtensions(), jibContainerBuilder);
 
-    return JibBuildRunner.forBuildTar(
-            updatedContainerBuilder,
-            containerizer,
-            projectProperties::log,
-            helpfulSuggestions,
-            rawConfiguration.getTarOutputPath())
+    return JibBuildRunner
+        .forBuildTar(updatedContainerBuilder, containerizer,
+                     projectProperties::log, helpfulSuggestions,
+                     rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
@@ -206,72 +223,75 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration the raw configuration from the plugin
    * @param inferredAuthProvider the plugin specific auth provider
-   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
-   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @param projectProperties an plugin specific implementation of {@link
+   *     ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link
+   *     HelpfulSuggestions}
    * @return new {@link JibBuildRunner} to execute a build
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
-   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws InvalidAppRootException if the specific path for application root
+   *     is invalid
    * @throws IOException if an error occurs creating the container builder
-   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   * @throws InvalidWorkingDirectoryException if the working directory specified
+   *     for the build is invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is
    *     invalid
-   * @throws InvalidContainerVolumeException if a specific container volume is invalid
-   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
-   *     this build
-   * @throws NumberFormatException if a string to number conversion operation fails
-   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
-   *     specified
-   * @throws InvalidFilesModificationTimeException if configured modification time could not be
-   *     parsed
-   * @throws InvalidCreationTimeException if configured creation time could not be parsed
-   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java
+   *     version cannot support this build
+   * @throws NumberFormatException if a string to number conversion operation
+   *     fails
+   * @throws InvalidContainerizingModeException if an invalid {@link
+   *     ContainerizingMode} was specified
+   * @throws InvalidFilesModificationTimeException if configured modification
+   *     time could not be parsed
+   * @throws InvalidCreationTimeException if configured creation time could not
+   *     be parsed
+   * @throws JibPluginExtensionException if an error occurred while running
+   *     plugin extensions
    */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
+      throws InvalidImageReferenceException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException, JibPluginExtensionException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
-    ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
+    ImageReference targetImageReference =
+        ImageReference.parse(rawConfiguration.getToImage().get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
     configureCredentialRetrievers(
-        rawConfiguration,
-        projectProperties,
-        targetImage,
-        targetImageReference,
-        PropertyNames.TO_AUTH_USERNAME,
-        PropertyNames.TO_AUTH_PASSWORD,
-        rawConfiguration.getToAuth(),
-        inferredAuthProvider,
+        rawConfiguration, projectProperties, targetImage, targetImageReference,
+        PropertyNames.TO_AUTH_USERNAME, PropertyNames.TO_AUTH_PASSWORD,
+        rawConfiguration.getToAuth(), inferredAuthProvider,
         rawConfiguration.getToCredHelper().orElse(null));
 
-    boolean alwaysCacheBaseImage =
-        Boolean.parseBoolean(
-            rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
+    boolean alwaysCacheBaseImage = Boolean.parseBoolean(
+        rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
+            .orElse("false"));
     Containerizer containerizer =
-        Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
+        Containerizer.to(targetImage)
+            .setAlwaysCacheBaseImage(alwaysCacheBaseImage);
 
     JibContainerBuilder jibContainerBuilder =
-        processCommonConfiguration(
-            rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+        processCommonConfiguration(rawConfiguration, inferredAuthProvider,
+                                   projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
         projectProperties.runPluginExtensions(
             rawConfiguration.getPluginExtensions(), jibContainerBuilder);
 
-    return JibBuildRunner.forBuildImage(
-            updatedContainerBuilder,
-            containerizer,
-            projectProperties::log,
-            helpfulSuggestions,
-            targetImageReference,
-            rawConfiguration.getToTags())
+    return JibBuildRunner
+        .forBuildImage(updatedContainerBuilder, containerizer,
+                       projectProperties::log, helpfulSuggestions,
+                       targetImageReference, rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
@@ -281,63 +301,73 @@ public class PluginConfigurationProcessor {
    * Generate a skaffold syncmap JSON string for an image build configuration.
    *
    * @param rawConfiguration the raw configuration from the plugin
-   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
-   * @param excludes a set of paths to exclude, directories include in this list will be expanded
+   * @param projectProperties an plugin specific implementation of {@link
+   *     ProjectProperties}
+   * @param excludes a set of paths to exclude, directories include in this list
+   *     will be expanded
    * @return new json string representation of the Sync Map
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
-   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws InvalidAppRootException if the specific path for application root
+   *     is invalid
    * @throws IOException if an error occurs creating the container builder
-   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   * @throws InvalidWorkingDirectoryException if the working directory specified
+   *     for the build is invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is
    *     invalid
-   * @throws InvalidContainerVolumeException if a specific container volume is invalid
-   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
-   *     this build
-   * @throws NumberFormatException if a string to number conversion operation fails
-   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
-   *     specified
-   * @throws InvalidFilesModificationTimeException if configured modification time could not be
-   *     parsed
-   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java
+   *     version cannot support this build
+   * @throws NumberFormatException if a string to number conversion operation
+   *     fails
+   * @throws InvalidContainerizingModeException if an invalid {@link
+   *     ContainerizingMode} was specified
+   * @throws InvalidFilesModificationTimeException if configured modification
+   *     time could not be parsed
+   * @throws InvalidCreationTimeException if configured creation time could not
+   *     be parsed
    */
-  public static String getSkaffoldSyncMap(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
-      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidFilesModificationTimeException, InvalidContainerizingModeException {
-    JibContainerBuilder jibContainerBuilder =
-        processCommonConfiguration(
-            rawConfiguration, ignored -> Optional.empty(), projectProperties);
+  public static String getSkaffoldSyncMap(RawConfiguration rawConfiguration,
+                                          ProjectProperties projectProperties,
+                                          Set<Path> excludes)
+      throws IOException, InvalidCreationTimeException,
+             InvalidImageReferenceException,
+             IncompatibleBaseImageJavaVersionException,
+             InvalidContainerVolumeException, MainClassInferenceException,
+             InvalidAppRootException, InvalidWorkingDirectoryException,
+             InvalidFilesModificationTimeException,
+             InvalidContainerizingModeException {
+    JibContainerBuilder jibContainerBuilder = processCommonConfiguration(
+        rawConfiguration, ignored -> Optional.empty(), projectProperties);
     SkaffoldSyncMapTemplate syncMap = new SkaffoldSyncMapTemplate();
-    // since jib has already expanded out directories after processing everything, we just
-    // ignore directories and provide only files to watch
+    // since jib has already expanded out directories after processing
+    // everything, we just ignore directories and provide only files to watch
     Set<Path> excludesExpanded = getAllFiles(excludes);
-    for (LayerObject layerObject : jibContainerBuilder.toContainerBuildPlan().getLayers()) {
+    for (LayerObject layerObject :
+         jibContainerBuilder.toContainerBuildPlan().getLayers()) {
       Verify.verify(
           layerObject instanceof FileEntriesLayer,
           "layer types other than FileEntriesLayer not yet supported in build plan layers");
-      FileEntriesLayer layer = (FileEntriesLayer) layerObject;
+      FileEntriesLayer layer = (FileEntriesLayer)layerObject;
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
       }
       if (GENERATED_LAYERS.contains(layer.getName())) {
-        layer
-            .getEntries()
+        layer.getEntries()
             .stream()
-            .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
-                layerEntry ->
-                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
+                layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(layerEntry
+                    -> !excludesExpanded.contains(
+                        layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addGenerated);
       } else { // this is a direct layer
-        layer
-            .getEntries()
+        layer.getEntries()
             .stream()
-            .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
-                layerEntry ->
-                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
+                layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(layerEntry
+                    -> !excludesExpanded.contains(
+                        layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addDirect);
       }
     }
@@ -360,32 +390,35 @@ public class PluginConfigurationProcessor {
   }
 
   @VisibleForTesting
-  static JibContainerBuilder processCommonConfiguration(
-      RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
-      ProjectProperties projectProperties)
+  static JibContainerBuilder
+  processCommonConfiguration(RawConfiguration rawConfiguration,
+                             InferredAuthProvider inferredAuthProvider,
+                             ProjectProperties projectProperties)
       throws InvalidFilesModificationTimeException, InvalidAppRootException,
-          IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
-          InvalidContainerizingModeException, MainClassInferenceException,
-          InvalidContainerVolumeException, InvalidWorkingDirectoryException,
-          InvalidCreationTimeException {
+             IncompatibleBaseImageJavaVersionException, IOException,
+             InvalidImageReferenceException, InvalidContainerizingModeException,
+             MainClassInferenceException, InvalidContainerVolumeException,
+             InvalidWorkingDirectoryException, InvalidCreationTimeException {
 
     // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
-        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
+        createModificationTimeProvider(
+            rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =
         getJavaContainerBuilderWithBaseImage(
-                rawConfiguration, projectProperties, inferredAuthProvider)
+            rawConfiguration, projectProperties, inferredAuthProvider)
             .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
             .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createJibContainerBuilder(
-                javaContainerBuilder,
-                getContainerizingModeChecked(rawConfiguration, projectProperties))
+            .createJibContainerBuilder(javaContainerBuilder,
+                                       getContainerizingModeChecked(
+                                           rawConfiguration, projectProperties))
             .setFormat(rawConfiguration.getImageFormat())
-            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
-            .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
+            .setEntrypoint(
+                computeEntrypoint(rawConfiguration, projectProperties))
+            .setProgramArguments(
+                rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
             .setVolumes(getVolumesSet(rawConfiguration))
@@ -398,14 +431,13 @@ public class PluginConfigurationProcessor {
 
     // Adds all the extra files.
     for (Map.Entry<Path, AbsoluteUnixPath> entry :
-        rawConfiguration.getExtraDirectories().entrySet()) {
+         rawConfiguration.getExtraDirectories().entrySet()) {
       Path sourceDirectory = entry.getKey();
       AbsoluteUnixPath targetDirectory = entry.getValue();
       if (Files.exists(sourceDirectory)) {
         jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                sourceDirectory,
-                targetDirectory,
+                sourceDirectory, targetDirectory,
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
@@ -414,55 +446,58 @@ public class PluginConfigurationProcessor {
   }
 
   @VisibleForTesting
-  static JibContainerBuilder processCommonConfiguration(
-      RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
-      ProjectProperties projectProperties,
-      Containerizer containerizer)
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+  static JibContainerBuilder
+  processCommonConfiguration(RawConfiguration rawConfiguration,
+                             InferredAuthProvider inferredAuthProvider,
+                             ProjectProperties projectProperties,
+                             Containerizer containerizer)
+      throws InvalidImageReferenceException, MainClassInferenceException,
+             InvalidAppRootException, IOException,
+             InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+             IncompatibleBaseImageJavaVersionException, NumberFormatException,
+             InvalidContainerizingModeException,
+             InvalidFilesModificationTimeException,
+             InvalidCreationTimeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
     if (JibSystemProperties.sendCredentialsOverHttp()) {
-      projectProperties.log(
-          LogEvent.warn(
-              "Authentication over HTTP is enabled. It is strongly recommended that you do not "
-                  + "enable this on a public network!"));
+      projectProperties.log(LogEvent.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not "
+          + "enable this on a public network!"));
     }
 
     configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
-    return processCommonConfiguration(rawConfiguration, inferredAuthProvider, projectProperties);
+    return processCommonConfiguration(rawConfiguration, inferredAuthProvider,
+                                      projectProperties);
   }
 
   /**
-   * Returns a {@link JavaContainerBuilder} with the correctly parsed base image configuration.
+   * Returns a {@link JavaContainerBuilder} with the correctly parsed base image
+   * configuration.
    *
    * @param rawConfiguration contains the base image configuration
    * @param projectProperties used for providing additional information
    * @param inferredAuthProvider provides inferred auths for registry images
    * @return a new {@link JavaContainerBuilder} with the configured base image
-   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
-   *     incompatible with the Java version of the application to be containerized
-   * @throws InvalidImageReferenceException if the base image configuration can't be parsed
+   * @throws IncompatibleBaseImageJavaVersionException when the Java version in
+   *     the base image is incompatible with the Java version of the application
+   *     to be containerized
+   * @throws InvalidImageReferenceException if the base image configuration
+   *     can't be parsed
    * @throws FileNotFoundException if a credential helper can't be found
    */
   @VisibleForTesting
   static JavaContainerBuilder getJavaContainerBuilderWithBaseImage(
-      RawConfiguration rawConfiguration,
-      ProjectProperties projectProperties,
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties,
       InferredAuthProvider inferredAuthProvider)
-      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException,
-          FileNotFoundException {
+      throws IncompatibleBaseImageJavaVersionException,
+             InvalidImageReferenceException, FileNotFoundException {
     // Use image configuration as-is if it's a local base image
-    String baseImageConfig =
-        rawConfiguration.getFromImage().isPresent()
-            ? rawConfiguration.getFromImage().get()
-            : getDefaultBaseImage(projectProperties);
+    String baseImageConfig = rawConfiguration.getFromImage().isPresent()
+                                 ? rawConfiguration.getFromImage().get()
+                                 : getDefaultBaseImage(projectProperties);
     if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
@@ -483,20 +518,16 @@ public class PluginConfigurationProcessor {
           DockerDaemonImage.named(baseImageReference)
               .setDockerEnvironment(rawConfiguration.getDockerEnvironment());
       if (rawConfiguration.getDockerExecutable().isPresent()) {
-        dockerDaemonImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+        dockerDaemonImage.setDockerExecutable(
+            rawConfiguration.getDockerExecutable().get());
       }
       return JavaContainerBuilder.from(dockerDaemonImage);
     }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
-        rawConfiguration,
-        projectProperties,
-        baseImage,
-        baseImageReference,
-        PropertyNames.FROM_AUTH_USERNAME,
-        PropertyNames.FROM_AUTH_PASSWORD,
-        rawConfiguration.getFromAuth(),
-        inferredAuthProvider,
+        rawConfiguration, projectProperties, baseImage, baseImageReference,
+        PropertyNames.FROM_AUTH_USERNAME, PropertyNames.FROM_AUTH_PASSWORD,
+        rawConfiguration.getFromAuth(), inferredAuthProvider,
         rawConfiguration.getFromCredHelper().orElse(null));
     return JavaContainerBuilder.from(baseImage);
   }
@@ -507,76 +538,81 @@ public class PluginConfigurationProcessor {
    * <p>Computation occurs in this order:
    *
    * <ol>
-   *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
-   *   <li>the user specified one, if set
-   *   <li>for a WAR project, null (it must be inherited from base image)
-   *   <li>for a non-WAR project, by resolving the main class
+   *   <li>null (inheriting from the base image), if the user specified value is
+   * {@code INHERIT} <li>the user specified one, if set <li>for a WAR project,
+   * null (it must be inherited from base image) <li>for a non-WAR project, by
+   * resolving the main class
    * </ol>
    *
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the entrypoint
-   * @throws MainClassInferenceException if no valid main class is configured or discovered
-   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
-   * @throws InvalidContainerizingModeException if {@code containerizingMode} value is invalid
+   * @throws MainClassInferenceException if no valid main class is configured or
+   *     discovered
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute
+   *     Unix path
+   * @throws InvalidContainerizingModeException if {@code containerizingMode}
+   *     value is invalid
    */
   @Nullable
   @VisibleForTesting
-  static List<String> computeEntrypoint(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+  static List<String> computeEntrypoint(RawConfiguration rawConfiguration,
+                                        ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidContainerizingModeException {
-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+             InvalidContainerizingModeException {
+    AbsoluteUnixPath appRoot =
+        getAppRootChecked(rawConfiguration, projectProperties);
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
-      if (rawConfiguration.getMainClass().isPresent()
-          || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()) {
-        projectProperties.log(
-            LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+      if (rawConfiguration.getMainClass().isPresent() ||
+          !rawConfiguration.getJvmFlags().isEmpty() ||
+          !rawExtraClasspath.isEmpty()) {
+        projectProperties.log(LogEvent.warn(
+            "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
       }
 
-      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
+      if (rawEntrypoint.get().size() == 1 &&
+          "INHERIT".equals(rawEntrypoint.get().get(0))) {
         return null;
       }
       return rawEntrypoint.get();
     }
 
     if (projectProperties.isWarProject()) {
-      if (rawConfiguration.getMainClass().isPresent()
-          || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()) {
-        projectProperties.log(
-            LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+      if (rawConfiguration.getMainClass().isPresent() ||
+          !rawConfiguration.getJvmFlags().isEmpty() ||
+          !rawExtraClasspath.isEmpty()) {
+        projectProperties.log(LogEvent.warn(
+            "mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
       }
       return null;
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
+    ContainerizingMode mode =
+        getContainerizingModeChecked(rawConfiguration, projectProperties);
     switch (mode) {
-      case EXPLODED:
-        classpath.add(appRoot.resolve("resources").toString());
-        classpath.add(appRoot.resolve("classes").toString());
-        classpath.add(appRoot.resolve("libs/*").toString());
-        break;
-      case PACKAGED:
-        classpath.add(appRoot.resolve("classpath/*").toString());
-        classpath.add(appRoot.resolve("libs/*").toString());
-        break;
-      default:
-        throw new IllegalStateException("unknown containerizing mode: " + mode);
+    case EXPLODED:
+      classpath.add(appRoot.resolve("resources").toString());
+      classpath.add(appRoot.resolve("classes").toString());
+      classpath.add(appRoot.resolve("libs/*").toString());
+      break;
+    case PACKAGED:
+      classpath.add(appRoot.resolve("classpath/*").toString());
+      classpath.add(appRoot.resolve("libs/*").toString());
+      break;
+    default:
+      throw new IllegalStateException("unknown containerizing mode: " + mode);
     }
 
     String classpathString = String.join(":", classpath);
-    String mainClass =
-        MainClassResolver.resolveMainClass(
-            rawConfiguration.getMainClass().orElse(null), projectProperties);
+    String mainClass = MainClassResolver.resolveMainClass(
+        rawConfiguration.getMainClass().orElse(null), projectProperties);
 
-    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+    List<String> entrypoint =
+        new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
     entrypoint.add("java");
     entrypoint.addAll(rawConfiguration.getJvmFlags());
     entrypoint.add("-cp");
@@ -586,14 +622,16 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
-   * non-WAR.
+   * Gets the suitable value for the base image. If the raw base image parameter
+   * is null, returns
+   * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code
+   * "gcr.io/distroless/java"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
-   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
-   *     incompatible with the Java version of the application to be containerized
+   * @throws IncompatibleBaseImageJavaVersionException when the Java version in
+   *     the base image is incompatible with the Java version of the application
+   *     to be containerized
    */
   @VisibleForTesting
   static String getDefaultBaseImage(ProjectProperties projectProperties)
@@ -613,11 +651,13 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}.
+   * Parses the list of raw volumes directories to a set of {@link
+   * AbsoluteUnixPath}.
    *
    * @param rawConfiguration raw configuration data
    * @return the set of parsed volumes.
-   * @throws InvalidContainerVolumeException if {@code volumes} are not valid absolute Unix paths
+   * @throws InvalidContainerVolumeException if {@code volumes} are not valid
+   *     absolute Unix paths
    */
   @VisibleForTesting
   static Set<AbsoluteUnixPath> getVolumesSet(RawConfiguration rawConfiguration)
@@ -636,25 +676,25 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
-   * JavaContainerBuilder#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
-   * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
+   * Gets the value of the {@code appRoot} parameter. If the parameter is empty,
+   * returns {@link JavaContainerBuilder#DEFAULT_WEB_APP_ROOT} for WAR projects
+   * or {@link JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
    * @param projectProperties the project properties
    * @return the app root value
-   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute
+   *     Unix path
    */
   @VisibleForTesting
-  static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+  static AbsoluteUnixPath getAppRootChecked(RawConfiguration rawConfiguration,
+                                            ProjectProperties projectProperties)
       throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
-      appRoot =
-          projectProperties.isWarProject()
-              ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
-              : JavaContainerBuilder.DEFAULT_APP_ROOT;
+      appRoot = projectProperties.isWarProject()
+                    ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
+                    : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }
     try {
       return AbsoluteUnixPath.get(appRoot);
@@ -663,11 +703,14 @@ public class PluginConfigurationProcessor {
     }
   }
 
-  static ContainerizingMode getContainerizingModeChecked(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+  static ContainerizingMode
+  getContainerizingModeChecked(RawConfiguration rawConfiguration,
+                               ProjectProperties projectProperties)
       throws InvalidContainerizingModeException {
-    ContainerizingMode mode = ContainerizingMode.from(rawConfiguration.getContainerizingMode());
-    if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+    ContainerizingMode mode =
+        ContainerizingMode.from(rawConfiguration.getContainerizingMode());
+    if (mode == ContainerizingMode.PACKAGED &&
+        projectProperties.isWarProject()) {
       throw new UnsupportedOperationException(
           "packaged containerizing mode for WAR is not yet supported");
     }
@@ -675,7 +718,8 @@ public class PluginConfigurationProcessor {
   }
 
   @VisibleForTesting
-  static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
+  static Optional<AbsoluteUnixPath>
+  getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
       throws InvalidWorkingDirectoryException {
     if (!rawConfiguration.getWorkingDirectory().isPresent()) {
       return Optional.empty();
@@ -690,35 +734,38 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Creates a modification time provider based on the config value. The value can be:
+   * Creates a modification time provider based on the config value. The value
+   * can be:
    *
    * <ol>
-   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
-   *       EPOCH + 1 second
-   *   <li>date in ISO 8601 format
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file
+   * modification time to EPOCH + 1 second <li>date in ISO 8601 format
    * </ol>
    *
    * @param modificationTime modification time config value
    * @return corresponding modification time provider
-   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
+   * @throws InvalidFilesModificationTimeException if the config value is not in
+   *     ISO 8601 format
    */
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
-      String modificationTime) throws InvalidFilesModificationTimeException {
+  static BiFunction<Path, AbsoluteUnixPath, Instant>
+  createModificationTimeProvider(String modificationTime)
+      throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
-        case "EPOCH_PLUS_SECOND":
-          Instant epochPlusSecond = Instant.ofEpochSecond(1);
-          return (ignored1, ignored2) -> epochPlusSecond;
+      case "EPOCH_PLUS_SECOND":
+        Instant epochPlusSecond = Instant.ofEpochSecond(1);
+        return (ignored1, ignored2) -> epochPlusSecond;
 
-        default:
-          Instant timestamp =
-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
-          return (ignored1, ignored2) -> timestamp;
+      default:
+        Instant timestamp = DateTimeFormatter.ISO_DATE_TIME.parse(
+            modificationTime, Instant::from);
+        return (ignored1, ignored2) -> timestamp;
       }
 
     } catch (DateTimeParseException ex) {
-      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
+      throw new InvalidFilesModificationTimeException(modificationTime,
+                                                      modificationTime, ex);
     }
   }
 
@@ -737,57 +784,51 @@ public class PluginConfigurationProcessor {
    * @throws InvalidCreationTimeException if the config value is invalid
    */
   @VisibleForTesting
-  static Instant getCreationTime(String configuredCreationTime, ProjectProperties projectProperties)
+  static Instant getCreationTime(String configuredCreationTime,
+                                 ProjectProperties projectProperties)
       throws DateTimeParseException, InvalidCreationTimeException {
     try {
       switch (configuredCreationTime) {
-        case "EPOCH":
-          return Instant.EPOCH;
+      case "EPOCH":
+        return Instant.EPOCH;
 
-        case "USE_CURRENT_TIMESTAMP":
-          projectProperties.log(
-              LogEvent.warn(
-                  "Setting image creation time to current time; your image may not be reproducible."));
-          return Instant.now();
+      case "USE_CURRENT_TIMESTAMP":
+        projectProperties.log(LogEvent.warn(
+            "Setting image creation time to current time; your image may not be reproducible."));
+        return Instant.now();
 
-        default:
-          DateTimeFormatter formatter =
-              new DateTimeFormatterBuilder()
-                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
-                  // add ability to parse with no ":" in tz
-                  .optionalStart()
-                  .appendOffset("+HHmm", "+0000")
-                  .optionalEnd()
-                  .toFormatter();
-          return formatter.parse(configuredCreationTime, Instant::from);
+      default:
+        DateTimeFormatter formatter =
+            new DateTimeFormatterBuilder()
+                .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+                // add ability to parse with no ":" in tz
+                .optionalStart()
+                .appendOffset("+HHmm", "+0000")
+                .optionalEnd()
+                .toFormatter();
+        return formatter.parse(configuredCreationTime, Instant::from);
       }
     } catch (DateTimeParseException ex) {
-      throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
+      throw new InvalidCreationTimeException(configuredCreationTime,
+                                             configuredCreationTime, ex);
     }
   }
 
   // TODO: find a way to reduce the number of arguments.
   private static void configureCredentialRetrievers(
-      RawConfiguration rawConfiguration,
-      ProjectProperties projectProperties,
-      RegistryImage registryImage,
-      ImageReference imageReference,
-      String usernamePropertyName,
-      String passwordPropertyName,
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties,
+      RegistryImage registryImage, ImageReference imageReference,
+      String usernamePropertyName, String passwordPropertyName,
       AuthProperty rawAuthConfiguration,
-      InferredAuthProvider inferredAuthProvider,
-      @Nullable String credHelper)
+      InferredAuthProvider inferredAuthProvider, @Nullable String credHelper)
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log));
+        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(
+            imageReference, projectProperties::log));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            projectProperties::log,
-            usernamePropertyName,
-            passwordPropertyName,
-            rawAuthConfiguration,
-            rawConfiguration);
+            projectProperties::log, usernamePropertyName, passwordPropertyName,
+            rawAuthConfiguration, rawConfiguration);
     if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
           optionalCredential.get(), rawAuthConfiguration.getAuthDescriptor());
@@ -800,67 +841,71 @@ public class PluginConfigurationProcessor {
           String username = Verify.verifyNotNull(auth.getUsername());
           String password = Verify.verifyNotNull(auth.getPassword());
           Credential credential = Credential.from(username, password);
-          defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
+          defaultCredentialRetrievers.setInferredCredential(
+              credential, auth.getAuthDescriptor());
         }
       } catch (InferredAuthException ex) {
-        projectProperties.log(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
+        projectProperties.log(
+            LogEvent.warn("InferredAuthException: " + ex.getMessage()));
       }
     }
 
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
-    defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
+    defaultCredentialRetrievers.asList().forEach(
+        registryImage::addCredentialRetriever);
   }
 
-  private static ImageReference getGeneratedTargetDockerTag(
-      RawConfiguration rawConfiguration,
-      ProjectProperties projectProperties,
-      HelpfulSuggestions helpfulSuggestions)
+  private static ImageReference
+  getGeneratedTargetDockerTag(RawConfiguration rawConfiguration,
+                              ProjectProperties projectProperties,
+                              HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
     return ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-        rawConfiguration.getToImage().orElse(null), projectProperties, helpfulSuggestions);
+        rawConfiguration.getToImage().orElse(null), projectProperties,
+        helpfulSuggestions);
   }
 
   /**
-   * Configures a {@link Containerizer} with values pulled from project properties/raw build
-   * configuration.
+   * Configures a {@link Containerizer} with values pulled from project
+   * properties/raw build configuration.
    *
    * @param containerizer the {@link Containerizer} to configure
    * @param rawConfiguration the raw build configuration
    * @param projectProperties the project properties
    */
-  private static void configureContainerizer(
-      Containerizer containerizer,
-      RawConfiguration rawConfiguration,
-      ProjectProperties projectProperties) {
+  private static void
+  configureContainerizer(Containerizer containerizer,
+                         RawConfiguration rawConfiguration,
+                         ProjectProperties projectProperties) {
     projectProperties.configureEventHandlers(containerizer);
-    containerizer
-        .setOfflineMode(projectProperties.isOffline())
+    containerizer.setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())
         .setToolVersion(projectProperties.getToolVersion())
-        .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
-        .setBaseImageLayersCache(
-            getCheckedCacheDirectory(
-                PropertyNames.BASE_IMAGE_CACHE,
-                Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE)
-                    ? projectProperties.getDefaultCacheDirectory()
-                    : Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
-        .setApplicationLayersCache(
-            getCheckedCacheDirectory(
-                PropertyNames.APPLICATION_CACHE, projectProperties.getDefaultCacheDirectory()));
+        .setAllowInsecureRegistries(
+            rawConfiguration.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(getCheckedCacheDirectory(
+            PropertyNames.BASE_IMAGE_CACHE,
+            Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE)
+                ? projectProperties.getDefaultCacheDirectory()
+                : Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
+        .setApplicationLayersCache(getCheckedCacheDirectory(
+            PropertyNames.APPLICATION_CACHE,
+            projectProperties.getDefaultCacheDirectory()));
 
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
   }
 
   /**
-   * Returns the value of a cache directory system property if it is set, otherwise returns {@code
-   * defaultPath}.
+   * Returns the value of a cache directory system property if it is set,
+   * otherwise returns {@code defaultPath}.
    *
    * @param property the name of the system property to check
    * @param defaultPath the path to return if the system property isn't set
-   * @return the value of a cache directory system property if it is set, otherwise returns {@code
-   *     defaultPath}
+   * @return the value of a cache directory system property if it is set,
+   *     otherwise returns {@code defaultPath}
    */
-  private static Path getCheckedCacheDirectory(String property, Path defaultPath) {
+  private static Path getCheckedCacheDirectory(String property,
+                                               Path defaultPath) {
     if (System.getProperty(property) != null) {
       return Paths.get(System.getProperty(property));
     }
@@ -868,40 +913,46 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Checks if the given image is a known Java 8 distroless image. Checking against only images
-   * known to Java 8, the method may to return {@code false} for Java 8 distroless unknown to it.
+   * Checks if the given image is a known Java 8 distroless image. Checking
+   * against only images known to Java 8, the method may to return {@code false}
+   * for Java 8 distroless unknown to it.
    *
    * @param imageReference the image reference
-   * @return {@code true} if the image is equal to one of the known Java 8 distroless images, else
+   * @return {@code true} if the image is equal to one of the known Java 8
+   *     distroless images, else
    *     {@code false}
    */
   private static boolean isKnownDistrolessJava8Image(String imageReference) {
-    // TODO: drop "latest", "debug", and the like once they no longer point to Java 8.
-    return imageReference.equals("gcr.io/distroless/java")
-        || imageReference.equals("gcr.io/distroless/java:latest")
-        || imageReference.equals("gcr.io/distroless/java:debug")
-        || imageReference.equals("gcr.io/distroless/java:8")
-        || imageReference.equals("gcr.io/distroless/java:8-debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty")
-        || imageReference.equals("gcr.io/distroless/java/jetty:latest")
-        || imageReference.equals("gcr.io/distroless/java/jetty:debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java8")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java8-debug");
+    // TODO: drop "latest", "debug", and the like once they no longer point to
+    // Java 8.
+    return imageReference.equals("gcr.io/distroless/java") ||
+        imageReference.equals("gcr.io/distroless/java:latest") ||
+        imageReference.equals("gcr.io/distroless/java:debug") ||
+        imageReference.equals("gcr.io/distroless/java:8") ||
+        imageReference.equals("gcr.io/distroless/java:8-debug") ||
+        imageReference.equals("gcr.io/distroless/java/jetty") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:latest") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:debug") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:java8") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:java8-debug");
   }
 
   /**
-   * Checks if the given image is a known Java 11 distroless image. Checking against only images
-   * known to Java 11, the method may to return {@code false} for Java 11 distroless unknown to it.
+   * Checks if the given image is a known Java 11 distroless image. Checking
+   * against only images known to Java 11, the method may to return {@code
+   * false} for Java 11 distroless unknown to it.
    *
    * @param imageReference the image reference
-   * @return {@code true} if the image is equal to one of the known Java 11 distroless images, else
+   * @return {@code true} if the image is equal to one of the known Java 11
+   *     distroless images, else
    *     {@code false}
    */
   private static boolean isKnownDistrolessJava11Image(String imageReference) {
-    // TODO: add "latest", "debug", and the like to this list once they point to Java 11.
-    return imageReference.equals("gcr.io/distroless/java:11")
-        || imageReference.equals("gcr.io/distroless/java:11-debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java11")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java11-debug");
+    // TODO: add "latest", "debug", and the like to this list once they point to
+    // Java 11.
+    return imageReference.equals("gcr.io/distroless/java:11") ||
+        imageReference.equals("gcr.io/distroless/java:11-debug") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:java11") ||
+        imageReference.equals("gcr.io/distroless/java/jetty:java11-debug");
   }
 }

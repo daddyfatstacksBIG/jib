@@ -25,9 +25,9 @@ import java.util.Map;
 /**
  * Jib Maven plugin extension API.
  *
- * <p>If a class implementing the interface is visible on the classpath of the Jib Maven plugin and
- * the plugin is configured to load the extension class, the Jib plugin extension framework calls
- * the interface method of the class.
+ * <p>If a class implementing the interface is visible on the classpath of the
+ * Jib Maven plugin and the plugin is configured to load the extension class,
+ * the Jib plugin extension framework calls the interface method of the class.
  */
 public interface JibMavenPluginExtension extends JibPluginExtension {
 
@@ -36,15 +36,16 @@ public interface JibMavenPluginExtension extends JibPluginExtension {
    *
    * @param buildPlan original build plan prepared by the Jib Maven plugin
    * @param properties custom properties configured for the plugin extension
-   * @param mavenData {@link MavenData} providing Maven-specific data and properties
+   * @param mavenData {@link MavenData} providing Maven-specific data and
+   *     properties
    * @param logger logger for writing log messages
    * @return updated build plan
-   * @throws JibPluginExtensionException if an error occurs while running the plugin extension
+   * @throws JibPluginExtensionException if an error occurs while running the
+   *     plugin extension
    */
-  ContainerBuildPlan extendContainerBuildPlan(
-      ContainerBuildPlan buildPlan,
-      Map<String, String> properties,
-      MavenData mavenData,
-      ExtensionLogger logger)
+  ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan,
+                                              Map<String, String> properties,
+                                              MavenData mavenData,
+                                              ExtensionLogger logger)
       throws JibPluginExtensionException;
 }

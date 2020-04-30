@@ -25,30 +25,28 @@ class GradleExtensionLogger implements ExtensionLogger {
 
   private final Consumer<LogEvent> logger;
 
-  GradleExtensionLogger(Consumer<LogEvent> logger) {
-    this.logger = logger;
-  }
+  GradleExtensionLogger(Consumer<LogEvent> logger) { this.logger = logger; }
 
   @Override
   public void log(ExtensionLogger.LogLevel logLevel, String message) {
     switch (logLevel) {
-      case ERROR:
-        logger.accept(LogEvent.error(message));
-        break;
-      case WARN:
-        logger.accept(LogEvent.warn(message));
-        break;
-      case LIFECYCLE:
-        logger.accept(LogEvent.lifecycle(message));
-        break;
-      case INFO:
-        logger.accept(LogEvent.info(message));
-        break;
-      case DEBUG:
-        logger.accept(LogEvent.debug(message));
-        break;
-      default:
-        throw new RuntimeException();
+    case ERROR:
+      logger.accept(LogEvent.error(message));
+      break;
+    case WARN:
+      logger.accept(LogEvent.warn(message));
+      break;
+    case LIFECYCLE:
+      logger.accept(LogEvent.lifecycle(message));
+      break;
+    case INFO:
+      logger.accept(LogEvent.info(message));
+      break;
+    case DEBUG:
+      logger.accept(LogEvent.debug(message));
+      break;
+    default:
+      throw new RuntimeException();
     }
   }
 }
