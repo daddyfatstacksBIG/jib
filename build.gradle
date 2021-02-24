@@ -427,7 +427,7 @@ subprojects {
     }
   }
   /* TEST COVERAGE */
-  
+
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 
   /* LOCAL DEVELOPMENT HELPER TASKS */
