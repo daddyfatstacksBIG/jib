@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -37,6 +38,8 @@ public class JarFiles {
    * @param processor jar processor
    * @param jarOptions jar cli options
    * @param commonCliOptions common cli options
+   * @param commonContainerConfigCliOptions common command line options shared between jar and war
+   *     command
    * @param logger console logger
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
@@ -44,27 +47,33 @@ public class JarFiles {
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
   public static JibContainerBuilder toJibContainerBuilder(
-      JarProcessor processor,
+      ArtifactProcessor processor,
       Jar jarOptions,
       CommonCliOptions commonCliOptions,
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
     // Use AdoptOpenJDK image as the default base image.
     JibContainerBuilder containerBuilder;
-    if (jarOptions.getFrom().isPresent()) {
+    if (commonContainerConfigCliOptions.getFrom().isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger);
+              commonContainerConfigCliOptions.getFrom().get(),
+              Collections.emptySet(),
+              commonCliOptions,
+              logger);
     } else {
       containerBuilder =
-          (processor.getJarJavaVersion() <= 8)
-              ? Jib.from("adoptopenjdk:8-jre")
-              : Jib.from("adoptopenjdk:11-jre");
+          (processor.getJavaVersion() <= 8)
+              ? ContainerBuilders.create(
+                  "adoptopenjdk:8-jre", Collections.emptySet(), commonCliOptions, logger)
+              : ContainerBuilders.create(
+                  "adoptopenjdk:11-jre", Collections.emptySet(), commonCliOptions, logger);
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();
-    List<String> customEntrypoint = jarOptions.getEntrypoint();
+    List<String> customEntrypoint = commonContainerConfigCliOptions.getEntrypoint();
     List<String> entrypoint =
         customEntrypoint.isEmpty()
             ? processor.computeEntrypoint(jarOptions.getJvmFlags())
@@ -73,14 +82,14 @@ public class JarFiles {
     containerBuilder
         .setEntrypoint(entrypoint)
         .setFileEntriesLayers(layers)
-        .setExposedPorts(jarOptions.getExposedPorts())
-        .setVolumes(jarOptions.getVolumes())
-        .setEnvironment(jarOptions.getEnvironment())
-        .setLabels(jarOptions.getLabels())
-        .setProgramArguments(jarOptions.getProgramArguments());
-    jarOptions.getUser().ifPresent(containerBuilder::setUser);
-    jarOptions.getFormat().ifPresent(containerBuilder::setFormat);
-    jarOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
+        .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
+        .setVolumes(commonContainerConfigCliOptions.getVolumes())
+        .setEnvironment(commonContainerConfigCliOptions.getEnvironment())
+        .setLabels(commonContainerConfigCliOptions.getLabels())
+        .setProgramArguments(commonContainerConfigCliOptions.getProgramArguments());
+    commonContainerConfigCliOptions.getUser().ifPresent(containerBuilder::setUser);
+    commonContainerConfigCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }

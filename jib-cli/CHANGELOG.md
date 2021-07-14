@@ -5,11 +5,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `--image-metadata-out` option to specify JSON output file that should contain image metadata (image ID, digest, and tags) after build is complete. ([#3187](https://github.com/GoogleContainerTools/jib/pull/3187))
-
 ### Changed
 
 ### Fixed
+
+## 0.7.0
+
+### Added
+
+- Added the `war` command which can be used to containerize a standard WAR with `$ jib war --target ... my-app.war`. The command will explode out the contents of the WAR into optimized layers on the container. ([#3285](https://github.com/GoogleContainerTools/jib/pull/3285))
+
+## 0.6.0
+
+### Added
+
+- Added automatic update check. Jib CLI will now display a message if a new version is available. See the [privacy page](https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md) for more details. ([#3165](https://github.com/GoogleContainerTools/jib/pull/3165))
+- Added `--image-metadata-out` option to specify JSON output file that should contain image metadata (image ID, digest, and tags) after build is complete. ([#3187](https://github.com/GoogleContainerTools/jib/pull/3187))
 
 ## 0.5.0
 
