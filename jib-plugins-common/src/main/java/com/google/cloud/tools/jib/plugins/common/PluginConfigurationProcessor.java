@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -92,6 +93,7 @@ public class PluginConfigurationProcessor {
 
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
+  private static final Path DEFAULT_JIB_DIR = Paths.get("src").resolve("main").resolve("jib");
 
   private PluginConfigurationProcessor() {}
 
@@ -122,6 +124,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -134,7 +138,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          ExtraDirectoryNotFoundException, JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -194,6 +198,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
@@ -206,7 +212,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          JibPluginExtensionException, ExtraDirectoryNotFoundException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage =
@@ -260,6 +266,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
@@ -272,7 +280,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          JibPluginExtensionException, ExtraDirectoryNotFoundException {
     Optional<String> image = rawConfiguration.getToImage();
     Preconditions.checkArgument(image.isPresent());
 
@@ -288,7 +296,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.TO_AUTH_PASSWORD,
         rawConfiguration.getToAuth(),
         inferredAuthProvider,
-        rawConfiguration.getToCredHelper().orElse(null));
+        rawConfiguration.getToCredHelper());
 
     boolean alwaysCacheBaseImage =
         Boolean.parseBoolean(
@@ -340,6 +348,8 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
@@ -347,7 +357,7 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties);
@@ -406,7 +416,7 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           InvalidContainerizingModeException, MainClassInferenceException, InvalidPlatformException,
           InvalidContainerVolumeException, InvalidWorkingDirectoryException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, ExtraDirectoryNotFoundException {
 
     // Create and configure JibContainerBuilder
     ModificationTimeProvider modificationTimeProvider =
@@ -446,6 +456,8 @@ public class PluginConfigurationProcessor {
                 extraDirectory.getExcludesList(),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
+      } else if (!from.endsWith(DEFAULT_JIB_DIR)) {
+        throw new ExtraDirectoryNotFoundException(from.toString(), from.toString());
       }
     }
     return jibContainerBuilder;
@@ -461,7 +473,8 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -514,6 +527,15 @@ public class PluginConfigurationProcessor {
     if (isKnownJava11Image(prefixRemoved) && javaVersion > 11) {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
+    if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+      throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+    }
+    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
+      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+    }
+    if (isKnownJava25Image(prefixRemoved) && javaVersion > 25) {
+      throw new IncompatibleBaseImageJavaVersionException(25, javaVersion);
+    }
 
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -537,7 +559,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.FROM_AUTH_PASSWORD,
         rawConfiguration.getFromAuth(),
         inferredAuthProvider,
-        rawConfiguration.getFromCredHelper().orElse(null));
+        rawConfiguration.getFromCredHelper());
     return JavaContainerBuilder.from(baseImage);
   }
 
@@ -550,7 +572,8 @@ public class PluginConfigurationProcessor {
    *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
    *   <li>the user specified one, if set
    *   <li>for a WAR project, null (inheriting) if a custom base image is specified, and {@code
-   *       ["java", "-jar", "/usr/local/jetty/start.jar"]} otherwise (default Jetty base image)
+   *       ["java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy"]} otherwise
+   *       (default Jetty base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -580,7 +603,7 @@ public class PluginConfigurationProcessor {
             || !rawExtraClasspath.isEmpty()
             || rawConfiguration.getExpandClasspathDependencies())) {
       projectProperties.log(
-          LogEvent.warn(
+          LogEvent.info(
               "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                   + "when entrypoint is specified"));
     }
@@ -603,7 +626,7 @@ public class PluginConfigurationProcessor {
       }
       return rawConfiguration.getFromImage().isPresent()
           ? null // Inherit if a custom base image.
-          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy");
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
@@ -736,8 +759,7 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "jetty"} for WAR projects or {@code "adoptopenjdk:8-jre"} or {@code
-   * "adoptopenjdk:11-jre"} for non-WAR.
+   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
@@ -752,11 +774,17 @@ public class PluginConfigurationProcessor {
     }
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (javaVersion <= 8) {
-      return "adoptopenjdk:8-jre";
+      return "eclipse-temurin:8-jre";
     } else if (javaVersion <= 11) {
-      return "adoptopenjdk:11-jre";
+      return "eclipse-temurin:11-jre";
+    } else if (javaVersion <= 17) {
+      return "eclipse-temurin:17-jre";
+    } else if (javaVersion <= 21) {
+      return "eclipse-temurin:21-jre";
+    } else if (javaVersion <= 25) {
+      return "eclipse-temurin:25-jre";
     }
-    throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    throw new IncompatibleBaseImageJavaVersionException(25, javaVersion);
   }
 
   /**
@@ -926,7 +954,7 @@ public class PluginConfigurationProcessor {
 
         case "USE_CURRENT_TIMESTAMP":
           projectProperties.log(
-              LogEvent.warn(
+              LogEvent.debug(
                   "Setting image creation time to current time; your image may not be reproducible."));
           return Instant.now();
 
@@ -956,11 +984,12 @@ public class PluginConfigurationProcessor {
       String passwordPropertyName,
       AuthProperty rawAuthConfiguration,
       InferredAuthProvider inferredAuthProvider,
-      @Nullable String credHelper)
+      CredHelperConfiguration credHelperConfiguration)
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log));
+            CredentialRetrieverFactory.forImage(
+                imageReference, projectProperties::log, credHelperConfiguration.getEnvironment()));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
             projectProperties::log,
@@ -987,7 +1016,8 @@ public class PluginConfigurationProcessor {
       }
     }
 
-    defaultCredentialRetrievers.setCredentialHelper(credHelper);
+    defaultCredentialRetrievers.setCredentialHelper(
+        credHelperConfiguration.getHelperName().orElse(null));
     defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
   }
 
@@ -1054,7 +1084,8 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 8 image
    */
   private static boolean isKnownJava8Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:8");
+    return imageReference.startsWith("adoptopenjdk:8")
+        || imageReference.startsWith("eclipse-temurin:8");
   }
 
   /**
@@ -1064,6 +1095,37 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 11 image
    */
   private static boolean isKnownJava11Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:11");
+    return imageReference.startsWith("adoptopenjdk:11")
+        || imageReference.startsWith("eclipse-temurin:11");
+  }
+
+  /**
+   * Checks if the given image is a known Java 17 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 17 image
+   */
+  private static boolean isKnownJava17Image(String imageReference) {
+    return imageReference.startsWith("eclipse-temurin:17");
+  }
+
+  /**
+   * Checks if the given image is a known Java 21 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 21 image
+   */
+  private static boolean isKnownJava21Image(String imageReference) {
+    return imageReference.startsWith("eclipse-temurin:21");
+  }
+
+  /**
+   * Checks if the given image is a known Java 25 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 25 image
+   */
+  private static boolean isKnownJava25Image(String imageReference) {
+    return imageReference.startsWith("eclipse-temurin:25");
   }
 }

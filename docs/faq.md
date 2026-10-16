@@ -14,7 +14,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [How are Jib applications layered?](#how-are-jib-applications-layered)\
-[Can I learn more about container images?](#can-i-learn-more-about-container-images)
+[Can I learn more about container images?](#can-i-learn-more-about-container-images)\
 [Which base image (JDK) does Jib use?](#which-base-image-jdk-does-jib-use)
 
 **How-Tos**\
@@ -42,11 +42,13 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
-[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)
+[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
+[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
+[I am seeing `Unsupported class file major version` when building.](#i-am-seeing-unsupported-class-file-major-version-when-building)\
+[I am seeing `NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream` when building.](#i-am-seeing-noclassdeffounderror-comgithublubenzstdzstdoutputstream-when-building)
 
 **Launch Problems**\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
-[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
 [Why won't my container start?](#why-wont-my-container-start)
 
 **Jib CLI**\
@@ -88,9 +90,9 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 ### Where is bash?
 
-By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). Starting from Jib build plugins 3.0, the default base image is [`adoptopenjdk`](default_base_image.md) (and [`jetty`](https://hub.docker.com/_/jetty) for WAR projects), which contains shell programs.
+By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). However, recent Jib tools use [default base images](default_base_image.md) that come with shell programs: Adoptium Eclipse Temurin (formerly AdoptOpenJDK) and Jetty for WAR projects.
 
-Note that you can always set a different base image. Jib's default choice for AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
+Note that you can always set a different base image. Jib's default choice for Temurin or AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
 
 * Configuring a base image in Maven
    ```xml
@@ -184,7 +186,7 @@ Jib applications are split into the following layers:
 
 ### Which base image (JDK) does Jib use?
 
-[`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
+[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
 
 ### Can I learn more about container images?
 
@@ -213,6 +215,9 @@ spec:
     - name: JAVA_TOOL_OPTIONS
       value: <JVM flags>
 ```
+Note that many JVMs may only support a max length of **1024** characters for the `JAVA_TOOL_OPTIONS` environment variable, and anything longer than this may be cut off by the JVM.
+
+For Java 9+, often you may want to use [`JDK_JAVA_OPTIONS`](https://stackoverflow.com/questions/52986487/what-is-the-difference-between-jdk-java-options-and-java-tool-options-when-using) instead of `JAVA_TOOL_OPTIONS`.
 
 #### Other Environment Variables
 
@@ -357,7 +362,7 @@ mvn compile resources:copy-resources jib:build
 The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
 
 ```groovy
-jib.extraDirectories = file('build/extra-directory')
+jib.extraDirectories.paths = ['build/extra-directory']
 
 task setupExtraDir(type: Copy) {
   from file('build/generated/files')
@@ -398,7 +403,7 @@ Beware: in Java 8 and earlier, specifying only a port meant that the JDWP socket
 
 ### I would like to run my application with a javaagent.
 
-You can run your container with a javaagent by placing it somewhere in the `src/main/jib` directory to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
+You can run your container with a javaagent by placing it somewhere in the `src/main/jib/myfolder` directory to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
 
 #### Maven
 
@@ -461,10 +466,11 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
-# Jib uses AdoptOpenJDK as the default base image
-FROM adoptopenjdk:11-jre
+# Jib uses Adoptium Eclipse Temurin (formerly AdoptOpenJDK).
+FROM eclipse-temurin:11-jre
 
-# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
+# Multiple copy statements are used to break the app into layers,
+# allowing for faster rebuilds after small changes
 COPY dependencyJars /app/libs
 COPY snapshotDependencyJars /app/libs
 COPY projectDependencyJars /app/libs
@@ -489,7 +495,7 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-Newer Jib verisons added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
+Newer Jib versions added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
 
 ```xml
   <from>
@@ -569,14 +575,14 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
 
-Starting from Jib build plugins 3.0, [the default base image is `adoptopenjdk` and `jetty` on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
+Starting from Jib build plugins 3.0, Jib by default uses [base images on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
 
 Some other alternatives to get around the rate limits:
 
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
-   - **Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).** If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
+   - **Pin to a specific base image using a SHA digest.** For example, `jib.from.image='eclipse-temurin:11-jre@sha256:...'`. If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out to the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
    - (Maven/Gradle plugins only) **Do offline building.** Pass `--offline` to Maven or Gradle. Before that, you need to run Jib online once to cache the image. However, `--offline` means you cannot push to a remote registry. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
-   - **Read a base from a local Docker deamon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://adoptopenjdk:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
+   - **Retrieve a base image from a local Docker daemon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://eclipse-temurin:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
    - **Set up a local registry, store a base image, and read it from the local registry.** Setting up a local registry is as simple as running `docker run -d -p5000:5000 registry:2`, but nevertheless, the whole process is a bit involved.
 * Retry with increasing backoffs. For example, using the [`retry`](https://github.com/kadwanev/retry) tool.
 
@@ -609,21 +615,40 @@ Depending on registry implementations, it is also possible that the registry act
 
 If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
 
-* You did not configure auth information in the default places where Jib searches.
-   - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
-   - (Starting from Jib 2.2.0) You can set the environment variable `$DOCKER_CONFIG` for the _directory_ containing Docker configuration files. `$DOCKER_CONFIG/config.json` takes precedence over `$HOME/.docker/config.json`.
-   - Some common credential helpers on `$PATH` (for example, `docker-credential-osxkeychain`, `docker-credential-ecr-login`, etc.) for well-known registries.
+* You did not configure auth information in the default places where Jib searches. (See also [Authentication Methods](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#authentication-methods)).
+
+   - Docker credential file (as generated by `docker login` or `podman login`) at
+     - `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json` or `$HOME/.config/containers/auth.json`
+     - `$DOCKER_CONFIG/config.json`
+     - `$HOME/.docker/config.json`
+
+     This is [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` or `podman` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
+
+     If Jib was able to retrieve auth information from a Docker credential file, you should see a log message similar to `Using credentials from Docker config (/home/myuser/.docker/config.json)` where you can verify which credential file was picked up by Jib.
+
    - Jib configurations
+
       - Configuring credential helpers: [`<from/to><credHelper>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-docker-credential-helpers) (Maven) / [`from/to.credHelper`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-docker-credential-helpers) (Gradle)
       - Specific credentials (not recommend): [`<from/to><auth><username>/<password>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-specific-credentials) or in [`settings.xml`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-maven-settings) (Maven) / [`from/to.auth.username/password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) (Gradle)
       - These parameters can also be set through properties: [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties) / [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#system-properties)
+
+* For Google Cloud Registry (GCR), the Container Registry API is not yet enabled for your project.
+   - You enable the API from [Cloud Console](https://console.cloud.google.com/flows/enableapi?apiid=containerregistry.googleapis.com) or with the following [Cloud SDK](https://cloud.google.com/sdk/docs) command: `gcloud services enable containerregistry.googleapis.com`
+
 * `$HOME/.docker/config.json` may also contain short-lived authorizations in the `auths` block that may have expired. In the case of Google Container Registry, if you had previously used `gcloud docker` to configure these authorizations, you should remove these stale authorizations by editing your `config.json` and deleting lines from `auths` associated with `gcr.io` (for example: `"https://asia.gcr.io"`). You can then run `gcloud auth configure-docker` to correctly configure the `credHelpers` block for more robust interactions with gcr.
+
 * Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
+
 * You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
+
 * Configured credentials have access to the base image repository but not to the target image repository (or vice versa).
+
 * Typos in username, password, image names, repository names, or registry names. This is a very common error.
+
 * Image names do not conform to the structure or policy that a registry requires. For example, [Docker Hub returns 401 Unauthorized](https://github.com/GoogleContainerTools/jib/issues/2650#issuecomment-667323777) when trying to use a multi-level repository name.
+
 * Incorrect port number in image references (`registry.hostname:<port>/...`).
+
 * You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
 Note, if Jib was able to retrieve credentials, you should see a log message like these:
@@ -671,12 +696,12 @@ mvn --batch-mode -Djava.util.logging.config.file=path/to/logging.properties -Dji
 ```
 or
 ```sh
-gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
+gradle --no-daemon --console=plain --info -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
 ```
 
 **Note**: Jib Gradle plugins prior to version 2.2.0 have an issue generating HTTP logs ([#2356](https://github.com/GoogleContainerTools/jib/issues/2356)).
 
-You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
+You may want to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
 When configured correctly, you should see logs like this:
 ```
@@ -699,13 +724,59 @@ Accept-Encoding: gzip
 Authorization: <Not Logged>
 User-Agent: jib 2.1.1-SNAPSHOT jib-maven-plugin Google-HTTP-Java-Client/1.34.0 (gzip)
 ```
-  
+
 ### How do I view debug logs for Jib?
 
 Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
 
 Gradle: use `gradle --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
 
+### I am seeing `Method Not Found` or `Class Not Found` errors when building.
+
+Sometimes when upgrading your Gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
+
+This commonly appears in multi module Gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
+
+`build.gradle` (root)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
+}
+```
+
+`build.gradle` (sub-project)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib'
+}
+```
+
+### I am seeing `Unsupported class file major version` when building.
+
+When you're using latest Java versions to write an app (or using an old version of Jib), you may see the error _coming from Jib when building an image_ (not when compiling your code):
+
+```
+Failed to execute goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild (default-cli) on project demo: Execution default-cli of goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild failed: Unsupported class file major version 61
+```
+
+Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecode to automatically infer a main class (in other words, the class that defines `public static void main()` to start your app). In this way, if you have only one such class, Jib can automatically infer and use that class to set an image entrypoint (basically, a command to start your app). When new Java versions come out, often the ASM library version used in Jib doesn't support the new bytecode format. If this is the case, check if you are using the latest Jib. If you still get the error with the latest Jib, file a [bug](https://github.com/GoogleContainerTools/jib/issues/new/choose) to have the Jib team upgrade the ASM library.
+
+**Workaround**: to prevent Jib from doing auto-inference, you can manually set your desired main class via [`<container><mainClass>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#container-object) (for example, `<container><mainClass>com.example.your.Main</mainClass>`). As with other Jib parameters, it can be set through system/Maven properties or on the command-line (for example, `-Dcontainer.mainClass=...`).
+
+Note that although the ASM library is the common cause of this error coming from Jib, it may be due to other reasons. Always check the full stack (`-e` or `-X` for Maven and `--stacktrace` for Gradle) to see where the error is coming from.
+
+### I am seeing `NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream` when building.
+
+Jib supports base image layers with media-type `application/vnd.oci.image.layer.v1.tar+zstd`, i.e. compressed with zstd algorithm instead of gzip.
+
+However, the dependency to zstd is optional, so pulling such layers will result in:
+
+```
+java.lang.NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream
+at org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream.<init>
+```
+
+This can be solved by adding a dependency to artifact `com.github.luben:zstd-jni:1.5.2-3` to the plugin.
 
 ## Launch problems
 
@@ -739,35 +810,15 @@ kubectl patch serviceaccount default \
 
 See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
 
-### I am seeing `Method Not Found` or `Class Not Found` errors when building.
-
-Sometimes when upgrading your gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
-
-This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
-
-`build.gradle` (root)
-```groovy
-plugins {
-  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
-}
-```
-
-`build.gradle` (sub-project)
-```groovy
-plugins {
-  id 'com.google.cloud.tools.jib'
-}
-```
-
 ### Why won't my container start?
 
 There are some common reasons why containers fail on launch.
 
-#### My shell script won't run
- 
+#### My shell script won't run.
+
 Jib Maven and Gradle plugins prior to 3.0 used Distroless Java as the default base image, which does not have a shell. See [Where is bash?](#where-is-bash) for more details.
 
-#### The container fails with `exec` errors 
+#### The container fails with `exec` errors.
 
 A Jib user reported an error launching their container:
 ```
@@ -783,6 +834,7 @@ Solution: The user installed the file in a different location.
 ## Jib CLI 
  
 ### How does the `jar` command support Standard JARs?
+
 The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
 
 The current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. Therefore, for efficiency, we recommend against containerizing fat JARs (Spring Boot fat JARs are an [exception](#how-does-the-jar-command-support-spring-boot-jars)) if you can prepare thin JARs. We hope to have better support for fat JARs in the future.
@@ -790,6 +842,7 @@ The current limitation of using a fat JAR is that the embedded dependencies will
 A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
 The default mode for containerizing a JAR. It will open up the JAR and optimally place files into the following layers:  
@@ -802,6 +855,7 @@ The default mode for containerizing a JAR. It will open up the JAR and optimally
 **Entrypoint** : `java -cp /app/dependencies/:/app/explodedJar/ ${MAIN_CLASS}`
 
 #### Packaged Mode
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`.
 
 It will result in the following layers on the container:
@@ -812,10 +866,12 @@ It will result in the following layers on the container:
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
 
 ### How does the `jar` command support Spring Boot JARs?
+
 The `jar` command currently supports containerization of Spring Boot fat JARs.
 A Spring-Boot fat JAR can be containerized in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
 The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) in the JAR (if present) or create optimized layers in the following format:
@@ -829,6 +885,7 @@ The default mode for containerizing a JAR. It will respect [`layers.idx`](https:
 **Entrypoint** : `java -cp /app org.springframework.boot.loader.JarLauncher`
 
 #### Packaged Mode
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`
 
 It will containerize the JAR as is. However, **note** that we highly recommend against using packaged mode for containerizing Spring Boot fat JARs. 
@@ -836,6 +893,7 @@ It will containerize the JAR as is. However, **note** that we highly recommend a
 **Entrypoint**: `java -jar ${JAR_NAME}.jar`
 
 ### How does the `war` command work?
+
 The `war` command currently supports containerization of standard WARs. It uses the official [`jetty`](https://hub.docker.com/_/jetty) on Docker Hub as the default base image and explodes out the WAR into `/var/lib/jetty/webapps/ROOT` on the container. It creates the following layers:
 
 * Other Dependencies Layer
@@ -843,7 +901,7 @@ The `war` command currently supports containerization of standard WARs. It uses 
 * Resources Layer
 * Classes Layer
 
-The default entrypoint when using a jetty base image will be `java -jar /usr/local/jetty/start.jar` unless you choose to specify a custom one.
+The default entrypoint when using a jetty base image will be `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` unless you choose to specify a custom one.
 
 You can use a different Servlet engine base image with the help of the `--from` option and customize `--app-root`, `--entrypoint` and `--program-args`. If you don't set the `entrypoint` or `program-arguments`, Jib will inherit them from the base image. However, setting the `--app-root` is **required** if you use a non-jetty base image. Here is how the `war` command may look if you're using a Tomcat image:
 ```

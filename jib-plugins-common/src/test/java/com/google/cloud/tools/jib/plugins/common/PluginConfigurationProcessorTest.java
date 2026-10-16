@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.collect.ImmutableList;
@@ -66,6 +67,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,10 +79,11 @@ import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link PluginConfigurationProcessor}. */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class PluginConfigurationProcessorTest {
 
   private static class TestPlatformConfiguration implements PlatformConfiguration {
@@ -147,6 +151,7 @@ public class PluginConfigurationProcessorTest {
         .getEntries();
   }
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -158,6 +163,8 @@ public class PluginConfigurationProcessorTest {
   @Mock private InferredAuthProvider inferredAuthProvider;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
+  @Mock private CredHelperConfiguration fromCredHelper;
+  @Mock private CredHelperConfiguration toCredHelper;
 
   private Path appCacheDirectory;
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
@@ -172,6 +179,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+    when(rawConfiguration.getFromCredHelper()).thenReturn(fromCredHelper);
+    when(rawConfiguration.getToCredHelper()).thenReturn(toCredHelper);
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     when(projectProperties.getToolName()).thenReturn("tool");
     when(projectProperties.getToolVersion()).thenReturn("tool-version");
@@ -195,7 +204,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
@@ -216,7 +226,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
           InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
@@ -256,12 +267,25 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testPluginConfigurationProcessor__errorOnExtraDirectoryPathNotFound()
+      throws URISyntaxException, NumberFormatException {
+    Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI()).resolve("xyz");
+    Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
+        .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
+
+    Exception exception =
+        assertThrows(ExtraDirectoryNotFoundException.class, this::processCommonConfiguration);
+    assertThat(exception).hasMessageThat().isEqualTo(extraDirectory.toString());
+  }
+
+  @Test
   public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
       throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
     System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
 
@@ -336,7 +360,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -442,13 +467,14 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verifyNoInteractions(logger);
   }
@@ -459,7 +485,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -479,7 +506,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
     when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -500,7 +528,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
 
@@ -539,7 +568,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("invalid main class"));
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("bash")));
 
@@ -575,7 +605,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -588,7 +619,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
     assertThat(buildPlan.getUser()).isNull();
   }
@@ -599,7 +631,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -609,7 +642,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
@@ -620,7 +653,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -630,7 +664,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
@@ -641,7 +675,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
@@ -651,7 +686,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
@@ -662,14 +697,14 @@ public class PluginConfigurationProcessorTest {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
     when(projectProperties.isWarProject()).thenReturn(true);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
@@ -684,14 +719,14 @@ public class PluginConfigurationProcessorTest {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
     when(projectProperties.isWarProject()).thenReturn(true);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
@@ -706,7 +741,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -723,7 +759,8 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(true);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("custom-base-image"));
 
@@ -846,7 +883,7 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo("eclipse-temurin:8-jre");
   }
 
   @Test
@@ -859,48 +896,35 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_chooseJava8BaseImage()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(6);
+  @Parameters(
+      value = {
+        "6, eclipse-temurin:8-jre",
+        "8, eclipse-temurin:8-jre",
+        "9, eclipse-temurin:11-jre",
+        "11, eclipse-temurin:11-jre",
+        "13, eclipse-temurin:17-jre",
+        "17, eclipse-temurin:17-jre",
+        "21, eclipse-temurin:21-jre",
+        "25, eclipse-temurin:25-jre"
+      })
+  public void testGetDefaultBaseImage_defaultJavaBaseImage(
+      int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(javaVersion);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(7);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(8);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo(expectedBaseImage);
   }
 
   @Test
-  public void testGetDefaultBaseImage_chooseJava11BaseImage()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(9);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(10);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
-  }
-
-  @Test
-  public void testGetDefaultBaseImage_projectHigherThanJava11() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+  public void testGetDefaultBaseImage_projectHigherThanJava25() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(26);
 
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(25);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(26);
   }
 
   @Test
@@ -947,53 +971,36 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
+  @Parameters(
+      value = {
+        "adoptopenjdk:8, 8, 11",
+        "adoptopenjdk:8-jre, 8, 11",
+        "eclipse-temurin:8, 8, 11",
+        "eclipse-temurin:8-jre, 8, 11",
+        "adoptopenjdk:11, 11, 15",
+        "adoptopenjdk:11-jre, 11, 15",
+        "eclipse-temurin:11, 11, 15",
+        "eclipse-temurin:11-jre, 11, 15",
+        "eclipse-temurin:17, 17, 19",
+        "eclipse-temurin:17-jre, 17, 19",
+        "eclipse-temurin:21, 21, 22",
+        "eclipse-temurin:21-jre, 21, 22",
+        "eclipse-temurin:25, 25, 26",
+        "eclipse-temurin:25-jre, 25, 26"
+      })
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
+      String baseImage, int baseImageJavaVersion, int appJavaVersion) {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(appJavaVersion);
 
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8"));
-    IncompatibleBaseImageJavaVersionException exception1 =
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of(baseImage));
+    IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(11);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8-jre"));
-    IncompatibleBaseImageJavaVersionException exception2 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(11);
-  }
-
-  @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(15);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11"));
-    IncompatibleBaseImageJavaVersionException exception1 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(15);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11-jre"));
-    IncompatibleBaseImageJavaVersionException exception2 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(15);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(baseImageJavaVersion);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(appJavaVersion);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995
@@ -1009,8 +1016,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+  public void testGetJavaContainerBuilderWithBaseImage_java26NoBaseImage() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(26);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
@@ -1018,8 +1025,8 @@ public class PluginConfigurationProcessorTest {
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(25);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(26);
   }
 
   @Test
@@ -1199,7 +1206,8 @@ public class PluginConfigurationProcessorTest {
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     JibContainerBuilder containerBuilder =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);

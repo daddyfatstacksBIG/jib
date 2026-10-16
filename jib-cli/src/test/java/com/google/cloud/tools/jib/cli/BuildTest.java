@@ -379,19 +379,19 @@ public class BuildTest {
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
-  public Object incompatibleCredentialOptions() {
-    return new Object[] {
-      new String[] {"--credential-helper=x", "--to-credential-helper=x"},
-      new String[] {"--credential-helper=x", "--from-credential-helper=x"},
-      new String[] {"--credential-helper=x", "--username=x", "--password=x"},
-      new String[] {"--credential-helper=x", "--from-username=x", "--from-password=x"},
-      new String[] {"--credential-helper=x", "--to-username=x", "--to-password=x"},
-      new String[] {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
-      new String[] {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
-      new String[] {"--username=x", "--password=x", "--to-credential-helper=x"},
-      new String[] {"--username=x", "--password=x", "--from-credential-helper=x"},
-      new String[] {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
-      new String[] {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
+  public String[][] incompatibleCredentialOptions() {
+    return new String[][] {
+      {"--credential-helper=x", "--to-credential-helper=x"},
+      {"--credential-helper=x", "--from-credential-helper=x"},
+      {"--credential-helper=x", "--username=x", "--password=x"},
+      {"--credential-helper=x", "--from-username=x", "--from-password=x"},
+      {"--credential-helper=x", "--to-username=x", "--to-password=x"},
+      {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
+      {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
+      {"--username=x", "--password=x", "--to-credential-helper=x"},
+      {"--username=x", "--password=x", "--from-credential-helper=x"},
+      {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
+      {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
     };
   }
 
@@ -406,7 +406,7 @@ public class BuildTest {
                     new Build(), ArrayUtils.add(authArgs, "--target=ignored")));
     assertThat(meae)
         .hasMessageThat()
-        .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
+        .containsMatch("^Error: (\\[)*(--(from-|to-)?credential-helper|\\[--(username|password))");
   }
 
   @Test
